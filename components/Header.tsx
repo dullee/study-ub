@@ -48,9 +48,6 @@ export default function Header({ onAddClick, addLabel, wide = false }: HeaderPro
                 UB
               </span>
             </h1>
-            <p className="hidden sm:block text-xs text-slate-400">
-              {t.siteTagline}
-            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">

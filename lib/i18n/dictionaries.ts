@@ -17,7 +17,6 @@ const mn = {
   // Ерөнхий
   languageName: "Монгол",
   languageLabel: "Хэл",
-  siteTagline: "Улаанбаатарын тухтай, Wi-Fi хурдан, чимээгүй газруудын гид",
   metaDescription: "Улаанбаатарын тухтай, Wi-Fi хурдан, чимээгүй сурах газруудын гид",
   navPlaces: "📍 Газрууд",
   navEvents: "📅 Эвентүүд",
@@ -242,7 +241,6 @@ export type Dictionary = {
 const en: Dictionary = {
   languageName: "English",
   languageLabel: "Language",
-  siteTagline: "A guide to cozy, quiet spots with fast Wi-Fi in Ulaanbaatar",
   metaDescription: "A guide to cozy, quiet places to study in Ulaanbaatar with fast Wi-Fi",
   navPlaces: "📍 Places",
   navEvents: "📅 Events",

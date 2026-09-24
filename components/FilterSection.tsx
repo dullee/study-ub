@@ -75,6 +75,7 @@ export default function FilterSection({
         </div>
 
         <Dropdown
+          align="right"
           active={selectedTags.length > 0}
           label={
             <>
