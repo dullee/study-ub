@@ -40,7 +40,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="mn"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-900">
+      {/* Хөтчийн өргөтгөлүүд body-д class нэмдэг (ж: vc-init) — зөвхөн body-гийн attribute зөрүүг үл тоомсорлоно. */}
+      <body className="min-h-full flex flex-col bg-slate-900" suppressHydrationWarning>
         <ClerkProvider localization={mnMN} appearance={clerkAppearance}>
           <ClerkSupabaseBridge />
           {children}

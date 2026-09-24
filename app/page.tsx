@@ -14,6 +14,7 @@ import { fetchReviewScores, fetchSpots, insertSpot } from "@/lib/supabase/spots"
 import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { sortByActiveTags } from "@/lib/spotSort";
+import { distanceKm, useUserLocation } from "@/lib/geo";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -97,6 +98,24 @@ export default function Home() {
     setActiveTags(updated);
   };
 
+  const { location, locate, clear: clearLocation } = useUserLocation();
+  const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(null);
+  const userCoords = location.status === "ready" ? location.coords : null;
+
+  // Байршил мэдэгдэж байвал газар бүрийн зай (км).
+  const distances = useMemo(() => {
+    if (!userCoords) return null;
+    return Object.fromEntries(spots.map((spot) => [spot.id, distanceKm(userCoords, spot)])) as Record<
+      number,
+      number
+    >;
+  }, [spots, userCoords]);
+
+  const handleClearLocation = () => {
+    clearLocation();
+    setMaxDistanceKm(null);
+  };
+
   const filteredSpots = useMemo(() => {
     const matching = spots.filter((spot) => {
       const q = searchQuery.toLowerCase();
@@ -104,10 +123,12 @@ export default function Home() {
         spot.name.toLowerCase().includes(q) || spot.location.toLowerCase().includes(q);
       const matchesTags =
         activeTags.includes("Бүгд") || activeTags.every((t) => spot.tags.includes(t));
-      return matchesSearch && matchesTags;
+      const withinDistance =
+        !distances || maxDistanceKm === null || distances[spot.id] <= maxDistanceKm;
+      return matchesSearch && matchesTags && withinDistance;
     });
-    return sortByActiveTags(matching, activeTags, summaries);
-  }, [spots, searchQuery, activeTags, summaries]);
+    return sortByActiveTags(matching, activeTags, summaries, distances);
+  }, [spots, searchQuery, activeTags, summaries, distances, maxDistanceKm]);
 
   const handleAddSpot = async (draft: Omit<StudySpot, "id">) => {
     const pending = { ...draft, status: "pending" as const };
@@ -144,6 +165,11 @@ export default function Home() {
           availableTags={[...AVAILABLE_TAGS]}
           activeTags={activeTags}
           toggleTag={toggleTag}
+          location={location}
+          onLocate={locate}
+          onClearLocation={handleClearLocation}
+          maxDistanceKm={maxDistanceKm}
+          setMaxDistanceKm={setMaxDistanceKm}
         />
         <section className="space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
@@ -166,6 +192,7 @@ export default function Home() {
                   onOpenDetails={setDetailSpot}
                   summary={summaries[spot.id]}
                   ratingsLoading={reviewScores === null}
+                  distanceKm={distances?.[spot.id]}
                 />
               ))}
             </div>

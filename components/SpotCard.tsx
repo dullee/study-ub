@@ -4,6 +4,7 @@ import { googleMapsUrl, OUTLET_LEVELS, PLACEHOLDER_IMAGE, QUIET_LEVELS, StudySpo
 import Stars from "@/components/Stars";
 import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 import { formatWifi, SpotSummary } from "@/lib/scores";
+import { formatDistance } from "@/lib/geo";
 
 interface SpotCardProps {
   spot: StudySpot;
@@ -13,10 +14,19 @@ interface SpotCardProps {
   summary: SpotSummary | undefined;
   // Сэтгэгдэл ачаалж байх үед одны үнэлгээний оронд placeholder.
   ratingsLoading: boolean;
+  // Хэрэглэгчээс хүрэх зай (км). Байршил мэдэгдэхгүй бол undefined.
+  distanceKm?: number;
 }
 
 // Карт бүхэлдээ дарагдана: гарчгийн товчны after:inset-0 картыг бүрхэнэ, доорх товчнууд z-10-оор дээр нь гарна.
-export default function SpotCard({ spot, onFocus, onOpenDetails, summary, ratingsLoading }: SpotCardProps) {
+export default function SpotCard({
+  spot,
+  onFocus,
+  onOpenDetails,
+  summary,
+  ratingsLoading,
+  distanceKm,
+}: SpotCardProps) {
   const now = useNow();
   const status = now === null ? null : openStatus(spot, now);
   const rating = summary?.rating;
@@ -68,7 +78,12 @@ export default function SpotCard({ spot, onFocus, onOpenDetails, summary, rating
               <span className="text-slate-500">Үнэлгээгүй</span>
             )}
           </div>
-          <p className="text-xs text-slate-400 flex items-center gap-1">📍 {spot.location}</p>
+          <p className="text-xs text-slate-400 flex items-center gap-1">
+            📍 {spot.location}
+            {distanceKm !== undefined ? (
+              <span className="ml-auto shrink-0 font-semibold text-indigo-300">🚶 {formatDistance(distanceKm)}</span>
+            ) : null}
+          </p>
           {scoreLine.length > 0 ? <p className="text-[11px] text-slate-400">{scoreLine.join(" · ")}</p> : null}
           <div className="flex flex-wrap gap-1.5 pt-1">
             {spot.tags.map((tag, idx) => (
