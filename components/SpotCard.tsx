@@ -1,18 +1,26 @@
 "use client";
 
-import { googleMapsUrl, StudySpot } from "@/types";
+import { googleMapsUrl, RatingSummary, StudySpot } from "@/types";
+import Stars from "@/components/Stars";
 
 interface SpotCardProps {
   spot: StudySpot;
   onFocus: (lat: number, lng: number) => void;
-  onOpenReviews: (spot: StudySpot) => void;
+  onOpenDetails: (spot: StudySpot) => void;
+  // null — үнэлгээ ачаалж байна; undefined — сэтгэгдэлгүй.
+  rating: RatingSummary | undefined | null;
 }
 
-export default function SpotCard({ spot, onFocus, onOpenReviews }: SpotCardProps) {
+export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotCardProps) {
   return (
     <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-500 transition-all group shadow-lg">
       <div>
-        <div className="relative h-44 w-full overflow-hidden bg-slate-900">
+        <button
+          type="button"
+          onClick={() => onOpenDetails(spot)}
+          aria-label={`${spot.name} — дэлгэрэнгүй`}
+          className="relative block h-44 w-full overflow-hidden bg-slate-900 cursor-pointer"
+        >
           <img
             src={spot.image || "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop"}
             alt={spot.name}
@@ -21,11 +29,26 @@ export default function SpotCard({ spot, onFocus, onOpenReviews }: SpotCardProps
           <span className="absolute top-3 right-3 text-[11px] font-semibold bg-slate-900/90 backdrop-blur text-indigo-400 px-2.5 py-1 rounded-lg border border-slate-700">
             ⏰ {spot.hours}
           </span>
-        </div>
+        </button>
         <div className="p-4 space-y-3">
           <h3 className="font-bold text-white text-base group-hover:text-indigo-400 transition-colors">
-            {spot.name}
+            <button type="button" onClick={() => onOpenDetails(spot)} className="text-left">
+              {spot.name}
+            </button>
           </h3>
+          <div className="flex items-center gap-1.5 text-xs min-h-4">
+            {rating === null ? (
+              <span className="h-3 w-28 rounded bg-slate-700/70 animate-pulse" aria-hidden="true" />
+            ) : rating ? (
+              <>
+                <Stars value={rating.average} />
+                <span className="text-slate-300 font-semibold">{rating.average.toFixed(1)}</span>
+                <span className="text-slate-500">({rating.count})</span>
+              </>
+            ) : (
+              <span className="text-slate-500">Үнэлгээгүй</span>
+            )}
+          </div>
           <p className="text-xs text-slate-400 flex items-center gap-1">📍 {spot.location}</p>
           {(spot.wifi_speed || spot.quiet_score || spot.socket_score) && (
             <p className="text-[11px] text-slate-400">
@@ -62,10 +85,10 @@ export default function SpotCard({ spot, onFocus, onOpenReviews }: SpotCardProps
           Google Maps
         </a>
         <button
-          onClick={() => onOpenReviews(spot)}
+          onClick={() => onOpenDetails(spot)}
           className="col-span-2 w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-slate-700"
         >
-          Сэтгэгдэл
+          Дэлгэрэнгүй ба сэтгэгдэл
         </button>
       </div>
     </div>

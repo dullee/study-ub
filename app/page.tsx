@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { StudySpot, AVAILABLE_TAGS } from "@/types";
+import { StudySpot, AVAILABLE_TAGS, RatingSummary, Review, summarizeRatings } from "@/types";
 import { initialSpots } from "@/data/initialSpots";
 import SpotCard from "@/components/SpotCard";
 import FilterSection from "@/components/FilterSection";
 import AddSpotModal from "@/components/AddSpotModal";
 import Header from "@/components/Header";
-import ReviewSection from "@/components/ReviewSection";
+import SpotDetailDialog from "@/components/SpotDetailDialog";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
-import { fetchSpots, insertSpot } from "@/lib/supabase/spots";
-import { loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
+import { fetchReviewRatings, fetchSpots, insertSpot } from "@/lib/supabase/spots";
+import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -30,7 +30,33 @@ export default function Home() {
   const [activeTags, setActiveTags] = useState<string[]>(["Бүгд"]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [focusCoords, setFocusCoords] = useState<[number, number] | null>(null);
-  const [reviewSpot, setReviewSpot] = useState<StudySpot | null>(null);
+  const [detailSpot, setDetailSpot] = useState<StudySpot | null>(null);
+  const closeDetails = useCallback(() => setDetailSpot(null), []);
+  // null — ачаалж байна.
+  const [ratings, setRatings] = useState<Record<number, RatingSummary> | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRatings() {
+      const remote = isSupabaseConfigured ? await fetchReviewRatings() : null;
+      if (!cancelled) setRatings(summarizeRatings(remote ?? loadLocalReviews()));
+    }
+    loadRatings();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleReviewAdded = useCallback((review: Review) => {
+    setRatings((prev) => {
+      const current = prev?.[review.spot_id] ?? { average: 0, count: 0 };
+      const count = current.count + 1;
+      return {
+        ...prev,
+        [review.spot_id]: { average: (current.average * current.count + review.rating) / count, count },
+      };
+    });
+  }, []);
   const [usingRemote, setUsingRemote] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -109,7 +135,7 @@ export default function Home() {
             {notice}
           </p>
         ) : null}
-        <Map spots={filteredSpots} focusCoords={focusCoords} />
+        <Map spots={filteredSpots} focusCoords={focusCoords} onOpenDetails={setDetailSpot} />
         <FilterSection
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -135,7 +161,8 @@ export default function Home() {
                   key={spot.id}
                   spot={spot}
                   onFocus={handleFocus}
-                  onOpenReviews={setReviewSpot}
+                  onOpenDetails={setDetailSpot}
+                  rating={ratings ? ratings[spot.id] : null}
                 />
               ))}
             </div>
@@ -147,7 +174,14 @@ export default function Home() {
         onClose={() => setIsModalOpen(false)}
         onAddSpot={handleAddSpot}
       />
-      {reviewSpot ? <ReviewSection spot={reviewSpot} onClose={() => setReviewSpot(null)} /> : null}
+      {detailSpot ? (
+        <SpotDetailDialog
+          spot={detailSpot}
+          onClose={closeDetails}
+          onShowOnMap={handleFocus}
+          onReviewAdded={handleReviewAdded}
+        />
+      ) : null}
     </div>
   );
 }

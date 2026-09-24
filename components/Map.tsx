@@ -9,6 +9,7 @@ import { googleMapsUrl, StudySpot } from "@/types";
 interface MapProps {
   spots: StudySpot[];
   focusCoords: [number, number] | null;
+  onOpenDetails: (spot: StudySpot) => void;
 }
 
 function MapController({ focusCoords }: { focusCoords: [number, number] | null }) {
@@ -21,7 +22,7 @@ function MapController({ focusCoords }: { focusCoords: [number, number] | null }
   return null;
 }
 
-export default function Map({ spots, focusCoords }: MapProps) {
+export default function Map({ spots, focusCoords, onOpenDetails }: MapProps) {
   const customIcon = useMemo(
     () =>
       L.icon({
@@ -55,6 +56,14 @@ export default function Map({ spots, focusCoords }: MapProps) {
                 <a href={googleMapsUrl(spot)} target="_blank" rel="noopener noreferrer">
                   Google Maps
                 </a>
+                {" · "}
+                <button
+                  type="button"
+                  onClick={() => onOpenDetails(spot)}
+                  className="text-indigo-600 font-semibold hover:underline"
+                >
+                  Дэлгэрэнгүй
+                </button>
               </div>
             </Popup>
           </Marker>

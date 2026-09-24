@@ -58,6 +58,25 @@ export interface EventAttendee {
   reminder_sent_at?: string | null;
 }
 
+export interface RatingSummary {
+  average: number;
+  count: number;
+}
+
+export function summarizeRatings(reviews: Pick<Review, "spot_id" | "rating">[]) {
+  const totals: Record<number, { sum: number; count: number }> = {};
+  for (const { spot_id, rating } of reviews) {
+    const entry = (totals[spot_id] ??= { sum: 0, count: 0 });
+    entry.sum += rating;
+    entry.count += 1;
+  }
+  const summaries: Record<number, RatingSummary> = {};
+  for (const [spotId, { sum, count }] of Object.entries(totals)) {
+    summaries[Number(spotId)] = { average: sum / count, count };
+  }
+  return summaries;
+}
+
 // Clerk хэрэглэгчийн харагдах нэр.
 export function displayName(user: {
   fullName?: string | null;

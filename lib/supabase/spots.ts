@@ -96,6 +96,17 @@ export async function fetchReviews(spotId: number): Promise<Review[] | null> {
   return data as Review[];
 }
 
+// Картууд дээрх дундаж үнэлгээнд: бүх сэтгэгдлийн зөвхөн spot_id, rating.
+export async function fetchReviewRatings(): Promise<Pick<Review, "spot_id" | "rating">[] | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from("reviews").select("spot_id, rating");
+  if (error) {
+    console.error("Supabase review ratings:", error.message);
+    return null;
+  }
+  return data as Pick<Review, "spot_id" | "rating">[];
+}
+
 export async function insertReview(
   review: Omit<Review, "id" | "created_at">
 ): Promise<Review | null> {
