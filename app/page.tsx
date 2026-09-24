@@ -116,19 +116,29 @@ export default function Home() {
     setMaxDistanceKm(null);
   };
 
-  const filteredSpots = useMemo(() => {
+  // Хайлт, шошгоор шүүсэн газрууд — газрын зурагт зайнаас гадуурхыг нь бүдгэрүүлж харуулна.
+  const matchingSpots = useMemo(() => {
     const matching = spots.filter((spot) => {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         spot.name.toLowerCase().includes(q) || spot.location.toLowerCase().includes(q);
       const matchesTags =
         activeTags.includes("Бүгд") || activeTags.every((t) => spot.tags.includes(t));
-      const withinDistance =
-        !distances || maxDistanceKm === null || distances[spot.id] <= maxDistanceKm;
-      return matchesSearch && matchesTags && withinDistance;
+      return matchesSearch && matchesTags;
     });
     return sortByActiveTags(matching, activeTags, summaries, distances);
-  }, [spots, searchQuery, activeTags, summaries, distances, maxDistanceKm]);
+  }, [spots, searchQuery, activeTags, summaries, distances]);
+
+  const outOfRangeIds = useMemo(() => {
+    if (!distances || maxDistanceKm === null) return new Set<number>();
+    return new Set(matchingSpots.filter((spot) => distances[spot.id] > maxDistanceKm).map((spot) => spot.id));
+  }, [matchingSpots, distances, maxDistanceKm]);
+
+  // Картын жагсаалт: зайн шүүлтүүрийг ч хэрэглэнэ.
+  const filteredSpots = useMemo(
+    () => matchingSpots.filter((spot) => !outOfRangeIds.has(spot.id)),
+    [matchingSpots, outOfRangeIds]
+  );
 
   const handleAddSpot = async (draft: Omit<StudySpot, "id">) => {
     const pending = { ...draft, status: "pending" as const };
@@ -158,7 +168,14 @@ export default function Home() {
             {notice}
           </p>
         ) : null}
-        <Map spots={filteredSpots} focusCoords={focusCoords} onOpenDetails={setDetailSpot} />
+        <Map
+          spots={matchingSpots}
+          dimmedIds={outOfRangeIds}
+          focusCoords={focusCoords}
+          onOpenDetails={setDetailSpot}
+          userCoords={userCoords}
+          radiusKm={maxDistanceKm}
+        />
         <FilterSection
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
