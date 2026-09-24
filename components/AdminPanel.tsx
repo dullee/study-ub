@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { UserButton, useAuth } from "@clerk/nextjs";
 import { googleMapsUrl, Review, StudySpot } from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -20,16 +21,14 @@ import {
   saveLocalSpots,
 } from "@/lib/localStore";
 
-const SESSION_KEY = "studyspots_admin";
 const inputClass =
   "w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500";
 
 type Tab = "pending" | "places" | "comments";
 
-export default function AdminPage() {
-  const [authed, setAuthed] = useState(false);
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+// app/admin/page.tsx сервер дээр Clerk-ийн админ эрхийг шалгасны дараа л харагдана.
+export default function AdminPanel() {
+  const { isLoaded } = useAuth();
   const [tab, setTab] = useState<Tab>("pending");
   const [remote, setRemote] = useState(false);
   const [spots, setSpots] = useState<StudySpot[]>([]);
@@ -38,11 +37,8 @@ export default function AdminPage() {
   const [editingReview, setEditingReview] = useState<Review | null>(null);
 
   useEffect(() => {
-    if (sessionStorage.getItem(SESSION_KEY) === "1") setAuthed(true);
-  }, []);
-
-  useEffect(() => {
-    if (!authed) return;
+    // Clerk ачаалагдаж token бэлэн болсны дараа л уншина — эс бөгөөс хүлээгдэж буй газрууд харагдахгүй.
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       if (isSupabaseConfigured) {
@@ -63,19 +59,7 @@ export default function AdminPage() {
     return () => {
       cancelled = true;
     };
-  }, [authed]);
-
-  const login = (e: FormEvent) => {
-    e.preventDefault();
-    const expected = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "admin";
-    if (password !== expected) {
-      setError("Нууц үг буруу байна.");
-      return;
-    }
-    sessionStorage.setItem(SESSION_KEY, "1");
-    setAuthed(true);
-    setError("");
-  };
+  }, [isLoaded]);
 
   const persistSpots = async (next: StudySpot[], changed?: StudySpot, removedId?: number) => {
     setSpots(next);
@@ -151,38 +135,17 @@ export default function AdminPage() {
   const spotName = (id: number) => spots.find((spot) => spot.id === id)?.name ?? `#${id}`;
   const pending = spots.filter((spot) => spot.status === "pending");
 
-  if (!authed) {
-    return (
-      <main className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4">
-        <form onSubmit={login} className="w-full max-w-sm bg-slate-800/60 border border-slate-700 rounded-2xl p-6 space-y-4">
-          <h1 className="text-lg font-bold">Админ нэвтрэх</h1>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Нууц үг"
-            className={inputClass}
-          />
-          {error ? <p className="text-xs text-rose-400">{error}</p> : null}
-          <button className="w-full bg-indigo-600 hover:bg-indigo-500 rounded-xl py-2.5 text-sm font-semibold">
-            Нэвтрэх
-          </button>
-          <Link href="/" className="block text-center text-xs text-slate-400 hover:text-white">
-            Нүүр хуудас
-          </Link>
-        </form>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-slate-900 text-slate-100">
       <header className="border-b border-slate-800 sticky top-0 bg-slate-900/90 backdrop-blur z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="font-bold">StudySpots админ</h1>
-          <Link href="/" className="text-xs text-slate-400 hover:text-white">
-            Нүүр хуудас
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-xs text-slate-400 hover:text-white">
+              Нүүр хуудас
+            </Link>
+            <UserButton />
+          </div>
         </div>
       </header>
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">

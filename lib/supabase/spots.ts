@@ -71,18 +71,15 @@ export async function fetchSpots(): Promise<StudySpot[] | null> {
   return (data as SpotRow[]).map(mapSpot);
 }
 
-export async function insertSpot(spot: Omit<StudySpot, "id">): Promise<StudySpot | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase
-    .from("spots")
-    .insert(spotPayload(spot))
-    .select("*")
-    .single();
+// Хүлээгдэж буй газрыг зөвхөн админ уншина, тиймээс нэмсэн мөрийг буцааж уншихгүй.
+export async function insertSpot(spot: Omit<StudySpot, "id">): Promise<boolean> {
+  if (!supabase) return false;
+  const { error } = await supabase.from("spots").insert(spotPayload(spot));
   if (error) {
     console.error("Supabase insert spot:", error.message);
-    return null;
+    return false;
   }
-  return mapSpot(data as SpotRow);
+  return true;
 }
 
 export async function fetchReviews(spotId: number): Promise<Review[] | null> {
@@ -115,9 +112,10 @@ export async function insertReview(
   return data as Review;
 }
 
+// Доорх функцууд админд: RLS нь Clerk session token-ы metadata.role = "admin"-ийг шалгана.
 export async function fetchAllSpots(): Promise<StudySpot[] | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase.from("spots").select("*").order("id", { ascending: false });
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed.from("spots").select("*").order("id", { ascending: false });
   if (error) {
     console.error("Supabase all spots:", error.message);
     return null;
@@ -126,8 +124,8 @@ export async function fetchAllSpots(): Promise<StudySpot[] | null> {
 }
 
 export async function updateSpot(spot: StudySpot): Promise<StudySpot | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
     .from("spots")
     .update(spotPayload(spot))
     .eq("id", spot.id)
@@ -141,8 +139,8 @@ export async function updateSpot(spot: StudySpot): Promise<StudySpot | null> {
 }
 
 export async function deleteSpot(id: number): Promise<boolean> {
-  if (!supabase) return false;
-  const { error } = await supabase.from("spots").delete().eq("id", id);
+  if (!supabaseAuthed) return false;
+  const { error } = await supabaseAuthed.from("spots").delete().eq("id", id);
   if (error) {
     console.error("Supabase delete spot:", error.message);
     return false;
@@ -151,8 +149,8 @@ export async function deleteSpot(id: number): Promise<boolean> {
 }
 
 export async function fetchAllReviews(): Promise<Review[] | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
     .from("reviews")
     .select("*")
     .order("created_at", { ascending: false });
@@ -164,8 +162,8 @@ export async function fetchAllReviews(): Promise<Review[] | null> {
 }
 
 export async function updateReview(review: Review): Promise<Review | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
     .from("reviews")
     .update({
       comment: review.comment,
@@ -183,8 +181,8 @@ export async function updateReview(review: Review): Promise<Review | null> {
 }
 
 export async function deleteReview(id: number): Promise<boolean> {
-  if (!supabase) return false;
-  const { error } = await supabase.from("reviews").delete().eq("id", id);
+  if (!supabaseAuthed) return false;
+  const { error } = await supabaseAuthed.from("reviews").delete().eq("id", id);
   if (error) {
     console.error("Supabase delete review:", error.message);
     return false;

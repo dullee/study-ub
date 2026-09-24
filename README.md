@@ -24,7 +24,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
 ```
 
 4. Хүснэгтүүд `supabase/migrations/`-д байна. Supabase-ийн GitHub integration-ийг (Project Settings → Integrations → GitHub) энэ repo-той холбосон бол `main` руу push хийхэд автоматаар ажиллана. Холбоогүй бол файлуудыг дарааллаар нь SQL Editor дээр ажиллуулна. Шинэ хүснэгт нэмэхдээ шинэ migration файл үүсгэнэ, хуучныг нь засахгүй.
-5. Dev server-ээ дахин асаана. Шинэ газар `pending` статусаар орж, `/admin` дээр зөвшөөрсний дараа нүүрэнд гарна. Нууц үг: `NEXT_PUBLIC_ADMIN_PASSWORD` (анхдагч `admin`).
+5. Dev server-ээ дахин асаана. Шинэ газар `pending` статусаар орж, `/admin` дээр админ зөвшөөрсний дараа нүүрэнд гарна (доорх "Админ эрх"-ийг үз).
 
 ## Clerk (нэвтрэх, бүртгүүлэх)
 
@@ -63,6 +63,20 @@ CRON_SECRET=long_random_string
 
 5. `supabase/migrations/20260924000003_rsvp_emails.sql`-ийг ажиллуулна.
 6. Vercel-д deploy хийсний дараа `supabase/cron-reminders.sql` дахь `SITE_URL`, `YOUR_CRON_SECRET`-ийг солиод SQL Editor дээр ажиллуулна. Local дээр шалгах: `curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron/reminders`.
+
+## Админ эрх (Clerk)
+
+`/admin` хуудас болон газар зөвшөөрөх/засах/устгах, сэтгэгдэл засах/устгах нь Clerk хэрэглэгчийн `publicMetadata.role = "admin"`-ээр шалгагдана (сервер дээр болон Supabase RLS-д). Header дээр холбоос байхгүй — хаягаар нь орно.
+
+1. Clerk Dashboard → **Sessions → Customize session token** → байгаа claim-уудыг (ялангуяа `"role": "authenticated"`) устгалгүйгээр нэмнэ:
+
+```json
+"metadata": "{{user.public_metadata}}"
+```
+
+2. Clerk Dashboard → **Users** → өөрийгөө сонгох → **Metadata → Public** → `{ "role": "admin" }` → Save.
+3. Гараад дахин нэвтэрнэ (token шинэчлэгдэнэ).
+4. `supabase/migrations/20260924000004_admin_role.sql`-ийг ажиллуулна.
 
 ## Cloudinary (зураг)
 
