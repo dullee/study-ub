@@ -61,8 +61,6 @@ export function removeLocalReview(id: number) {
 
 const EVENTS_KEY = "studyspots_ub_events";
 const ATTENDEES_KEY = "studyspots_ub_event_attendees";
-const MY_RSVPS_KEY = "studyspots_ub_my_rsvps";
-const MY_NAME_KEY = "studyspots_ub_my_name";
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -95,21 +93,4 @@ export function removeLocalAttendee(id: number) {
     ATTENDEES_KEY,
     JSON.stringify(loadLocalAttendees().filter((item) => item.id !== id))
   );
-}
-
-// Нэвтрэлт байхгүй тул энэ хөтөч аль эвентэд "ирнэ" гэснийг event_id -> attendee_id хэлбэрээр санана.
-export function loadMyRsvps(): Record<string, number> {
-  return readJson<Record<string, number>>(MY_RSVPS_KEY, {});
-}
-
-export function saveMyRsvps(rsvps: Record<string, number>) {
-  localStorage.setItem(MY_RSVPS_KEY, JSON.stringify(rsvps));
-}
-
-export function loadMyName(): string {
-  return readJson<string>(MY_NAME_KEY, "");
-}
-
-export function saveMyName(name: string) {
-  localStorage.setItem(MY_NAME_KEY, JSON.stringify(name));
 }

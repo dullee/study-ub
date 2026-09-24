@@ -30,6 +30,8 @@ export interface Review {
   wifi_speed_test: string;
   rating: number;
   created_at: string;
+  user_id?: string | null;
+  author_name?: string | null;
 }
 
 export interface StudyEvent {
@@ -44,6 +46,7 @@ export interface StudyEvent {
   host_name: string;
   max_people: number | null;
   created_at: string;
+  user_id: string | null;
 }
 
 export interface EventAttendee {
@@ -51,6 +54,22 @@ export interface EventAttendee {
   event_id: number;
   name: string;
   created_at: string;
+  user_id: string | null;
+  reminder_sent_at?: string | null;
+}
+
+// Clerk хэрэглэгчийн харагдах нэр.
+export function displayName(user: {
+  fullName?: string | null;
+  username?: string | null;
+  primaryEmailAddress?: { emailAddress: string } | null;
+}) {
+  return (
+    user.fullName?.trim() ||
+    user.username ||
+    user.primaryEmailAddress?.emailAddress.split("@")[0] ||
+    "Хэрэглэгч"
+  );
 }
 
 export type TagType =

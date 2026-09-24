@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import { mnMN } from "@clerk/localizations";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ClerkSupabaseBridge from "@/components/ClerkSupabaseBridge";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,6 +14,20 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+// Сайтын slate/indigo өнгөтэй тааруулна.
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#4f46e5",
+    colorBackground: "#0f172a",
+    colorForeground: "#f1f5f9",
+    colorMutedForeground: "#94a3b8",
+    colorInput: "#1e293b",
+    colorInputForeground: "#ffffff",
+    colorNeutral: "#ffffff",
+    borderRadius: "0.75rem",
+  },
+};
 
 export const metadata: Metadata = {
   title: "StudySpots UB",
@@ -23,7 +40,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="mn"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-900">{children}</body>
+      <body className="min-h-full flex flex-col bg-slate-900">
+        <ClerkProvider localization={mnMN} appearance={clerkAppearance}>
+          <ClerkSupabaseBridge />
+          {children}
+        </ClerkProvider>
+      </body>
     </html>
   );
 }

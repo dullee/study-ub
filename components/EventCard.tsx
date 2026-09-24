@@ -1,60 +1,37 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { EventAttendee, googleMapsUrl, StudyEvent } from "@/types";
+import { formatEventTime } from "@/lib/format";
 
 interface EventCardProps {
   event: StudyEvent;
   attendees: EventAttendee[];
   isGoing: boolean;
+  isHost: boolean;
   isPast: boolean;
-  myName: string;
-  onJoin: (event: StudyEvent, name: string) => Promise<void> | void;
+  onJoin: (event: StudyEvent) => Promise<void> | void;
   onLeave: (event: StudyEvent) => Promise<void> | void;
-}
-
-const WEEKDAYS = ["Ням", "Дав", "Мяг", "Лха", "Пүр", "Баа", "Бям"];
-
-// Хөтчүүд mn-MN locale-ийг тогтвортой дэмждэггүй тул гараар форматлана.
-function formatEventTime(iso: string) {
-  const date = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getMonth() + 1}-р сарын ${date.getDate()} (${WEEKDAYS[date.getDay()]}) ${pad(
-    date.getHours()
-  )}:${pad(date.getMinutes())}`;
 }
 
 export default function EventCard({
   event,
   attendees,
   isGoing,
+  isHost,
   isPast,
-  myName,
   onJoin,
   onLeave,
 }: EventCardProps) {
-  const [askingName, setAskingName] = useState(false);
-  const [name, setName] = useState(myName);
   const [busy, setBusy] = useState(false);
 
   const isFull = event.max_people !== null && attendees.length >= event.max_people;
   const hasCoords = event.lat !== null && event.lng !== null;
 
-  const join = async (joinName: string) => {
+  const handleJoin = async () => {
     setBusy(true);
-    await onJoin(event, joinName.trim());
+    await onJoin(event);
     setBusy(false);
-    setAskingName(false);
-  };
-
-  const handleJoinClick = () => {
-    if (myName.trim()) join(myName);
-    else setAskingName(true);
-  };
-
-  const handleNameSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (name.trim()) join(name);
   };
 
   const handleLeave = async () => {
@@ -70,7 +47,14 @@ export default function EventCard({
       }`}
     >
       <div className="flex justify-between items-start gap-3">
-        <h3 className="font-bold text-white text-base">{event.title}</h3>
+        <h3 className="font-bold text-white text-base">
+          {event.title}
+          {isHost ? (
+            <span className="ml-2 align-middle text-[10px] font-semibold bg-indigo-600/30 text-indigo-200 px-1.5 py-0.5 rounded">
+              Таны эвент
+            </span>
+          ) : null}
+        </h3>
         <span className="shrink-0 text-[11px] font-semibold bg-slate-900/90 text-indigo-400 px-2.5 py-1 rounded-lg border border-slate-700">
           {formatEventTime(event.starts_at)}
         </span>
@@ -129,27 +113,9 @@ export default function EventCard({
           >
             ✓ Та ирнэ гэж бүртгүүлсэн · Болих
           </button>
-        ) : askingName ? (
-          <form onSubmit={handleNameSubmit} className="flex gap-2">
-            <input
-              autoFocus
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Таны нэр"
-              className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
-            />
-            <button
-              type="submit"
-              disabled={busy}
-              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl disabled:opacity-60"
-            >
-              Бүртгүүлэх
-            </button>
-          </form>
         ) : (
           <button
-            onClick={handleJoinClick}
+            onClick={handleJoin}
             disabled={busy || isFull}
             className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:shadow-none disabled:bg-slate-700"
           >

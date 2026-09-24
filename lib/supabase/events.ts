@@ -1,5 +1,5 @@
 import { EventAttendee, StudyEvent } from "@/types";
-import { supabase } from "@/lib/supabase/client";
+import { supabase, supabaseAuthed } from "@/lib/supabase/client";
 
 export async function fetchEvents(): Promise<StudyEvent[] | null> {
   if (!supabase) return null;
@@ -17,8 +17,8 @@ export async function fetchEvents(): Promise<StudyEvent[] | null> {
 export async function insertEvent(
   event: Omit<StudyEvent, "id" | "created_at">
 ): Promise<StudyEvent | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase.from("events").insert(event).select("*").single();
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed.from("events").insert(event).select("*").single();
   if (error) {
     console.error("Supabase insert event:", error.message);
     return null;
@@ -42,8 +42,8 @@ export async function fetchAttendees(): Promise<EventAttendee[] | null> {
 export async function insertAttendee(
   attendee: Omit<EventAttendee, "id" | "created_at">
 ): Promise<EventAttendee | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
     .from("event_attendees")
     .insert(attendee)
     .select("*")
@@ -56,8 +56,8 @@ export async function insertAttendee(
 }
 
 export async function deleteAttendee(id: number): Promise<boolean> {
-  if (!supabase) return false;
-  const { error } = await supabase.from("event_attendees").delete().eq("id", id);
+  if (!supabaseAuthed) return false;
+  const { error } = await supabaseAuthed.from("event_attendees").delete().eq("id", id);
   if (error) {
     console.error("Supabase delete attendee:", error.message);
     return false;

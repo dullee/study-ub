@@ -1,5 +1,5 @@
 import { Review, StudySpot } from "@/types";
-import { supabase } from "@/lib/supabase/client";
+import { supabase, supabaseAuthed } from "@/lib/supabase/client";
 
 type SpotRow = {
   id: number;
@@ -102,8 +102,8 @@ export async function fetchReviews(spotId: number): Promise<Review[] | null> {
 export async function insertReview(
   review: Omit<Review, "id" | "created_at">
 ): Promise<Review | null> {
-  if (!supabase) return null;
-  const { data, error } = await supabase
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
     .from("reviews")
     .insert(review)
     .select("*")

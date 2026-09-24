@@ -284,7 +284,10 @@ export default function AdminPage() {
             ) : (
               reviews.map((review) => (
                 <article key={review.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40 text-sm">
-                  <p className="text-xs text-indigo-300 mb-2">{spotName(review.spot_id)}</p>
+                  <p className="text-xs text-indigo-300 mb-2">
+                    {spotName(review.spot_id)}
+                    <span className="text-slate-400"> · {review.author_name ?? "Зочин"}</span>
+                  </p>
                   {editingReview?.id === review.id ? (
                     <form onSubmit={saveReview} className="space-y-2 text-xs">
                       <input className={inputClass} type="number" min={1} max={5} value={editingReview.rating} onChange={(e) => setEditingReview({ ...editingReview, rating: Number(e.target.value) })} />

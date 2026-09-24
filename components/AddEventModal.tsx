@@ -3,15 +3,25 @@
 import { FormEvent, useState } from "react";
 import { StudyEvent, StudySpot } from "@/types";
 
+export type EventDraft = Omit<StudyEvent, "id" | "created_at" | "host_name" | "user_id">;
+
 interface AddEventModalProps {
   isOpen: boolean;
   spots: StudySpot[];
-  defaultHostName: string;
+  hostName: string;
   onClose: () => void;
-  onAddEvent: (event: Omit<StudyEvent, "id" | "created_at">) => Promise<void> | void;
+  onAddEvent: (event: EventDraft) => Promise<boolean>;
 }
 
 const OTHER_PLACE = "other";
+
+function toLocalInput(ms: number) {
+  const date = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}`;
+}
 
 const inputClass =
   "w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500";
@@ -21,7 +31,6 @@ const emptyForm = {
   spotId: "",
   customPlace: "",
   startsAt: "",
-  hostName: null as string | null,
   maxPeople: "",
   description: "",
 };
@@ -29,24 +38,30 @@ const emptyForm = {
 export default function AddEventModal({
   isOpen,
   spots,
-  defaultHostName,
+  hostName,
   onClose,
   onAddEvent,
 }: AddEventModalProps) {
   const [formData, setFormData] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [minStart] = useState(() => toLocalInput(Date.now()));
 
   if (!isOpen) return null;
-
-  const hostName = formData.hostName ?? defaultHostName;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const spot = spots.find((item) => String(item.id) === formData.spotId);
     const placeName = spot ? spot.name : formData.customPlace.trim();
-    if (!placeName || !hostName.trim()) return;
+    if (!placeName) return;
+    const startsAt = new Date(formData.startsAt).getTime();
+    if (startsAt < Date.now()) {
+      setError("Эвентийн цаг өнгөрсөн байна.");
+      return;
+    }
     setSaving(true);
-    await onAddEvent({
+    setError("");
+    const ok = await onAddEvent({
       title: formData.title.trim(),
       description: formData.description.trim(),
       spot_id: spot?.id ?? null,
@@ -54,10 +69,13 @@ export default function AddEventModal({
       lat: spot?.lat ?? null,
       lng: spot?.lng ?? null,
       starts_at: new Date(formData.startsAt).toISOString(),
-      host_name: hostName.trim(),
       max_people: formData.maxPeople ? Number(formData.maxPeople) : null,
     });
     setSaving(false);
+    if (!ok) {
+      setError("Эвент хадгалагдсангүй. Дахин оролдоно уу.");
+      return;
+    }
     onClose();
     setFormData(emptyForm);
   };
@@ -121,6 +139,7 @@ export default function AddEventModal({
               <input
                 type="datetime-local"
                 required
+                min={minStart}
                 value={formData.startsAt}
                 onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
                 className={inputClass}
@@ -138,17 +157,9 @@ export default function AddEventModal({
               />
             </div>
           </div>
-          <div>
-            <label className="block text-slate-400 mb-1">Таны нэр</label>
-            <input
-              type="text"
-              required
-              value={hostName}
-              onChange={(e) => setFormData({ ...formData, hostName: e.target.value })}
-              placeholder="Ж: Болд"
-              className={inputClass}
-            />
-          </div>
+          <p className="text-slate-400">
+            🙋 Зохион байгуулагч: <span className="text-slate-200 font-semibold">{hostName}</span>
+          </p>
           <div>
             <label className="block text-slate-400 mb-1">Дэлгэрэнгүй</label>
             <textarea
@@ -159,6 +170,7 @@ export default function AddEventModal({
               className={inputClass}
             />
           </div>
+          {error ? <p className="text-rose-400">{error}</p> : null}
           <button
             type="submit"
             disabled={saving}

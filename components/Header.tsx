@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 
 interface HeaderProps {
@@ -48,6 +49,21 @@ export default function Header({ onAddClick, addLabel = "Шинэ газар н�
           >
             <span>➕</span> {addLabel}
           </button>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="text-slate-300 hover:text-white px-3 py-2 rounded-xl text-xs font-semibold border border-slate-700 hover:border-slate-500">
+                Нэвтрэх
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl text-xs font-semibold">
+                Бүртгүүлэх
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
         </div>
       </div>
       <nav className="max-w-7xl mx-auto px-4 flex gap-1">

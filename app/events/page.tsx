@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { EventAttendee, StudyEvent, StudySpot } from "@/types";
+import { useClerk, useUser } from "@clerk/nextjs";
+import { displayName, EventAttendee, StudyEvent, StudySpot } from "@/types";
 import { initialSpots } from "@/data/initialSpots";
 import Header from "@/components/Header";
 import EventCard from "@/components/EventCard";
-import AddEventModal from "@/components/AddEventModal";
+import AddEventModal, { EventDraft } from "@/components/AddEventModal";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchSpots } from "@/lib/supabase/spots";
 import {
@@ -19,13 +20,9 @@ import {
   loadLocalAttendees,
   loadLocalEvents,
   loadLocalSpots,
-  loadMyName,
-  loadMyRsvps,
   removeLocalAttendee,
   saveLocalAttendee,
   saveLocalEvent,
-  saveMyName,
-  saveMyRsvps,
 } from "@/lib/localStore";
 
 // Эхэлснээс хойш 3 цаг хүртэл идэвхтэй гэж үзнэ.
@@ -35,18 +32,17 @@ export default function EventsPage() {
   const [events, setEvents] = useState<StudyEvent[]>([]);
   const [attendees, setAttendees] = useState<EventAttendee[]>([]);
   const [spots, setSpots] = useState<StudySpot[]>(initialSpots);
-  const [myRsvps, setMyRsvps] = useState<Record<string, number>>({});
-  const [myName, setMyName] = useState("");
   const [usingRemote, setUsingRemote] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
+  const { user } = useUser();
+  const { openSignIn } = useClerk();
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      setMyRsvps(loadMyRsvps());
-      setMyName(loadMyName());
       setNow(Date.now());
       if (isSupabaseConfigured) {
         const [remoteEvents, remoteAttendees, remoteSpots] = await Promise.all([
@@ -88,21 +84,27 @@ export default function EventsPage() {
   const attendeesFor = (eventId: number) =>
     attendees.filter((attendee) => attendee.event_id === eventId);
 
-  const rememberName = (name: string) => {
-    setMyName(name);
-    saveMyName(name);
+  const myAttendance = (eventId: number) =>
+    user ? attendees.find((a) => a.event_id === eventId && a.user_id === user.id) : undefined;
+
+  // Имэйл нь бүртгэлийг хаахгүй: алдаа гарсан ч "Би ирнэ" хадгалагдсан хэвээр.
+  const sendRsvpEmail = async (eventId: number) => {
+    try {
+      const res = await fetch(`/api/events/${eventId}/rsvp`, { method: "POST" });
+      const body = await res.json();
+      if (body.sent) {
+        setNotice({ text: "📧 Эвентийн мэдээллийг имэйлээр илгээлээ. Эхлэхээс 1 цагийн өмнө сануулна." });
+      } else if (!res.ok) {
+        setNotice({ text: "Бүртгэгдсэн ч имэйл илгээж чадсангүй.", error: true });
+      }
+    } catch {
+      setNotice({ text: "Бүртгэгдсэн ч имэйл илгээж чадсангүй.", error: true });
+    }
   };
 
-  const rememberRsvp = (eventId: number, attendeeId: number | null) => {
-    const next = { ...loadMyRsvps() };
-    if (attendeeId === null) delete next[eventId];
-    else next[eventId] = attendeeId;
-    setMyRsvps(next);
-    saveMyRsvps(next);
-  };
-
-  const addAttendee = async (eventId: number, name: string) => {
-    const draft = { event_id: eventId, name };
+  const addAttendee = async (eventId: number) => {
+    if (!user) return null;
+    const draft = { event_id: eventId, name: displayName(user), user_id: user.id };
     let saved: EventAttendee | null = null;
     if (usingRemote) {
       saved = await insertAttendee(draft);
@@ -113,40 +115,57 @@ export default function EventsPage() {
     if (!saved) return null;
     const attendee = saved;
     setAttendees((prev) => [...prev, attendee]);
+    if (usingRemote) sendRsvpEmail(eventId);
     return attendee;
   };
 
-  const handleAddEvent = async (draft: Omit<StudyEvent, "id" | "created_at">) => {
-    let saved: StudyEvent | null = null;
-    if (usingRemote) {
-      saved = await insertEvent(draft);
-    } else {
-      saved = { ...draft, id: Date.now(), created_at: new Date().toISOString() };
-      saveLocalEvent(saved);
-    }
-    if (!saved) return;
-    const event = saved;
-    setEvents((prev) => [...prev, event]);
-    rememberName(event.host_name);
-    // Зохион байгуулагч өөрөө автоматаар ирэх хүмүүсийн жагсаалтад орно.
-    const host = await addAttendee(event.id, event.host_name);
-    if (host) rememberRsvp(event.id, host.id);
+  const handleAddClick = () => {
+    if (user) setIsModalOpen(true);
+    else openSignIn();
   };
 
-  const handleJoin = async (event: StudyEvent, name: string) => {
-    if (myRsvps[event.id]) return;
-    rememberName(name);
-    const attendee = await addAttendee(event.id, name);
-    if (attendee) rememberRsvp(event.id, attendee.id);
+  const handleAddEvent = async (draft: EventDraft) => {
+    if (!user) return false;
+    const full = { ...draft, host_name: displayName(user), user_id: user.id };
+    let saved: StudyEvent | null = null;
+    if (usingRemote) {
+      saved = await insertEvent(full);
+    } else {
+      saved = { ...full, id: Date.now(), created_at: new Date().toISOString() };
+      saveLocalEvent(saved);
+    }
+    if (!saved) return false;
+    const event = saved;
+    setEvents((prev) => [...prev, event]);
+    // Зохион байгуулагч өөрөө автоматаар ирэх хүмүүсийн жагсаалтад орно.
+    await addAttendee(event.id);
+    return true;
+  };
+
+  const handleJoin = async (event: StudyEvent) => {
+    if (!user) {
+      openSignIn();
+      return;
+    }
+    if (myAttendance(event.id)) return;
+    setNotice(null);
+    const attendee = await addAttendee(event.id);
+    if (!attendee) setNotice({ text: "Бүртгэл хадгалагдсангүй. Дахин оролдоно уу.", error: true });
   };
 
   const handleLeave = async (event: StudyEvent) => {
-    const attendeeId = myRsvps[event.id];
-    if (!attendeeId) return;
-    if (usingRemote) await deleteAttendee(attendeeId);
-    else removeLocalAttendee(attendeeId);
-    setAttendees((prev) => prev.filter((attendee) => attendee.id !== attendeeId));
-    rememberRsvp(event.id, null);
+    const attendance = myAttendance(event.id);
+    if (!attendance) return;
+    setNotice(null);
+    if (usingRemote) {
+      if (!(await deleteAttendee(attendance.id))) {
+        setNotice({ text: "Бүртгэл цуцлагдсангүй. Дахин оролдоно уу.", error: true });
+        return;
+      }
+    } else {
+      removeLocalAttendee(attendance.id);
+    }
+    setAttendees((prev) => prev.filter((attendee) => attendee.id !== attendance.id));
   };
 
   const renderGrid = (list: StudyEvent[], isPast: boolean) => (
@@ -156,9 +175,9 @@ export default function EventsPage() {
           key={event.id}
           event={event}
           attendees={attendeesFor(event.id)}
-          isGoing={Boolean(myRsvps[event.id])}
+          isGoing={Boolean(myAttendance(event.id))}
+          isHost={Boolean(user && event.user_id === user.id)}
           isPast={isPast}
-          myName={myName}
           onJoin={handleJoin}
           onLeave={handleLeave}
         />
@@ -168,8 +187,19 @@ export default function EventsPage() {
 
   return (
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
-      <Header onAddClick={() => setIsModalOpen(true)} addLabel="Эвент үүсгэх" />
+      <Header onAddClick={handleAddClick} addLabel="Эвент үүсгэх" />
       <main className="max-w-7xl mx-auto px-4 pt-6 space-y-8">
+        {notice ? (
+          <p
+            className={`text-sm rounded-xl px-4 py-3 border ${
+              notice.error
+                ? "text-rose-200 bg-rose-950/60 border-rose-800/50"
+                : "text-indigo-200 bg-indigo-950/60 border-indigo-800/50"
+            }`}
+          >
+            {notice.text}
+          </p>
+        ) : null}
         <section className="space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
             <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
@@ -185,7 +215,7 @@ export default function EventsPage() {
             <div className="text-center py-12 space-y-3">
               <p className="text-slate-500 text-sm">Одоогоор эвент алга. Хамт хичээллэх хүмүүсээ урь!</p>
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleAddClick}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold"
               >
                 ➕ Эвент үүсгэх
@@ -208,7 +238,7 @@ export default function EventsPage() {
       <AddEventModal
         isOpen={isModalOpen}
         spots={spots}
-        defaultHostName={myName}
+        hostName={user ? displayName(user) : ""}
         onClose={() => setIsModalOpen(false)}
         onAddEvent={handleAddEvent}
       />

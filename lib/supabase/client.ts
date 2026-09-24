@@ -7,6 +7,20 @@ const anonKey =
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
+// Унших болон админы үйлдлүүд — нэвтрэлт шаардахгүй.
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url as string, anonKey as string)
+  : null;
+
+type TokenGetter = () => Promise<string | null>;
+let getClerkToken: TokenGetter = async () => null;
+
+// ClerkSupabaseBridge нэвтэрсэн хэрэглэгчийн session token-ийг энд өгнө.
+export function setSupabaseTokenGetter(getter: TokenGetter) {
+  getClerkToken = getter;
+}
+
+// Эзэмшигчтэй мөр (сэтгэгдэл, эвент, бүртгэл) бичихэд Clerk token илгээж, RLS-ээр user_id-г шалгуулна.
+export const supabaseAuthed: SupabaseClient | null = isSupabaseConfigured
+  ? createClient(url as string, anonKey as string, { accessToken: () => getClerkToken() })
   : null;
