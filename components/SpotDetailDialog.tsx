@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ACCESSIBILITY,
   ACCESSIBILITY_GROUPS,
@@ -40,6 +40,33 @@ export default function SpotDetailDialog({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewsOpen, setReviewsOpen] = useState(false);
+
+  // Доош/дээш үсрэх товч: гүйлгэх боломжтой үед л харагдана; доод хэсэгт хүрвэл дээш заана.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scroll, setScroll] = useState({ scrollable: false, atBottom: false });
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const update = () =>
+      setScroll({
+        scrollable: el.scrollHeight > el.clientHeight + 8,
+        atBottom: el.scrollTop + el.clientHeight >= el.scrollHeight - 40,
+      });
+    // Зураг, сэтгэгдэл ачаалагдахад өндөр өөрчлөгдөнө.
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    Array.from(el.children).forEach((child) => observer.observe(child));
+    el.addEventListener("scroll", update, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("scroll", update);
+    };
+  }, []);
+  const jump = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: scroll.atBottom ? 0 : el.scrollHeight, behavior: "smooth" });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -163,6 +190,7 @@ export default function SpotDetailDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="spot-dialog-title"
+        ref={scrollRef}
         className="relative bg-slate-900 sm:border border-slate-800 w-full max-w-4xl rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92vh] overflow-y-auto"
       >
         <div className="sticky top-0 z-10 h-0 flex justify-end">
@@ -176,55 +204,71 @@ export default function SpotDetailDialog({
           </button>
         </div>
 
-        <div className="relative h-56 sm:h-72 w-full bg-slate-950">
-          <img src={spot.image || PLACEHOLDER_IMAGE} alt={spot.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-            {category ? (
-              <span className="inline-block mb-2 text-xs font-semibold bg-slate-900/80 backdrop-blur text-indigo-300 border border-slate-700 px-2.5 py-1 rounded-lg">
-                {category.icon} {category.label[locale]}
-              </span>
+        {/* Зураг дээд хэсгийн ард (шошгын бүлгүүд хүртэл): нэр, тайлбар, төлөв, мэдээллийн хайрцгууд дээр нь. */}
+        <div className="relative isolate">
+          <img
+            src={spot.image || PLACEHOLDER_IMAGE}
+            alt={spot.name}
+            className="absolute inset-0 -z-10 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/0 via-slate-950/70 to-slate-900" />
+          <div className="px-5 sm:px-6 pt-32 sm:pt-44 pb-6 space-y-4">
+            <div>
+              {category ? (
+                <span className="inline-block mb-2 text-xs font-semibold bg-slate-900/80 backdrop-blur text-indigo-300 border border-slate-700 px-2.5 py-1 rounded-lg">
+                  {category.icon} {category.label[locale]}
+                </span>
+              ) : null}
+              <h2 id="spot-dialog-title" className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">
+                {spot.name}
+              </h2>
+              <div className="text-sm text-slate-200 mt-1 flex items-center gap-2 min-h-5 drop-shadow">
+                {loading ? (
+                  <span className="h-3.5 w-32 rounded bg-slate-700/80 animate-pulse" aria-hidden="true" />
+                ) : reviews.length > 0 ? (
+                  <>
+                    <Stars value={average} />
+                    <span>
+                      {average.toFixed(1)} · {t.reviewCount(reviews.length)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-slate-300">{t.noRatingsYet}</span>
+                )}
+              </div>
+            </div>
+
+            {spot.description ? (
+              <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line drop-shadow">{spot.description}</p>
             ) : null}
-            <h2 id="spot-dialog-title" className="text-2xl sm:text-3xl font-bold text-white">
-              {spot.name}
-            </h2>
-            <div className="text-sm text-slate-300 mt-1 flex items-center gap-2 min-h-5">
-              {loading ? (
-                <span className="h-3.5 w-32 rounded bg-slate-700/80 animate-pulse" aria-hidden="true" />
-              ) : reviews.length > 0 ? (
-                <>
-                  <Stars value={average} />
-                  <span>
-                    {average.toFixed(1)} · {t.reviewCount(reviews.length)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-slate-400">{t.noRatingsYet}</span>
-              )}
+            {status ? (
+              <p className={`inline-block text-sm font-semibold bg-slate-950/60 backdrop-blur px-2.5 py-1 rounded-lg ${STATUS_TONE[status.tone]}`}>
+                ● {status.detail}
+              </p>
+            ) : null}
+
+            {/* Утсан дээр: байршил бүтэн өргөн, цаг / Wi-Fi / чимээгүй / розетка 2×2. */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-2.5">
+              {facts.map((fact, index) => (
+                <div
+                  key={fact.label}
+                  className={`bg-slate-950/55 backdrop-blur-md border border-white/10 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3 min-w-0 ${
+                    index === 0 ? "col-span-2 lg:col-span-1" : ""
+                  }`}
+                >
+                  <p className="text-[11px] text-slate-300">
+                    {fact.icon} {fact.label}
+                  </p>
+                  <p className="text-sm text-white font-medium mt-0.5">{fact.value}</p>
+                  {fact.note ? <p className="text-[11px] text-slate-400 mt-0.5">{fact.note}</p> : null}
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="p-5 sm:p-6 space-y-6">
-          {spot.description ? (
-            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{spot.description}</p>
-          ) : null}
-          {status ? (
-            <p className={`text-sm font-semibold ${STATUS_TONE[status.tone]}`}>● {status.detail}</p>
-          ) : null}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {facts.map((fact) => (
-              <div key={fact.label} className="bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">
-                <p className="text-[11px] text-slate-400">
-                  {fact.icon} {fact.label}
-                </p>
-                <p className="text-sm text-white font-medium mt-0.5">{fact.value}</p>
-                {fact.note ? <p className="text-[11px] text-slate-500 mt-0.5">{fact.note}</p> : null}
-              </div>
-            ))}
-          </div>
-
+        {/* Гүйлгэх боломжтой үед доор зай үлдээнэ — үсрэх товч сүүлийн товчнуудыг халхлахгүй. */}
+        <div className={`px-5 sm:px-6 pt-1 space-y-6 ${scroll.scrollable ? "pb-24" : "pb-5 sm:pb-6"}`}>
           {featureGroups.length > 0 || accessibility.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
               {featureGroups.map((group) => (
@@ -296,6 +340,20 @@ export default function SpotDetailDialog({
             </a>
           </div>
         </div>
+
+        {scroll.scrollable ? (
+          <div className="sticky bottom-0 z-10 h-0 flex justify-end pointer-events-none">
+            <button
+              type="button"
+              onClick={jump}
+              aria-label={scroll.atBottom ? t.scrollToTop : t.scrollToBottom}
+              title={scroll.atBottom ? t.scrollToTop : t.scrollToBottom}
+              className="pointer-events-auto -translate-y-[calc(100%+1.5rem)] sm:-translate-y-[calc(100%+2rem)] mr-4 sm:mr-6 h-11 w-11 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-lg shadow-lg shadow-indigo-950/60 border border-indigo-400/40 transition-colors"
+            >
+              <span aria-hidden="true">{scroll.atBottom ? "↑" : "↓"}</span>
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {reviewsOpen ? (

@@ -228,10 +228,9 @@ export default function Home() {
               onToggleFullscreen={() => setMapFullscreen((value) => !value)}
             />
           </div>
-          <section className="order-2 lg:order-1 space-y-2">
+          <section aria-label={t.placesHeading} className="order-2 lg:order-1 space-y-2">
             <div className="flex justify-between items-center gap-2 border-b border-slate-800 pb-2">
-              <h2 className="text-sm font-semibold text-slate-300 truncate min-w-0">{t.placesHeading}</h2>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center justify-between gap-1.5 w-full">
                 <span className="text-xs whitespace-nowrap text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2 py-1 rounded-md">
                   {t.placesCount(filteredSpots.length)}
                 </span>

@@ -125,6 +125,8 @@ const mn = {
   writeReviewLink: "Сэтгэгдэл бичих →",
   noReviewsYet: "Одоогоор сэтгэгдэл алга. Анхны сэтгэгдлийг та үлдээгээрэй!",
   showOnMapButton: "Карт дээр 🎯",
+  scrollToBottom: "Доош очих",
+  scrollToTop: "Дээш буцах",
 
   // Сэтгэгдэл
   reviewSaveFailed: "Сэтгэгдэл хадгалагдсангүй. Дахин оролдоно уу.",
@@ -403,6 +405,8 @@ const en: Dictionary = {
   writeReviewLink: "Write a review →",
   noReviewsYet: "No reviews yet. Be the first to leave one!",
   showOnMapButton: "Show on map 🎯",
+  scrollToBottom: "Go to bottom",
+  scrollToTop: "Back to top",
 
   reviewSaveFailed: "Couldn't save your review. Please try again.",
   closeReviews: "Close reviews",
