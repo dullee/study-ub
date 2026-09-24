@@ -1,4 +1,5 @@
 -- Supabase GitHub integration main руу push хийхэд автоматаар ажиллуулна.
+-- SQL Editor дээр гараар ажиллуулсан ч дахин ажиллахад алдаа гарахгүй.
 
 create table if not exists public.spots (
   id bigint generated always as identity primary key,
@@ -53,44 +54,58 @@ alter table public.reviews enable row level security;
 alter table public.events enable row level security;
 alter table public.event_attendees enable row level security;
 
+drop policy if exists "spots_public_read" on public.spots;
 create policy "spots_public_read" on public.spots
   for select using (true);
 
+drop policy if exists "spots_public_insert" on public.spots;
 create policy "spots_public_insert" on public.spots
   for insert with check (true);
 
+drop policy if exists "reviews_public_read" on public.reviews;
 create policy "reviews_public_read" on public.reviews
   for select using (true);
 
+drop policy if exists "reviews_public_insert" on public.reviews;
 create policy "reviews_public_insert" on public.reviews
   for insert with check (true);
 
+drop policy if exists "spots_public_update" on public.spots;
 create policy "spots_public_update" on public.spots
   for update using (true) with check (true);
 
+drop policy if exists "spots_public_delete" on public.spots;
 create policy "spots_public_delete" on public.spots
   for delete using (true);
 
+drop policy if exists "reviews_public_update" on public.reviews;
 create policy "reviews_public_update" on public.reviews
   for update using (true) with check (true);
 
+drop policy if exists "reviews_public_delete" on public.reviews;
 create policy "reviews_public_delete" on public.reviews
   for delete using (true);
 
+drop policy if exists "events_public_read" on public.events;
 create policy "events_public_read" on public.events
   for select using (true);
 
+drop policy if exists "events_public_insert" on public.events;
 create policy "events_public_insert" on public.events
   for insert with check (true);
 
+drop policy if exists "events_public_delete" on public.events;
 create policy "events_public_delete" on public.events
   for delete using (true);
 
+drop policy if exists "event_attendees_public_read" on public.event_attendees;
 create policy "event_attendees_public_read" on public.event_attendees
   for select using (true);
 
+drop policy if exists "event_attendees_public_insert" on public.event_attendees;
 create policy "event_attendees_public_insert" on public.event_attendees
   for insert with check (true);
 
+drop policy if exists "event_attendees_public_delete" on public.event_attendees;
 create policy "event_attendees_public_delete" on public.event_attendees
   for delete using (true);

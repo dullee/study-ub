@@ -1,7 +1,7 @@
--- data/initialSpots.ts-ийн 6 газрыг хүснэгтэд нэмнэ.
+-- data/initialSpots.ts-ийн 6 газрыг хүснэгтэд нэмнэ. Хүснэгтэд газар байвал юу ч хийхгүй.
 
 insert into public.spots (name, location, hours, lat, lng, tags, wifi_speed, quiet_score, socket_score, is_24h, image, status)
-values
+select * from (values
   ('Их Нацагдоржийн Номын Сан', 'Улаанбаатар, Сүхбаатар дүүрэг', '09:00 - 20:00', 47.917, 106.91,
    array['Маш чимээгүй', 'Розетка ихтэй', 'Номын сан'], '40 Mbps', '4.8/5', 'Ихтэй', false,
    'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop', 'approved'),
@@ -19,4 +19,6 @@ values
    'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&auto=format&fit=crop', 'approved'),
   ('ШУТИС-ийн Номын Сан', 'Бага тойруу, ШУТИС', '09:00 - 20:00', 47.9148, 106.9056,
    array['Номын сан', 'Розетка ихтэй', 'Wi-Fi хурдан'], '60 Mbps', '4.2/5', 'Ихтэй', false,
-   'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&auto=format&fit=crop', 'approved');
+   'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600&auto=format&fit=crop', 'approved')
+) as seed
+where not exists (select 1 from public.spots);
