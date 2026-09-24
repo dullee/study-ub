@@ -16,6 +16,9 @@ interface MapProps {
   // Хэрэглэгчийн байршил ба зайн шүүлтүүр (км) — тэмдэг, радиусын тойрог зурна.
   userCoords: LatLng | null;
   radiusKm: number | null;
+  // Бүтэн дэлгэц — байрлалыг page.tsx удирдана (header-ийн дээр гарахын тулд).
+  fullscreen: boolean;
+  onToggleFullscreen: () => void;
 }
 
 function MapController({ focusCoords }: { focusCoords: [number, number] | null }) {
@@ -43,6 +46,16 @@ function UserLocationController({ userCoords, radiusKm }: { userCoords: LatLng |
   return null;
 }
 
+// Хэмжээ өөрчлөгдөхөд Leaflet хавтангаа дахин тооцоолно — эс бөгөөс саарал хэсэг үлдэнэ.
+function ResizeController({ fullscreen }: { fullscreen: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => map.invalidateSize());
+    return () => cancelAnimationFrame(frame);
+  }, [fullscreen, map]);
+  return null;
+}
+
 const ICON_OPTIONS: L.IconOptions = {
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -51,13 +64,53 @@ const ICON_OPTIONS: L.IconOptions = {
   iconAnchor: [12, 41],
 };
 
-export default function Map({ spots, dimmedIds, focusCoords, onOpenDetails, userCoords, radiusKm }: MapProps) {
+export default function Map({
+  spots,
+  dimmedIds,
+  focusCoords,
+  onOpenDetails,
+  userCoords,
+  radiusKm,
+  fullscreen,
+  onToggleFullscreen,
+}: MapProps) {
   const customIcon = useMemo(() => L.icon(ICON_OPTIONS), []);
   const dimmedIcon = useMemo(() => L.icon({ ...ICON_OPTIONS, className: "grayscale opacity-50" }), []);
 
   return (
-    <div className="h-full w-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative z-0">
+    <div
+      className={`h-full w-full overflow-hidden shadow-2xl relative z-0 ${
+        fullscreen ? "" : "rounded-2xl border border-slate-800"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onToggleFullscreen}
+        aria-pressed={fullscreen}
+        aria-label={fullscreen ? "Бүтэн дэлгэцээс гарах" : "Газрын зургийг бүтэн дэлгэцээр харах"}
+        title={fullscreen ? "Бүтэн дэлгэцээс гарах (Esc)" : "Бүтэн дэлгэц"}
+        className="absolute top-3 right-3 z-[1000] h-10 w-10 flex items-center justify-center rounded-lg bg-white text-slate-800 shadow-md border border-black/20 hover:bg-slate-100"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {fullscreen ? (
+            <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+          ) : (
+            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+          )}
+        </svg>
+      </button>
       <MapContainer center={[47.9188, 106.9176]} zoom={13} className="h-full w-full">
+        <ResizeController fullscreen={fullscreen} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

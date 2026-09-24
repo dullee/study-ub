@@ -158,6 +158,24 @@ export default function Home() {
 
   // Том дэлгэцэнд газрын зураг наалдсан тул харагдаж байгаа — зөвхөн утсан дээр түүн рүү гүйлгэнэ.
   const mapWrapperRef = useRef<HTMLDivElement>(null);
+
+  // Газрын зургийг бүтэн дэлгэцээр: ард талын хуудас гүйлгэгдэхгүй, Esc дарахад гарна
+  // (газрын цонх нээлттэй бол Esc эхлээд цонхыг хаана).
+  const [mapFullscreen, setMapFullscreen] = useState(false);
+  useEffect(() => {
+    if (!mapFullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !detailSpot) setMapFullscreen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mapFullscreen, detailSpot]);
+
   const handleFocus = (lat: number, lng: number) => {
     setFocusCoords([lat, lng]);
     mapWrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -188,7 +206,11 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_1fr] gap-3 lg:gap-0 items-start">
           <div
             ref={mapWrapperRef}
-            className="order-1 lg:order-2 h-[42dvh] min-h-[240px] max-h-[380px] lg:max-h-none lg:min-h-0 lg:sticky lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
+            className={
+              mapFullscreen
+                ? "fixed inset-0 z-[1100] h-[100dvh] w-full"
+                : "order-1 lg:order-2 h-[42dvh] min-h-[240px] max-h-[380px] lg:max-h-none lg:min-h-0 lg:sticky lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
+            }
           >
             <Map
               spots={matchingSpots}
@@ -197,6 +219,8 @@ export default function Home() {
               onOpenDetails={setDetailSpot}
               userCoords={userCoords}
               radiusKm={maxDistanceKm}
+              fullscreen={mapFullscreen}
+              onToggleFullscreen={() => setMapFullscreen((value) => !value)}
             />
           </div>
           <section className="order-2 lg:order-1 space-y-2">
