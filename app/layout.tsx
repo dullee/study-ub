@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClerkSupabaseBridge from "@/components/ClerkSupabaseBridge";
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { Toaster } from "sonner";
 import { dictionaries } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 
@@ -53,6 +54,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <LanguageProvider initialLocale={locale}>
             <ClerkSupabaseBridge />
             {children}
+            {/* shadcn/sonner маягийн мэдэгдэл: хэдэн секундын дараа өөрөө алга болно. */}
+            <Toaster theme="dark" position="bottom-right" richColors closeButton />
           </LanguageProvider>
         </ClerkProvider>
       </body>

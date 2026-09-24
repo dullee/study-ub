@@ -7,11 +7,24 @@ interface DropdownProps {
   // Товч идэвхтэй (ж: шүүлтүүр сонгосон) үед өнгөөр ялгана.
   active?: boolean;
   align?: "left" | "right";
-  children: ReactNode;
+  // Функц өгвөл цэсний зүйл сонгосны дараа хаах close()-ийг дамжуулна.
+  children: ReactNode | ((close: () => void) => ReactNode);
+  buttonClassName?: string;
+  ariaLabel?: string;
+  // Нягт товчинд (ж: header-ийн ➕) доош заасан сумыг нуух.
+  hideCaret?: boolean;
 }
 
 // Товч дарахад доош нээгддэг цэс. Гадна дарах эсвэл Esc дарахад хаагдана.
-export default function Dropdown({ label, active = false, align = "left", children }: DropdownProps) {
+export default function Dropdown({
+  label,
+  active = false,
+  align = "left",
+  children,
+  buttonClassName,
+  ariaLabel,
+  hideCaret = false,
+}: DropdownProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -43,17 +56,23 @@ export default function Dropdown({ label, active = false, align = "left", childr
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
+        aria-label={ariaLabel}
         onClick={() => setOpen((value) => !value)}
-        className={`h-10 px-3 rounded-xl text-xs font-semibold border flex items-center gap-1.5 whitespace-nowrap transition-colors ${
-          active || open
-            ? "bg-indigo-600 border-indigo-500 text-white"
-            : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
-        }`}
+        className={
+          buttonClassName ??
+          `h-10 px-3 rounded-xl text-xs font-semibold border flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+            active || open
+              ? "bg-indigo-600 border-indigo-500 text-white"
+              : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
+          }`
+        }
       >
         {label}
-        <span aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`}>
-          ▾
-        </span>
+        {hideCaret ? null : (
+          <span aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`}>
+            ▾
+          </span>
+        )}
       </button>
       {open ? (
         <div
@@ -62,7 +81,7 @@ export default function Dropdown({ label, active = false, align = "left", childr
             align === "right" ? "sm:right-0" : "sm:left-0"
           }`}
         >
-          {children}
+          {typeof children === "function" ? children(() => setOpen(false)) : children}
         </div>
       ) : null}
     </div>

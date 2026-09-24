@@ -22,6 +22,9 @@ export interface StudySpot {
   maps_url?: string;
   amenities?: string[];
   category?: SpotCategory;
+  // Илгээсэн хэрэглэгчийн Clerk id (нэвтрээгүй бол хоосон) ба илгээсэн цаг.
+  user_id?: string | null;
+  created_at?: string;
   description?: string;
   accessibility?: string[];
 }

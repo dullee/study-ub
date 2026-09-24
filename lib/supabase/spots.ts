@@ -21,6 +21,8 @@ type SpotRow = {
   category: StudySpot["category"] | null;
   description: string | null;
   accessibility: string[] | null;
+  user_id: string | null;
+  created_at: string | null;
 };
 
 function mapSpot(row: SpotRow): StudySpot {
@@ -43,6 +45,8 @@ function mapSpot(row: SpotRow): StudySpot {
     category: row.category ?? undefined,
     description: row.description ?? undefined,
     accessibility: row.accessibility ?? [],
+    user_id: row.user_id ?? null,
+    created_at: row.created_at ?? undefined,
   };
 }
 
@@ -83,9 +87,11 @@ export async function fetchSpots(): Promise<StudySpot[] | null> {
 }
 
 // Хүлээгдэж буй газрыг зөвхөн админ уншина, тиймээс нэмсэн мөрийг буцааж уншихгүй.
+// Нэвтэрсэн бол Clerk token-оор илгээнэ — user_id автоматаар бөглөгдөж, хэрэглэгч өөрийн хүлээгдэж буйг харна.
 export async function insertSpot(spot: Omit<StudySpot, "id">): Promise<boolean> {
-  if (!supabase) return false;
-  const { error } = await supabase.from("spots").insert(spotPayload(spot));
+  const client = supabaseAuthed ?? supabase;
+  if (!client) return false;
+  const { error } = await client.from("spots").insert(spotPayload(spot));
   if (error) {
     console.error("Supabase insert spot:", error.message);
     return false;
@@ -214,4 +220,20 @@ export async function deleteReview(id: number): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+// Хэрэглэгчийн илгээсэн, хараахан нийтлэгдээгүй газрууд (хүлээгдэж буй ба татгалзсан). RLS: зөвхөн өөрийнх.
+export async function fetchMySubmissions(userId: string): Promise<StudySpot[] | null> {
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
+    .from("spots")
+    .select("*")
+    .eq("user_id", userId)
+    .in("status", ["pending", "rejected"])
+    .order("id", { ascending: false });
+  if (error) {
+    console.error("Supabase my submissions:", error.message);
+    return null;
+  }
+  return (data as SpotRow[]).map(mapSpot);
 }

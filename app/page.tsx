@@ -9,8 +9,11 @@ import FilterSection from "@/components/FilterSection";
 import AddSpotModal from "@/components/AddSpotModal";
 import Header from "@/components/Header";
 import SpotDetailDialog from "@/components/SpotDetailDialog";
+import { useUser } from "@clerk/nextjs";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchReviewScores, fetchSpots, insertSpot } from "@/lib/supabase/spots";
+import { notifySubmissionsChanged } from "@/lib/useMySubmissions";
+import { toast } from "sonner";
 import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { sortByActiveTags } from "@/lib/spotSort";
@@ -62,7 +65,10 @@ export default function Home() {
     [spots, reviewScores]
   );
   const [usingRemote, setUsingRemote] = useState(false);
-  const [notice, setNotice] = useState("");
+
+  // Орон нутгийн горимд илгээсэн газрыг хэрэглэгчтэй холбоно (header-ийн "Миний илгээсэн").
+  const { user } = useUser();
+  const userId = user?.id ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -149,13 +155,15 @@ export default function Home() {
     if (usingRemote) {
       const saved = await insertSpot(pending);
       if (saved) {
-        setNotice(t.spotSubmitted);
+        toast.success(t.spotSubmitted);
+        notifySubmissionsChanged();
         return;
       }
     }
-    const newSpot: StudySpot = { ...pending, id: Date.now() };
+    const newSpot: StudySpot = { ...pending, id: Date.now(), user_id: userId, created_at: new Date().toISOString() };
     saveLocalSpots([newSpot, ...loadLocalSpots()]);
-    setNotice(t.spotSubmitted);
+    toast.success(t.spotSubmitted);
+    notifySubmissionsChanged();
   };
 
   // Том дэлгэцэнд газрын зураг наалдсан тул харагдаж байгаа — зөвхөн утсан дээр түүн рүү гүйлгэнэ.
@@ -187,11 +195,6 @@ export default function Home() {
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
       <Header onAddClick={() => setIsModalOpen(true)} wide={wide} />
       <main className={`${wide ? "max-w-none" : "max-w-7xl"} mx-auto px-4 pt-2 sm:pt-6 space-y-3 sm:space-y-6`}>
-        {notice ? (
-          <p className="text-sm text-indigo-200 bg-indigo-950/60 border border-indigo-800/50 rounded-xl px-4 py-3">
-            {notice}
-          </p>
-        ) : null}
         <FilterSection
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

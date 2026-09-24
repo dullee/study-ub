@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, ReactNode, useEffect, useState } from "react";
 import { UserButton, useAuth } from "@clerk/nextjs";
 import {
   ACCESSIBILITY,
@@ -31,6 +31,7 @@ import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/clou
 import OptionPicker from "@/components/OptionPicker";
 import { useI18n } from "@/components/LanguageProvider";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useConfirm } from "@/components/ConfirmDialog";
 import ScoreFields from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
 import {
@@ -60,6 +61,16 @@ const inputClass =
 
 type Tab = "pending" | "places" | "comments" | "events";
 
+// Товчнуудын өнгө: зөвшөөрөх — ногоон, татгалзах — улаан, устгах — улаан хүрээтэй (бусдаас хол, баруун талд).
+const btn =
+  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-60";
+const btnNeutral = `${btn} bg-slate-700 hover:bg-slate-600 text-slate-100`;
+const btnApprove = `${btn} bg-emerald-600 hover:bg-emerald-500 text-white`;
+const btnReject = `${btn} bg-rose-600 hover:bg-rose-500 text-white`;
+const btnDelete = `${btn} border border-rose-700/70 text-rose-300 hover:bg-rose-950/70 hover:text-rose-200`;
+const cardClass = "rounded-2xl border border-slate-800 bg-slate-800/40 overflow-hidden";
+const actionBar = "flex flex-wrap items-center gap-2 px-4 py-3 border-t border-slate-800 bg-slate-900/40";
+
 // app/admin/page.tsx сервер дээр Clerk-ийн админ эрхийг шалгасны дараа л харагдана.
 export default function AdminPanel() {
   const { isLoaded } = useAuth();
@@ -76,6 +87,7 @@ export default function AdminPanel() {
   const [eventError, setEventError] = useState("");
   // "Өнгөрсөн" тэмдэглэгээнд — панел нээгдсэн мөчийн цаг.
   const [nowMs] = useState(() => Date.now());
+  const [confirm, confirmDialog] = useConfirm();
 
   useEffect(() => {
     // Clerk ачаалагдаж token бэлэн болсны дараа л уншина — эс бөгөөс хүлээгдэж буй газрууд харагдахгүй.
@@ -124,7 +136,15 @@ export default function AdminPanel() {
     saveLocalSpots(next);
   };
 
-  const acceptSpot = (spot: StudySpot) => {
+  const acceptSpot = async (spot: StudySpot) => {
+    const ok = await confirm({
+      title: t.approveSpotTitle,
+      message: t.confirmApproveSpot(spot.name),
+      confirmLabel: t.approve,
+      cancelLabel: t.cancel,
+      tone: "approve",
+    });
+    if (!ok) return;
     const updated = { ...spot, status: "approved" as const };
     persistSpots(
       spots.map((item) => (item.id === spot.id ? updated : item)),
@@ -132,7 +152,14 @@ export default function AdminPanel() {
     );
   };
 
-  const rejectSpot = (spot: StudySpot) => {
+  const rejectSpot = async (spot: StudySpot) => {
+    const ok = await confirm({
+      title: t.rejectSpotTitle,
+      message: t.confirmRejectSpot(spot.name),
+      confirmLabel: t.reject,
+      cancelLabel: t.cancel,
+    });
+    if (!ok) return;
     const updated = { ...spot, status: "rejected" as const };
     persistSpots(
       spots.map((item) => (item.id === spot.id ? updated : item)),
@@ -140,7 +167,24 @@ export default function AdminPanel() {
     );
   };
 
-  const removeSpot = (id: number) => {
+  // Татгалзсан газрыг дахин хянах жагсаалтад буцаана — буцаах боломжтой тул баталгаажуулахгүй.
+  const returnToReview = (spot: StudySpot) => {
+    const updated = { ...spot, status: "pending" as const };
+    persistSpots(
+      spots.map((item) => (item.id === spot.id ? updated : item)),
+      updated
+    );
+  };
+
+  const removeSpot = async (spot: StudySpot) => {
+    const ok = await confirm({
+      title: t.deleteSpotTitle,
+      message: t.confirmDeleteSpot(spot.name),
+      confirmLabel: t.delete,
+      cancelLabel: t.cancel,
+    });
+    if (!ok) return;
+    const id = spot.id;
     persistSpots(
       spots.filter((item) => item.id !== id),
       undefined,
@@ -180,7 +224,15 @@ export default function AdminPanel() {
     setEditingReview(null);
   };
 
-  const removeReview = async (id: number) => {
+  const removeReview = async (review: Review) => {
+    const ok = await confirm({
+      title: t.deleteReviewTitle,
+      message: t.confirmDeleteReview(review.author_name ?? t.guest),
+      confirmLabel: t.delete,
+      cancelLabel: t.cancel,
+    });
+    if (!ok) return;
+    const id = review.id;
     if (remote) await deleteReview(id);
     else removeLocalReview(id);
     setReviews(reviews.filter((item) => item.id !== id));
@@ -205,7 +257,13 @@ export default function AdminPanel() {
 
   // Эвент устгахад бүртгэл, групп чатын холбоос ч устана — тиймээс баталгаажуулна.
   const removeEvent = async (event: StudyEvent) => {
-    if (!window.confirm(t.confirmDeleteEvent(event.title))) return;
+    const ok = await confirm({
+      title: t.deleteEventTitle,
+      message: t.confirmDeleteEvent(event.title),
+      confirmLabel: t.delete,
+      cancelLabel: t.cancel,
+    });
+    if (!ok) return;
     setEventError("");
     if (remote) {
       if (!(await deleteEvent(event.id))) {
@@ -220,9 +278,21 @@ export default function AdminPanel() {
   };
 
   const spotName = (id: number) => spots.find((spot) => spot.id === id)?.name ?? `#${id}`;
+  const editingSpot = editingSpotId === null ? null : spots.find((spot) => spot.id === editingSpotId) ?? null;
+  const editingEvent = editingEventId === null ? null : events.find((event) => event.id === editingEventId) ?? null;
   // Шинэ нь эхэнд — удахгүй болох эвентүүд дээд талд.
   const sortedEvents = [...events].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
   const pending = spots.filter((spot) => spot.status === "pending");
+
+  // "Газрууд" табад зөвхөн зөвшөөрөгдсөн; татгалзсан нь "Хүлээгдэж буй" табын нуусан жагсаалтад.
+  const published = spots.filter((spot) => spot.status !== "pending" && spot.status !== "rejected");
+  const rejected = spots.filter((spot) => spot.status === "rejected");
+  const tabs = [
+    ["pending", t.tabPending, pending.length],
+    ["places", t.tabPlaces, published.length],
+    ["comments", t.tabReviews, reviews.length],
+    ["events", t.tabEvents, events.length],
+  ] as const;
 
   return (
     <main className="min-h-screen bg-slate-900 text-slate-100">
@@ -238,95 +308,143 @@ export default function AdminPanel() {
           </div>
         </div>
       </header>
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ["pending", t.tabPending(pending.length)],
-              ["places", t.tabPlaces],
-              ["comments", t.tabReviews],
-              ["events", t.tabEvents],
-            ] as const
-          ).map(([id, label]) => (
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        <nav className="flex flex-wrap gap-1 p-1 rounded-xl bg-slate-800/60 border border-slate-800 w-fit max-w-full">
+          {tabs.map(([id, label, count]) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                tab === id ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
+              aria-pressed={tab === id}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                tab === id ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-white"
               }`}
             >
               {label}
+              <span
+                className={`min-w-5 px-1.5 rounded-full text-[10px] leading-5 ${
+                  tab === id
+                    ? "bg-white/20"
+                    : id === "pending" && count > 0
+                      ? "bg-amber-500 text-slate-950"
+                      : "bg-slate-700 text-slate-300"
+                }`}
+              >
+                {count}
+              </span>
             </button>
           ))}
-        </div>
+        </nav>
 
         {tab === "pending" && (
-          <section className="space-y-3">
+          <section className="space-y-2">
             {pending.length === 0 ? (
               <p className="text-sm text-slate-500">{t.noPending}</p>
             ) : (
               pending.map((spot) =>
-                editingSpotId === spot.id ? (
-                  <article key={spot.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40">
-                    <SpotEditForm spot={spot} onSave={saveSpot} onCancel={() => setEditingSpotId(null)} />
+                (
+                  <article key={spot.id} className={`${cardClass} px-4 py-3`}>
+                    <SpotRow
+                      spot={spot}
+                      actions={
+                        <>
+                          <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
+                            ✏️ {t.edit}
+                          </button>
+                          <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+                          <button onClick={() => rejectSpot(spot)} className={btnReject}>
+                            ✕ {t.reject}
+                          </button>
+                          <button onClick={() => acceptSpot(spot)} className={btnApprove}>
+                            ✓ {t.approve}
+                          </button>
+                        </>
+                      }
+                    >
+                      <h2 className="font-semibold text-white truncate">{spot.name}</h2>
+                      <p className="text-xs text-slate-400 truncate">
+                        {spot.location} · {spot.hours} · {spot.lat}, {spot.lng}
+                      </p>
+                      {spot.tags.length > 0 ? (
+                        <p className="text-[11px] text-slate-500 truncate">🏷 {spot.tags.join(", ")}</p>
+                      ) : null}
+                    </SpotRow>
                   </article>
-                ) : (
-                <article key={spot.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40 space-y-2">
-                  <h2 className="font-semibold">{spot.name}</h2>
-                  <p className="text-xs text-slate-400">
-                    {spot.location} · {spot.hours} · {spot.lat}, {spot.lng}
-                  </p>
-                  <p className="text-xs text-slate-300">{spot.tags.join(", ")}</p>
-                  <a href={googleMapsUrl(spot)} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-300">
-                    Google Maps
-                  </a>
-                  <SpotImage spot={spot} />
-                  <div className="flex flex-wrap gap-2">
-                    <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">
-                      {t.approve}
-                    </button>
-                    <button onClick={() => rejectSpot(spot)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">
-                      {t.reject}
-                    </button>
-                    <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">
-                      {t.edit}
-                    </button>
-                  </div>
-                </article>
                 )
               )
             )}
+
+            {/* Татгалзсан газрууд — анхдагчаар хаалттай; эндээс дахин зөвшөөрөх эсвэл устгана. */}
+            {rejected.length > 0 ? (
+              <details className="group pt-4">
+                <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
+                  <span aria-hidden="true" className="transition-transform group-open:rotate-90">
+                    ▸
+                  </span>
+                  {t.rejectedPlaces(rejected.length)}
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {rejected.map((spot) =>
+                    (
+                      <article key={spot.id} className={`${cardClass} px-4 py-3 opacity-80 hover:opacity-100`}>
+                        <SpotRow
+                          spot={spot}
+                          actions={
+                            <>
+                              <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
+                                ✏️ {t.edit}
+                              </button>
+                              <button onClick={() => returnToReview(spot)} className={btnNeutral}>
+                                {t.backToReview}
+                              </button>
+                              <button onClick={() => acceptSpot(spot)} className={btnApprove}>
+                                ✓ {t.approve}
+                              </button>
+                              {/* Устгахыг бусдаас зааглагчаар тусгаарлана. */}
+                              <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                              <button onClick={() => removeSpot(spot)} className={btnDelete}>
+                                🗑 {t.delete}
+                              </button>
+                            </>
+                          }
+                        >
+                          <h2 className="font-semibold text-white truncate">{spot.name}</h2>
+                          <p className="text-xs text-slate-400 truncate">{spot.location}</p>
+                        </SpotRow>
+                      </article>
+                    )
+                  )}
+                </div>
+              </details>
+            ) : null}
           </section>
         )}
 
         {tab === "places" && (
-          <section className="space-y-3">
-            {spots
-              .filter((spot) => spot.status !== "pending")
-              .map((spot) => (
-                <article key={spot.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40">
-                  {editingSpotId === spot.id ? (
-                    <SpotEditForm spot={spot} onSave={saveSpot} onCancel={() => setEditingSpotId(null)} />
-                  ) : (
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-start">
-                      <div className="space-y-2">
-                        <h2 className="font-semibold">{spot.name}</h2>
-                        <p className="text-xs text-slate-400">
-                          {spot.location} · {spot.status === "rejected" ? t.statusRejected : t.statusPublished}
-                        </p>
-                        <SpotImage spot={spot} />
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">{t.edit}</button>
-                        {spot.status === "rejected" ? (
-                          <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">{t.approve}</button>
-                        ) : null}
-                        <button onClick={() => removeSpot(spot.id)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">{t.delete}</button>
-                      </div>
-                    </div>
-                  )}
+          <section className="space-y-2">
+            {published.map((spot) =>
+              (
+                <article key={spot.id} className={`${cardClass} px-4 py-3`}>
+                  <SpotRow
+                    spot={spot}
+                    actions={
+                      <>
+                        <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
+                          ✏️ {t.edit}
+                        </button>
+                        {/* Устгахыг засахаас зааглагчаар тусгаарлана. */}
+                        <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                        <button onClick={() => removeSpot(spot)} className={btnDelete}>
+                          🗑 {t.delete}
+                        </button>
+                      </>
+                    }
+                  >
+                    <h2 className="font-semibold text-white truncate">{spot.name}</h2>
+                    <p className="text-xs text-slate-400 truncate">{spot.location}</p>
+                  </SpotRow>
                 </article>
-              ))}
+              )
+            )}
           </section>
         )}
 
@@ -336,34 +454,27 @@ export default function AdminPanel() {
               <p className="text-sm text-slate-500">{t.noReviews}</p>
             ) : (
               reviews.map((review) => (
-                <article key={review.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40 text-sm">
-                  <p className="text-xs text-indigo-300 mb-2">
-                    {spotName(review.spot_id)}
-                    <span className="text-slate-400"> · {review.author_name ?? t.guest}</span>
-                  </p>
-                  {editingReview?.id === review.id ? (
-                    <form onSubmit={saveReview} className="space-y-2 text-xs">
-                      <input className={inputClass} type="number" min={1} max={5} value={editingReview.rating} onChange={(e) => setEditingReview({ ...editingReview, rating: Number(e.target.value) })} />
-                      <ScoreFields value={editingReview} onChange={(scores) => setEditingReview({ ...editingReview, ...scores })} />
-                      <textarea className={inputClass} rows={3} value={editingReview.comment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
-                      <div className="flex flex-wrap gap-2">
-                        <button className="px-3 py-1.5 rounded-lg bg-indigo-600">{t.save}</button>
-                        <button type="button" onClick={() => setEditingReview(null)} className="px-3 py-1.5 rounded-lg bg-slate-700">{t.cancel}</button>
-                      </div>
-                    </form>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-indigo-300">{review.rating}/5</p>
-                        <p>{review.comment}</p>
-                        <ReviewScoreLine review={review} />
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setEditingReview(review)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">{t.edit}</button>
-                        <button onClick={() => removeReview(review.id)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">{t.delete}</button>
-                      </div>
-                    </div>
-                  )}
+                <article key={review.id} className={`${cardClass} text-sm`}>
+                  <div className="p-4 space-y-2">
+                    <p className="text-xs text-indigo-300">
+                      {spotName(review.spot_id)}
+                      <span className="text-slate-400"> · {review.author_name ?? t.guest}</span>
+                    </p>
+                    <p className="font-semibold text-amber-400">
+                      {"★".repeat(review.rating)}
+                      <span className="text-slate-600">{"★".repeat(5 - review.rating)}</span>
+                    </p>
+                    <p className="text-slate-200 whitespace-pre-line">{review.comment}</p>
+                    <ReviewScoreLine review={review} />
+                  </div>
+                  <div className={actionBar}>
+                    <button onClick={() => setEditingReview(review)} className={btnNeutral}>
+                      ✏️ {t.edit}
+                    </button>
+                    <button onClick={() => removeReview(review)} className={`${btnDelete} ml-auto`}>
+                      🗑 {t.delete}
+                    </button>
+                  </div>
                 </article>
               ))
             )}
@@ -380,43 +491,38 @@ export default function AdminPanel() {
                 const going = attendees.filter((attendee) => attendee.event_id === event.id).length;
                 const isPast = new Date(event.starts_at).getTime() < nowMs;
                 return (
-                  <article key={event.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40">
-                    {editingEventId === event.id ? (
-                      <EventEditForm
-                        event={event}
-                        remote={remote}
-                        onSave={saveEvent}
-                        onCancel={() => setEditingEventId(null)}
-                      />
-                    ) : (
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-start">
-                        <div className="space-y-1 min-w-0">
-                          <h2 className="font-semibold">
-                            {event.title}
-                            {isPast ? (
-                              <span className="ml-2 align-middle text-[10px] font-semibold bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">
-                                {t.statusPast}
-                              </span>
-                            ) : null}
-                          </h2>
-                          <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
-                          <p className="text-xs text-slate-400">
-                            📍 {event.place_name} · {t.host} {event.host_name}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {t.attending} {going}
-                            {event.max_people !== null ? ` / ${event.max_people}` : ""}
-                          </p>
-                          {event.description ? (
-                            <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line">{event.description}</p>
+                  <article key={event.id} className={cardClass}>
+                    <>
+                      <div className="p-4 space-y-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <h2 className="font-semibold text-white">{event.title}</h2>
+                          {isPast ? (
+                            <span className="shrink-0 text-[10px] font-semibold bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+                              {t.statusPast}
+                            </span>
                           ) : null}
                         </div>
-                        <div className="flex flex-wrap gap-2 shrink-0">
-                          <button onClick={() => setEditingEventId(event.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">{t.edit}</button>
-                          <button onClick={() => removeEvent(event)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">{t.delete}</button>
-                        </div>
+                        <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
+                        <p className="text-xs text-slate-400">
+                          📍 {event.place_name} · {t.host} {event.host_name}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {t.attending} {going}
+                          {event.max_people !== null ? ` / ${event.max_people}` : ""}
+                        </p>
+                        {event.description ? (
+                          <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
+                        ) : null}
                       </div>
-                    )}
+                      <div className={actionBar}>
+                        <button onClick={() => setEditingEventId(event.id)} className={btnNeutral}>
+                          ✏️ {t.edit}
+                        </button>
+                        <button onClick={() => removeEvent(event)} className={`${btnDelete} ml-auto`}>
+                          🗑 {t.delete}
+                        </button>
+                      </div>
+                    </>
                   </article>
                 );
               })
@@ -424,36 +530,144 @@ export default function AdminPanel() {
           </section>
         )}
       </div>
+      {editingSpot ? (
+        <AdminDialog title={t.editPlace} onClose={() => setEditingSpotId(null)}>
+          <SpotEditForm key={editingSpot.id} spot={editingSpot} onSave={saveSpot} onCancel={() => setEditingSpotId(null)} />
+        </AdminDialog>
+      ) : null}
+      {editingReview ? (
+        <AdminDialog title={t.editReview} onClose={() => setEditingReview(null)}>
+          <form onSubmit={saveReview} className="space-y-3 text-xs">
+            <p className="text-indigo-300">
+              {spotName(editingReview.spot_id)}
+              <span className="text-slate-400"> · {editingReview.author_name ?? t.guest}</span>
+            </p>
+            <label className="block space-y-1">
+              <span className="block text-slate-400">{t.ratingLabel} (1–5)</span>
+              <input className={inputClass} type="number" min={1} max={5} value={editingReview.rating} onChange={(e) => setEditingReview({ ...editingReview, rating: Number(e.target.value) })} />
+            </label>
+            <ScoreFields value={editingReview} onChange={(scores) => setEditingReview({ ...editingReview, ...scores })} />
+            <label className="block space-y-1">
+              <span className="block text-slate-400">{t.tabReviews}</span>
+              <textarea className={inputClass} rows={4} value={editingReview.comment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <button className={`${btn} bg-indigo-600 hover:bg-indigo-500 text-white`}>{t.save}</button>
+              <button type="button" onClick={() => setEditingReview(null)} className={btnNeutral}>{t.cancel}</button>
+            </div>
+          </form>
+        </AdminDialog>
+      ) : null}
+      {editingEvent ? (
+        <AdminDialog title={t.editEvent} onClose={() => setEditingEventId(null)}>
+          <EventEditForm
+            key={editingEvent.id}
+            event={editingEvent}
+            remote={remote}
+            onSave={saveEvent}
+            onCancel={() => setEditingEventId(null)}
+          />
+        </AdminDialog>
+      ) : null}
+      {confirmDialog}
     </main>
   );
 }
 
-// Зургийг товч дарсны дараа л ачаална — жагсаалт олон зураг нэг дор татахгүй.
-function SpotImage({ spot }: { spot: StudySpot }) {
+// Засах маягтын цонх: гарчиг, ✕ нь дээрээ наалдана; Esc, гадна дарахад хаагдана. Утсан дээр бүтэн дэлгэц.
+function AdminDialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const { t } = useI18n();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[1200] bg-slate-950/80 backdrop-blur-sm flex items-stretch sm:items-center justify-center p-0 sm:p-4"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-dialog-title"
+        className="relative w-full max-w-2xl bg-slate-900 sm:border border-slate-800 rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6"
+      >
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 mb-4 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-3">
+          <h2 id="admin-dialog-title" className="font-bold text-white">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t.close}
+            className="h-9 w-9 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
+          >
+            ✕
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Газрын нягт карт нэг мөрөнд: зүүн талд нэр, мэдээлэл; голд Google Maps, зураг харах; баруун талд товчнууд.
+// Утсан дээр дээрээс доош. Зураг товч дарсны дараа л ачаалагдаж, мөрийн доор бүтэн өргөнөөр гарна.
+function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactNode; children: ReactNode }) {
   const { t } = useI18n();
   const [shown, setShown] = useState(false);
-  if (!hasPhoto(spot.image)) {
-    return (
-      <span className="inline-block px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-400">
-        {t.noPhoto}
-      </span>
-    );
-  }
+  const photo = hasPhoto(spot.image);
   return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => setShown((value) => !value)}
-        className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs"
-      >
-        {shown ? t.hidePhoto : t.showPhoto}
-      </button>
-      {shown ? (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 md:gap-4">
+        <div className="min-w-0">{children}</div>
+        <div className="flex items-center gap-2 text-xs md:justify-center">
+          <a
+            href={googleMapsUrl(spot)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="whitespace-nowrap px-2.5 py-1 rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500"
+          >
+            📍 Google Maps ↗
+          </a>
+          {photo ? (
+            <button
+              type="button"
+              aria-expanded={shown}
+              onClick={() => setShown((value) => !value)}
+              className={`whitespace-nowrap px-2.5 py-1 rounded-full border font-semibold transition-colors ${
+                shown
+                  ? "bg-sky-500 border-sky-400 text-white"
+                  : "bg-sky-500/10 border-sky-500/50 text-sky-300 hover:bg-sky-500/20"
+              }`}
+            >
+              {shown ? t.hidePhotoButton : t.photoButton}
+            </button>
+          ) : (
+            <span className="whitespace-nowrap px-2.5 py-1 rounded-full border border-dashed border-slate-700 text-slate-500">
+              {t.noPhoto}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">{actions}</div>
+      </div>
+      {photo && shown ? (
         <a href={spot.image} target="_blank" rel="noopener noreferrer" className="block">
           <img
             src={spot.image}
             alt={spot.name}
-            className="max-h-64 w-full max-w-md object-cover rounded-lg border border-slate-700"
+            className="max-h-72 w-full max-w-lg object-cover rounded-xl border border-slate-700"
           />
         </a>
       ) : null}
