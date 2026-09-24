@@ -16,6 +16,7 @@ type SpotRow = {
   is_24h: boolean | null;
   status: StudySpot["status"] | null;
   maps_url: string | null;
+  amenities: string[] | null;
 };
 
 function mapSpot(row: SpotRow): StudySpot {
@@ -34,6 +35,7 @@ function mapSpot(row: SpotRow): StudySpot {
     is_24h: row.is_24h ?? undefined,
     status: row.status ?? "approved",
     maps_url: row.maps_url ?? undefined,
+    amenities: row.amenities ?? [],
   };
 }
 
@@ -52,6 +54,7 @@ function spotPayload(spot: Omit<StudySpot, "id">) {
     is_24h: spot.is_24h ?? false,
     status: spot.status ?? "pending",
     maps_url: spot.maps_url?.trim() || null,
+    amenities: spot.amenities ?? [],
   };
 }
 

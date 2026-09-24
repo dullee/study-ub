@@ -1,8 +1,17 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useRef, useState } from "react";
 import { PLACEHOLDER_IMAGE, StudySpot } from "@/types";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
+import { isShortMapsLink, MapsLinkInfo, parseMapsLink } from "@/lib/maps";
+import AmenityPicker from "@/components/AmenityPicker";
+
+type MapsStatus = { kind: "hint" | "loading" | "ok" | "error"; text: string };
+
+const MAPS_HINT: MapsStatus = {
+  kind: "hint",
+  text: "Google Maps дээр газраа олоод «Share» → холбоосыг хуулж энд тавина. Координат автоматаар бөглөгдөнө.",
+};
 
 interface AddSpotModalProps {
   isOpen: boolean;
@@ -19,6 +28,7 @@ const emptyForm = {
   image: "",
   tags: "",
   maps_url: "",
+  amenities: [] as string[],
 };
 
 export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModalProps) {
@@ -27,8 +37,50 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
+  const [mapsStatus, setMapsStatus] = useState<MapsStatus>(MAPS_HINT);
+  // Хамгийн сүүлд оруулсан холбоосын хариуг л ашиглана.
+  const latestLink = useRef("");
 
   if (!isOpen) return null;
+
+  const applyMapsInfo = (info: MapsLinkInfo) => {
+    setFormData((prev) => ({
+      ...prev,
+      lat: String(info.lat),
+      lng: String(info.lng),
+      name: prev.name || info.name || "",
+    }));
+    setMapsStatus({ kind: "ok", text: `Координат авлаа: ${info.lat}, ${info.lng}` });
+  };
+
+  const handleMapsLinkChange = async (value: string) => {
+    setFormData((prev) => ({ ...prev, maps_url: value }));
+    latestLink.current = value;
+    const link = value.trim();
+    if (!link) {
+      setMapsStatus(MAPS_HINT);
+      return;
+    }
+    const direct = parseMapsLink(link);
+    if (direct) {
+      applyMapsInfo(direct);
+      return;
+    }
+    if (!isShortMapsLink(link)) {
+      setMapsStatus({ kind: "error", text: "Холбоосоос координат олдсонгүй — доор гараар оруулна уу." });
+      return;
+    }
+    setMapsStatus({ kind: "loading", text: "Координат уншиж байна..." });
+    try {
+      const res = await fetch(`/api/maps/resolve?url=${encodeURIComponent(link)}`);
+      if (latestLink.current !== value) return;
+      if (!res.ok) throw new Error();
+      applyMapsInfo((await res.json()) as MapsLinkInfo);
+    } catch {
+      if (latestLink.current !== value) return;
+      setMapsStatus({ kind: "error", text: "Холбоосоос координат олдсонгүй — доор гараар оруулна уу." });
+    }
+  };
 
   const resetImage = () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -39,6 +91,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
   const handleClose = () => {
     resetImage();
     setError("");
+    setMapsStatus(MAPS_HINT);
     onClose();
   };
 
@@ -89,6 +142,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       tags,
       is_24h: tags.includes("24 цаг") || /24/.test(formData.hours),
       maps_url: formData.maps_url.trim() || undefined,
+      amenities: formData.amenities,
     };
     await onAddSpot(newSpot);
     setSaving(false);
@@ -106,6 +160,27 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+          <div>
+            <label className="block text-slate-400 mb-1">Google Maps холбоос</label>
+            <input
+              type="url"
+              value={formData.maps_url}
+              onChange={(e) => handleMapsLinkChange(e.target.value)}
+              placeholder="https://maps.app.goo.gl/..."
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+            />
+            <p
+              className={`mt-1 ${
+                mapsStatus.kind === "error"
+                  ? "text-rose-400"
+                  : mapsStatus.kind === "ok"
+                  ? "text-emerald-400"
+                  : "text-slate-500"
+              }`}
+            >
+              {mapsStatus.text}
+            </p>
+          </div>
           <div>
             <label className="block text-slate-400 mb-1">Газрын нэр</label>
             <input
@@ -192,16 +267,6 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             </div>
           )}
           <div>
-            <label className="block text-slate-400 mb-1">Google Maps холбоос</label>
-            <input
-              type="url"
-              value={formData.maps_url}
-              onChange={(e) => setFormData({ ...formData, maps_url: e.target.value })}
-              placeholder="https://maps.app.goo.gl/..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
-            />
-          </div>
-          <div>
             <label className="block text-slate-400 mb-1">Онцлог Тагууд (Таслалаар тусгаарлах)</label>
             <input
               type="text"
@@ -209,6 +274,13 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
               placeholder="Розетка ихтэй, Wi-Fi хурдан, Маш чимээгүй"
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-400 mb-1">Үйлчилгээ</label>
+            <AmenityPicker
+              value={formData.amenities}
+              onChange={(amenities) => setFormData({ ...formData, amenities })}
             />
           </div>
           {error ? <p className="text-rose-400">{error}</p> : null}

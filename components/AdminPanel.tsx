@@ -6,6 +6,7 @@ import { UserButton, useAuth } from "@clerk/nextjs";
 import { googleMapsUrl, PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
+import AmenityPicker from "@/components/AmenityPicker";
 import {
   deleteReview,
   deleteSpot,
@@ -411,6 +412,10 @@ function SpotEditForm({
       <input className={inputClass} type="number" step="any" required value={draft.lat} onChange={(e) => setDraft({ ...draft, lat: Number(e.target.value) })} />
       <input className={inputClass} type="number" step="any" required value={draft.lng} onChange={(e) => setDraft({ ...draft, lng: Number(e.target.value) })} />
       <input className={`${inputClass} col-span-2`} type="url" placeholder="Google Maps холбоос" value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
+      <div className="col-span-2 space-y-2">
+        <label className="block text-slate-400">Үйлчилгээ</label>
+        <AmenityPicker value={draft.amenities ?? []} onChange={(amenities) => setDraft({ ...draft, amenities })} />
+      </div>
 
       <div className="col-span-2 space-y-2">
         <label className="block text-slate-400">Зураг</label>

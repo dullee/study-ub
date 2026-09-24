@@ -12,6 +12,7 @@ import SpotDetailDialog from "@/components/SpotDetailDialog";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchReviewRatings, fetchSpots, insertSpot } from "@/lib/supabase/spots";
 import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
+import { sortByActiveTags } from "@/lib/spotSort";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -97,7 +98,7 @@ export default function Home() {
   };
 
   const filteredSpots = useMemo(() => {
-    return spots.filter((spot) => {
+    const matching = spots.filter((spot) => {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
         spot.name.toLowerCase().includes(q) || spot.location.toLowerCase().includes(q);
@@ -105,6 +106,7 @@ export default function Home() {
         activeTags.includes("Бүгд") || activeTags.every((t) => spot.tags.includes(t));
       return matchesSearch && matchesTags;
     });
+    return sortByActiveTags(matching, activeTags);
   }, [spots, searchQuery, activeTags]);
 
   const handleAddSpot = async (draft: Omit<StudySpot, "id">) => {

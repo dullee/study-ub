@@ -2,11 +2,12 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { displayName, googleMapsUrl, PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
+import { AMENITIES, displayName, googleMapsUrl, PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
 import { fetchReviews, insertReview } from "@/lib/supabase/spots";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { reviewsForSpot, saveLocalReview } from "@/lib/localStore";
 import Stars from "@/components/Stars";
+import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 
 interface SpotDetailDialogProps {
   spot: StudySpot;
@@ -38,6 +39,7 @@ export default function SpotDetailDialog({
   onShowOnMap,
   onReviewAdded,
 }: SpotDetailDialogProps) {
+  const now = useNow();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");
@@ -85,9 +87,12 @@ export default function SpotDetailDialog({
   const average =
     reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
 
+  const status = now === null ? null : openStatus(spot, now);
+  const amenities = AMENITIES.filter((amenity) => spot.amenities?.includes(amenity.key));
+
   const facts = [
     { icon: "📍", label: "Байршил", value: spot.location },
-    { icon: "⏰", label: "Цагийн хуваарь", value: spot.is_24h ? `${spot.hours} · 24 цаг` : spot.hours },
+    { icon: "⏰", label: "Цагийн хуваарь (өдөр бүр)", value: status ? status.schedule : spot.hours },
     { icon: "⚡", label: "Wi-Fi", value: spot.wifi_speed },
     { icon: "🤫", label: "Чимээгүй байдал", value: spot.quiet_score },
     { icon: "🔌", label: "Розетка", value: spot.socket_score },
@@ -277,6 +282,9 @@ export default function SpotDetailDialog({
           </div>
 
           <div className="p-5 space-y-5">
+            {status ? (
+              <p className={`text-sm font-semibold ${STATUS_TONE[status.tone]}`}>● {status.detail}</p>
+            ) : null}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2.5">
               {facts.map((fact) => (
                 <div key={fact.label} className="bg-slate-800/50 border border-slate-700/60 rounded-xl px-4 py-3">
@@ -287,6 +295,23 @@ export default function SpotDetailDialog({
                 </div>
               ))}
             </div>
+
+            {amenities.length > 0 ? (
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-slate-400">Үйлчилгээ</h3>
+                <ul className="grid grid-cols-2 gap-2">
+                  {amenities.map((amenity) => (
+                    <li
+                      key={amenity.key}
+                      className="flex items-center gap-2 text-sm text-slate-200 bg-slate-800/50 border border-slate-700/60 rounded-xl px-3 py-2"
+                    >
+                      <span aria-hidden="true">{amenity.icon}</span>
+                      {amenity.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
             {spot.tags.length > 0 ? (
               <div className="flex flex-wrap gap-1.5">

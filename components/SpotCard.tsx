@@ -2,6 +2,7 @@
 
 import { googleMapsUrl, PLACEHOLDER_IMAGE, RatingSummary, StudySpot } from "@/types";
 import Stars from "@/components/Stars";
+import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 
 interface SpotCardProps {
   spot: StudySpot;
@@ -12,6 +13,8 @@ interface SpotCardProps {
 }
 
 export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotCardProps) {
+  const now = useNow();
+  const status = now === null ? null : openStatus(spot, now);
   return (
     <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-500 transition-all group shadow-lg">
       <div>
@@ -26,8 +29,12 @@ export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotC
             alt={spot.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <span className="absolute top-3 right-3 text-[11px] font-semibold bg-slate-900/90 backdrop-blur text-indigo-400 px-2.5 py-1 rounded-lg border border-slate-700">
-            ⏰ {spot.hours}
+          <span
+            className={`absolute top-3 right-3 text-[11px] font-semibold bg-slate-900/90 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-700 ${
+              status ? STATUS_TONE[status.tone] : "text-indigo-400"
+            }`}
+          >
+            {now === null ? "⏰" : status ? `● ${status.short}` : `⏰ ${spot.hours}`}
           </span>
         </button>
         <div className="p-4 space-y-3">

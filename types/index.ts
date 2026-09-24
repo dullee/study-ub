@@ -19,7 +19,22 @@ export interface StudySpot {
   is_24h?: boolean;
   status?: SpotStatus;
   maps_url?: string;
+  amenities?: string[];
 }
+
+// Газрын үйлчилгээ. key нь өгөгдлийн санд хадгалагдана — нэрийг нь солиход өгөгдөл өөрчлөгдөхгүй.
+export const AMENITIES = [
+  { key: "printer", icon: "🖨️", label: "Принтер" },
+  { key: "food", icon: "🍽️", label: "Хоол" },
+  { key: "drinks", icon: "☕", label: "Кофе, ундаа" },
+  { key: "water", icon: "🚰", label: "Үнэгүй ус" },
+  { key: "restroom", icon: "🚻", label: "Ариун цэврийн өрөө" },
+  { key: "group_room", icon: "👥", label: "Бүлгийн өрөө" },
+  { key: "whiteboard", icon: "📝", label: "Самбар" },
+  { key: "ac", icon: "❄️", label: "Агааржуулалт" },
+  { key: "parking", icon: "🅿️", label: "Зогсоол" },
+  { key: "lockers", icon: "🔐", label: "Шүүгээ" },
+] as const;
 
 export function googleMapsUrl(spot: Pick<StudySpot, "maps_url" | "lat" | "lng">) {
   const custom = spot.maps_url?.trim();
