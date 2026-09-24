@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { UserButton, useAuth } from "@clerk/nextjs";
-import { googleMapsUrl, Review, StudySpot } from "@/types";
+import { googleMapsUrl, PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import {
   deleteReview,
   deleteSpot,
@@ -33,7 +34,7 @@ export default function AdminPanel() {
   const [remote, setRemote] = useState(false);
   const [spots, setSpots] = useState<StudySpot[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [editingSpot, setEditingSpot] = useState<StudySpot | null>(null);
+  const [editingSpotId, setEditingSpotId] = useState<number | null>(null);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
 
   useEffect(() => {
@@ -103,14 +104,18 @@ export default function AdminPanel() {
     }
   };
 
-  const saveSpot = (e: FormEvent) => {
-    e.preventDefault();
-    if (!editingSpot) return;
-    persistSpots(
-      spots.map((item) => (item.id === editingSpot.id ? editingSpot : item)),
-      editingSpot
-    );
-    setEditingSpot(null);
+  const saveSpot = async (updated: StudySpot) => {
+    if (remote) {
+      const saved = await updateSpot(updated);
+      if (!saved) return false;
+      setSpots((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
+    } else {
+      const next = spots.map((item) => (item.id === updated.id ? updated : item));
+      setSpots(next);
+      saveLocalSpots(next);
+    }
+    setEditingSpotId(null);
+    return true;
   };
 
   const saveReview = async (e: FormEvent) => {
@@ -174,7 +179,12 @@ export default function AdminPanel() {
             {pending.length === 0 ? (
               <p className="text-sm text-slate-500">Хүлээгдэж буй газар алга.</p>
             ) : (
-              pending.map((spot) => (
+              pending.map((spot) =>
+                editingSpotId === spot.id ? (
+                  <article key={spot.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40">
+                    <SpotEditForm spot={spot} onSave={saveSpot} onCancel={() => setEditingSpotId(null)} />
+                  </article>
+                ) : (
                 <article key={spot.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40 space-y-2">
                   <h2 className="font-semibold">{spot.name}</h2>
                   <p className="text-xs text-slate-400">
@@ -184,6 +194,7 @@ export default function AdminPanel() {
                   <a href={googleMapsUrl(spot)} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-300">
                     Google Maps
                   </a>
+                  <SpotImage spot={spot} />
                   <div className="flex gap-2">
                     <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">
                       Зөвшөөрөх
@@ -191,9 +202,13 @@ export default function AdminPanel() {
                     <button onClick={() => rejectSpot(spot)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">
                       Татгалзах
                     </button>
+                    <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">
+                      Засах
+                    </button>
                   </div>
                 </article>
-              ))
+                )
+              )
             )}
           </section>
         )}
@@ -204,30 +219,19 @@ export default function AdminPanel() {
               .filter((spot) => spot.status !== "pending")
               .map((spot) => (
                 <article key={spot.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40">
-                  {editingSpot?.id === spot.id ? (
-                    <form onSubmit={saveSpot} className="grid grid-cols-2 gap-2 text-xs">
-                      <input className={inputClass} value={editingSpot.name} onChange={(e) => setEditingSpot({ ...editingSpot, name: e.target.value })} />
-                      <input className={inputClass} value={editingSpot.location} onChange={(e) => setEditingSpot({ ...editingSpot, location: e.target.value })} />
-                      <input className={inputClass} value={editingSpot.hours} onChange={(e) => setEditingSpot({ ...editingSpot, hours: e.target.value })} />
-                      <input className={inputClass} value={editingSpot.tags.join(", ")} onChange={(e) => setEditingSpot({ ...editingSpot, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} />
-                      <input className={inputClass} type="number" step="any" value={editingSpot.lat} onChange={(e) => setEditingSpot({ ...editingSpot, lat: Number(e.target.value) })} />
-                      <input className={inputClass} type="number" step="any" value={editingSpot.lng} onChange={(e) => setEditingSpot({ ...editingSpot, lng: Number(e.target.value) })} />
-                      <input className={`${inputClass} col-span-2`} type="url" placeholder="Google Maps холбоос" value={editingSpot.maps_url ?? ""} onChange={(e) => setEditingSpot({ ...editingSpot, maps_url: e.target.value })} />
-                      <div className="col-span-2 flex gap-2">
-                        <button className="px-3 py-1.5 rounded-lg bg-indigo-600">Хадгалах</button>
-                        <button type="button" onClick={() => setEditingSpot(null)} className="px-3 py-1.5 rounded-lg bg-slate-700">Болих</button>
-                      </div>
-                    </form>
+                  {editingSpotId === spot.id ? (
+                    <SpotEditForm spot={spot} onSave={saveSpot} onCancel={() => setEditingSpotId(null)} />
                   ) : (
                     <div className="flex justify-between gap-3 items-start">
-                      <div>
+                      <div className="space-y-2">
                         <h2 className="font-semibold">{spot.name}</h2>
                         <p className="text-xs text-slate-400">
                           {spot.location} · {spot.status === "rejected" ? "Татгалзсан" : "Нийтлэгдсэн"}
                         </p>
+                        <SpotImage spot={spot} />
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => setEditingSpot(spot)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">Засах</button>
+                        <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">Засах</button>
                         {spot.status === "rejected" ? (
                           <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">Зөвшөөрөх</button>
                         ) : null}
@@ -281,5 +285,174 @@ export default function AdminPanel() {
         )}
       </div>
     </main>
+  );
+}
+
+// Зургийг товч дарсны дараа л ачаална — жагсаалт олон зураг нэг дор татахгүй.
+function SpotImage({ spot }: { spot: StudySpot }) {
+  const [shown, setShown] = useState(false);
+  if (!hasPhoto(spot.image)) {
+    return (
+      <span className="inline-block px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-400">
+        Зураг оруулаагүй
+      </span>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setShown((value) => !value)}
+        className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs"
+      >
+        {shown ? "Зураг нуух" : "Зураг харах"}
+      </button>
+      {shown ? (
+        <a href={spot.image} target="_blank" rel="noopener noreferrer" className="block">
+          <img
+            src={spot.image}
+            alt={spot.name}
+            className="max-h-64 w-full max-w-md object-cover rounded-lg border border-slate-700"
+          />
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+const hasPhoto = (image?: string) => Boolean(image) && image !== PLACEHOLDER_IMAGE;
+
+// Хүлээгдэж буй болон нийтлэгдсэн газрыг засна. Шинэ зургийг хадгалах үед Cloudinary руу хуулна.
+function SpotEditForm({
+  spot,
+  onSave,
+  onCancel,
+}: {
+  spot: StudySpot;
+  onSave: (spot: StudySpot) => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState(spot);
+  // Шошгыг текстээр хадгалж, хадгалахдаа массив болгоно — бичиж байхад таслал, зай арилахгүй.
+  const [tagsText, setTagsText] = useState(spot.tags.join(", "));
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
+
+  const clearFile = () => {
+    setImageFile(null);
+    setPreview("");
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    clearFile();
+    setError("");
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Зөвхөн зургийн файл сонгоно уу.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("Зураг 5MB-аас бага байх ёстой.");
+      e.target.value = "";
+      return;
+    }
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
+  };
+
+  const removePhoto = () => {
+    clearFile();
+    setDraft({ ...draft, image: PLACEHOLDER_IMAGE });
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    let image = draft.image;
+    if (imageFile) {
+      try {
+        image = await uploadImage(imageFile);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Зураг хуулахад алдаа гарлаа.");
+        setSaving(false);
+        return;
+      }
+    }
+    const ok = await onSave({
+      ...draft,
+      image: image || PLACEHOLDER_IMAGE,
+      tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
+    });
+    if (!ok) {
+      setError("Хадгалж чадсангүй. Дахин оролдоно уу.");
+      setSaving(false);
+    }
+  };
+
+  const shownImage = preview || (hasPhoto(draft.image) ? draft.image : "");
+
+  return (
+    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-2 text-xs">
+      <input className={inputClass} required placeholder="Нэр" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+      <input className={inputClass} required placeholder="Байршил" value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
+      <input className={inputClass} placeholder="Ажиллах цаг" value={draft.hours} onChange={(e) => setDraft({ ...draft, hours: e.target.value })} />
+      <input className={inputClass} placeholder="Шошго, таслалаар тусгаарлана" value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
+      <input className={inputClass} type="number" step="any" required value={draft.lat} onChange={(e) => setDraft({ ...draft, lat: Number(e.target.value) })} />
+      <input className={inputClass} type="number" step="any" required value={draft.lng} onChange={(e) => setDraft({ ...draft, lng: Number(e.target.value) })} />
+      <input className={`${inputClass} col-span-2`} type="url" placeholder="Google Maps холбоос" value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
+
+      <div className="col-span-2 space-y-2">
+        <label className="block text-slate-400">Зураг</label>
+        {shownImage ? (
+          <img src={shownImage} alt={draft.name} className="max-h-48 w-full max-w-md object-cover rounded-lg border border-slate-700" />
+        ) : (
+          <span className="inline-block px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">
+            Зураг оруулаагүй
+          </span>
+        )}
+        {isCloudinaryConfigured ? (
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:text-xs file:font-semibold"
+          />
+        ) : (
+          <input
+            className={inputClass}
+            type="url"
+            placeholder="Зургийн URL"
+            value={hasPhoto(draft.image) ? draft.image : ""}
+            onChange={(e) => setDraft({ ...draft, image: e.target.value })}
+          />
+        )}
+        {shownImage ? (
+          <button type="button" onClick={removePhoto} className="px-3 py-1.5 rounded-lg bg-rose-900/70">
+            Зураг устгах
+          </button>
+        ) : null}
+      </div>
+
+      {error ? <p className="col-span-2 text-rose-400">{error}</p> : null}
+      <div className="col-span-2 flex gap-2">
+        <button disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
+          {saving ? (imageFile ? "Зураг хуулж байна..." : "Хадгалж байна...") : "Хадгалах"}
+        </button>
+        <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-lg bg-slate-700">
+          Болих
+        </button>
+      </div>
+    </form>
   );
 }

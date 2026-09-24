@@ -1,4 +1,4 @@
-import { Review, StudySpot } from "@/types";
+import { PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
 import { supabase, supabaseAuthed } from "@/lib/supabase/client";
 
 type SpotRow = {
@@ -27,9 +27,7 @@ function mapSpot(row: SpotRow): StudySpot {
     lat: row.lat,
     lng: row.lng,
     tags: row.tags ?? [],
-    image:
-      row.image ??
-      "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop",
+    image: row.image ?? PLACEHOLDER_IMAGE,
     wifi_speed: row.wifi_speed ?? undefined,
     quiet_score: row.quiet_score ?? undefined,
     socket_score: row.socket_score ?? undefined,

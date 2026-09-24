@@ -1,6 +1,6 @@
 "use client";
 
-import { googleMapsUrl, RatingSummary, StudySpot } from "@/types";
+import { googleMapsUrl, PLACEHOLDER_IMAGE, RatingSummary, StudySpot } from "@/types";
 import Stars from "@/components/Stars";
 
 interface SpotCardProps {
@@ -22,7 +22,7 @@ export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotC
           className="relative block h-44 w-full overflow-hidden bg-slate-900 cursor-pointer"
         >
           <img
-            src={spot.image || "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop"}
+            src={spot.image || PLACEHOLDER_IMAGE}
             alt={spot.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

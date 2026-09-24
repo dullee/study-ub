@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useState } from "react";
-import { StudySpot } from "@/types";
+import { PLACEHOLDER_IMAGE, StudySpot } from "@/types";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 
 interface AddSpotModalProps {
@@ -85,9 +85,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       hours: formData.hours || "Тодорхойгүй",
       lat: parseFloat(formData.lat),
       lng: parseFloat(formData.lng),
-      image:
-        image ||
-        "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop",
+      image: image || PLACEHOLDER_IMAGE,
       tags,
       is_24h: tags.includes("24 цаг") || /24/.test(formData.hours),
       maps_url: formData.maps_url.trim() || undefined,

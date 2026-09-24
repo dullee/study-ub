@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { displayName, googleMapsUrl, Review, StudySpot } from "@/types";
+import { displayName, googleMapsUrl, PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
 import { fetchReviews, insertReview } from "@/lib/supabase/spots";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { reviewsForSpot, saveLocalReview } from "@/lib/localStore";
@@ -14,9 +14,6 @@ interface SpotDetailDialogProps {
   onShowOnMap: (lat: number, lng: number) => void;
   onReviewAdded?: (review: Review) => void;
 }
-
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop";
 
 const inputClass =
   "w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500";
@@ -248,7 +245,7 @@ export default function SpotDetailDialog({
         {/* Баруун тал (утсан дээр дээр): газрын мэдээлэл */}
         <aside className="order-1 md:order-2 md:w-[45%] md:overflow-y-auto">
           <div className="relative h-56 sm:h-64 w-full bg-slate-950">
-            <img src={spot.image || FALLBACK_IMAGE} alt={spot.name} className="w-full h-full object-cover" />
+            <img src={spot.image || PLACEHOLDER_IMAGE} alt={spot.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
             <button
               onClick={onClose}

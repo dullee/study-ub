@@ -1,3 +1,7 @@
+// Зураггүй газарт харуулах ерөнхий зураг. Админ хуудас үүгээр "зураггүй" гэж танина.
+export const PLACEHOLDER_IMAGE =
+  "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop";
+
 export type SpotStatus = "pending" | "approved" | "rejected";
 
 export interface StudySpot {
