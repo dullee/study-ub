@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { StudySpot, AVAILABLE_TAGS, Review } from "@/types";
 import { initialSpots } from "@/data/initialSpots";
@@ -15,11 +15,12 @@ import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { sortByActiveTags } from "@/lib/spotSort";
 import { distanceKm, useUserLocation } from "@/lib/geo";
+import { useWideLayout } from "@/lib/useWideLayout";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
   loading: () => (
-    <div className="h-[350px] w-full rounded-2xl border border-slate-800 bg-slate-800/40 animate-pulse" />
+    <div className="h-full w-full rounded-2xl border border-slate-800 bg-slate-800/40 animate-pulse" />
   ),
 });
 
@@ -98,6 +99,7 @@ export default function Home() {
     setActiveTags(updated);
   };
 
+  const [wide, setWide] = useWideLayout();
   const { location, locate, clear: clearLocation } = useUserLocation();
   const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(null);
   const userCoords = location.status === "ready" ? location.coords : null;
@@ -154,28 +156,22 @@ export default function Home() {
     setNotice("Хүсэлт илгээгдлээ. Админ зөвшөөрсний дараа газрын зурагт гарна.");
   };
 
+  // Том дэлгэцэнд газрын зураг наалдсан тул харагдаж байгаа — зөвхөн утсан дээр түүн рүү гүйлгэнэ.
+  const mapWrapperRef = useRef<HTMLDivElement>(null);
   const handleFocus = (lat: number, lng: number) => {
     setFocusCoords([lat, lng]);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    mapWrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   return (
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
-      <Header onAddClick={() => setIsModalOpen(true)} />
-      <main className="max-w-7xl mx-auto px-4 pt-6 space-y-6">
+      <Header onAddClick={() => setIsModalOpen(true)} wide={wide} />
+      <main className={`${wide ? "max-w-none" : "max-w-7xl"} mx-auto px-4 pt-6 space-y-6`}>
         {notice ? (
           <p className="text-sm text-indigo-200 bg-indigo-950/60 border border-indigo-800/50 rounded-xl px-4 py-3">
             {notice}
           </p>
         ) : null}
-        <Map
-          spots={matchingSpots}
-          dimmedIds={outOfRangeIds}
-          focusCoords={focusCoords}
-          onOpenDetails={setDetailSpot}
-          userCoords={userCoords}
-          radiusKm={maxDistanceKm}
-        />
         <FilterSection
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -188,33 +184,65 @@ export default function Home() {
           maxDistanceKm={maxDistanceKm}
           setMaxDistanceKm={setMaxDistanceKm}
         />
-        <section className="space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-              📍 Сонгогдсон газрууд
-            </h2>
-            <span className="text-xs text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2.5 py-1 rounded-md">
-              {filteredSpots.length} газар
-            </span>
+        {/* Том дэлгэцэнд: зүүн талд картууд нэг баганаар, баруун талд header + шүүлтүүрийн доор наалдсан том газрын зураг. Утсан дээр: зураг дээр, жагсаалт доор. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_1fr] gap-3 lg:gap-0 items-start">
+          <div
+            ref={mapWrapperRef}
+            className="order-1 lg:order-2 h-[350px] lg:sticky lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
+          >
+            <Map
+              spots={matchingSpots}
+              dimmedIds={outOfRangeIds}
+              focusCoords={focusCoords}
+              onOpenDetails={setDetailSpot}
+              userCoords={userCoords}
+              radiusKm={maxDistanceKm}
+            />
           </div>
-          {filteredSpots.length === 0 ? (
-            <p className="text-center text-slate-500 py-12 text-sm">Шүүлтүүрт тохирох газар олдсонгүй.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredSpots.map((spot) => (
-                <SpotCard
-                  key={spot.id}
-                  spot={spot}
-                  onFocus={handleFocus}
-                  onOpenDetails={setDetailSpot}
-                  summary={summaries[spot.id]}
-                  ratingsLoading={reviewScores === null}
-                  distanceKm={distances?.[spot.id]}
-                />
-              ))}
+          <section className="order-2 lg:order-1 space-y-2">
+            <div className="flex justify-between items-center gap-2 border-b border-slate-800 pb-2">
+              <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                📍 Сонгогдсон газрууд
+              </h2>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2.5 py-1 rounded-md">
+                  {filteredSpots.length} газар
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setWide(!wide)}
+                  aria-pressed={wide}
+                  title={wide ? "Энгийн өргөн" : "Бүтэн өргөн — газрын зургийг томруулна"}
+                  className={`hidden lg:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors ${
+                    wide
+                      ? "bg-indigo-600 border-indigo-500 text-white"
+                      : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
+                  }`}
+                >
+                  <span aria-hidden="true">{wide ? "⇥⇤" : "⇤⇥"}</span>
+                  {wide ? "Энгийн" : "Бүтэн өргөн"}
+                </button>
+              </div>
             </div>
-          )}
-        </section>
+            {filteredSpots.length === 0 ? (
+              <p className="text-center text-slate-500 py-12 text-sm">Шүүлтүүрт тохирох газар олдсонгүй.</p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {filteredSpots.map((spot) => (
+                  <SpotCard
+                    key={spot.id}
+                    spot={spot}
+                    onFocus={handleFocus}
+                    onOpenDetails={setDetailSpot}
+                    summary={summaries[spot.id]}
+                    ratingsLoading={reviewScores === null}
+                    distanceKm={distances?.[spot.id]}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </main>
       <AddSpotModal
         isOpen={isModalOpen}

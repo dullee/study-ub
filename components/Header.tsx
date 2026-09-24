@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
+import { useHeightVar } from "@/lib/useHeightVar";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 
 interface HeaderProps {
   onAddClick: () => void;
   addLabel?: string;
+  // Нүүрний "бүтэн өргөн" горимд header-ийн агуулга ч бүтэн өргөнөөр.
+  wide?: boolean;
 }
 
 const TABS = [
@@ -14,12 +18,20 @@ const TABS = [
   { href: "/events", label: "📅 Эвентүүд" },
 ];
 
-export default function Header({ onAddClick, addLabel = "Шинэ газар нэмэх" }: HeaderProps) {
+export default function Header({ onAddClick, addLabel = "Шинэ газар нэмэх", wide = false }: HeaderProps) {
+  const widthClass = wide ? "max-w-none" : "max-w-7xl";
   const pathname = usePathname();
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Наалдсан header-ийн өндрийг --header-h болгон нийтэлнэ — шүүлтүүр, газрын зураг түүний доор наалдана.
+  useHeightVar(headerRef, "--header-h");
 
   return (
-    <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-[1000]">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center gap-3">
+    <header
+      ref={headerRef}
+      className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-[1000]"
+    >
+      <div className={`${widthClass} mx-auto px-4 py-4 flex justify-between items-center gap-3`}>
         <div className="flex items-center gap-3">
           <span className="text-2xl p-2 bg-indigo-600/20 rounded-xl border border-indigo-500/30">
             💻
@@ -60,7 +72,7 @@ export default function Header({ onAddClick, addLabel = "Шинэ газар н�
           </Show>
         </div>
       </div>
-      <nav className="max-w-7xl mx-auto px-4 flex gap-1">
+      <nav className={`${widthClass} mx-auto px-4 flex gap-1`}>
         {TABS.map((tab) => {
           const active = pathname === tab.href;
           return (

@@ -56,7 +56,7 @@ export default function Map({ spots, dimmedIds, focusCoords, onOpenDetails, user
   const dimmedIcon = useMemo(() => L.icon({ ...ICON_OPTIONS, className: "grayscale opacity-50" }), []);
 
   return (
-    <div className="h-[350px] w-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative z-0">
+    <div className="h-full w-full rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative z-0">
       <MapContainer center={[47.9188, 106.9176]} zoom={13} className="h-full w-full">
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
