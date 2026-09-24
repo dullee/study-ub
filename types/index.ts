@@ -32,6 +32,27 @@ export interface Review {
   created_at: string;
 }
 
+export interface StudyEvent {
+  id: number;
+  title: string;
+  description: string;
+  spot_id: number | null;
+  place_name: string;
+  lat: number | null;
+  lng: number | null;
+  starts_at: string;
+  host_name: string;
+  max_people: number | null;
+  created_at: string;
+}
+
+export interface EventAttendee {
+  id: number;
+  event_id: number;
+  name: string;
+  created_at: string;
+}
+
 export type TagType =
   | "Бүгд"
   | "Wi-Fi хурдан"

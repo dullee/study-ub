@@ -39,8 +39,9 @@ export default function Home() {
     async function load() {
       if (isSupabaseConfigured) {
         const remote = await fetchSpots();
-        if (!cancelled && remote && remote.length > 0) {
-          setSpots(remote);
+        if (!cancelled && remote) {
+          // Хүснэгт хоосон ч шинэ газрыг Supabase руу илгээнэ; харуулахдаа анхны газруудыг ашиглана.
+          if (remote.length > 0) setSpots(remote);
           setUsingRemote(true);
           return;
         }

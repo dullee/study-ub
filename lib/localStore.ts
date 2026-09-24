@@ -1,5 +1,5 @@
 import { initialSpots } from "@/data/initialSpots";
-import { Review, StudySpot } from "@/types";
+import { EventAttendee, Review, StudyEvent, StudySpot } from "@/types";
 
 const SPOTS_KEY = "studyspots_ub";
 const REVIEWS_KEY = "studyspots_ub_reviews";
@@ -57,4 +57,59 @@ export function saveLocalReview(review: Review) {
 
 export function removeLocalReview(id: number) {
   writeReviewMap(loadLocalReviews().filter((item) => item.id !== id));
+}
+
+const EVENTS_KEY = "studyspots_ub_events";
+const ATTENDEES_KEY = "studyspots_ub_event_attendees";
+const MY_RSVPS_KEY = "studyspots_ub_my_rsvps";
+const MY_NAME_KEY = "studyspots_ub_my_name";
+
+function readJson<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? (JSON.parse(saved) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function loadLocalEvents(): StudyEvent[] {
+  return readJson<StudyEvent[]>(EVENTS_KEY, []);
+}
+
+export function saveLocalEvent(event: StudyEvent) {
+  localStorage.setItem(EVENTS_KEY, JSON.stringify([event, ...loadLocalEvents()]));
+}
+
+export function loadLocalAttendees(): EventAttendee[] {
+  return readJson<EventAttendee[]>(ATTENDEES_KEY, []);
+}
+
+export function saveLocalAttendee(attendee: EventAttendee) {
+  localStorage.setItem(ATTENDEES_KEY, JSON.stringify([...loadLocalAttendees(), attendee]));
+}
+
+export function removeLocalAttendee(id: number) {
+  localStorage.setItem(
+    ATTENDEES_KEY,
+    JSON.stringify(loadLocalAttendees().filter((item) => item.id !== id))
+  );
+}
+
+// Нэвтрэлт байхгүй тул энэ хөтөч аль эвентэд "ирнэ" гэснийг event_id -> attendee_id хэлбэрээр санана.
+export function loadMyRsvps(): Record<string, number> {
+  return readJson<Record<string, number>>(MY_RSVPS_KEY, {});
+}
+
+export function saveMyRsvps(rsvps: Record<string, number>) {
+  localStorage.setItem(MY_RSVPS_KEY, JSON.stringify(rsvps));
+}
+
+export function loadMyName(): string {
+  return readJson<string>(MY_NAME_KEY, "");
+}
+
+export function saveMyName(name: string) {
+  localStorage.setItem(MY_NAME_KEY, JSON.stringify(name));
 }

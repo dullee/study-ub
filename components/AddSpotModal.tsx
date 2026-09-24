@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import { StudySpot } from "@/types";
+import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 
 interface AddSpotModalProps {
   isOpen: boolean;
@@ -23,12 +24,57 @@ const emptyForm = {
 export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModalProps) {
   const [formData, setFormData] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState("");
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
+
+  const resetImage = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    setImageFile(null);
+    setPreview("");
+  };
+
+  const handleClose = () => {
+    resetImage();
+    setError("");
+    onClose();
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    resetImage();
+    setError("");
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Зөвхөн зургийн файл сонгоно уу.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError("Зураг 5MB-аас бага байх ёстой.");
+      e.target.value = "";
+      return;
+    }
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setError("");
+    let image = formData.image;
+    if (imageFile) {
+      try {
+        image = await uploadImage(imageFile);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Зураг хуулахад алдаа гарлаа.");
+        setSaving(false);
+        return;
+      }
+    }
     const tags = formData.tags
       .split(",")
       .map((t) => t.trim())
@@ -40,7 +86,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       lat: parseFloat(formData.lat),
       lng: parseFloat(formData.lng),
       image:
-        formData.image ||
+        image ||
         "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop",
       tags,
       is_24h: tags.includes("24 цаг") || /24/.test(formData.hours),
@@ -48,7 +94,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
     };
     await onAddSpot(newSpot);
     setSaving(false);
-    onClose();
+    handleClose();
     setFormData(emptyForm);
   };
 
@@ -57,7 +103,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 space-y-4 relative shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center border-b border-slate-800 pb-3">
           <h3 className="text-base font-bold text-white">➕ Шинэ Study Spot нэмэх</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white text-lg" type="button">
+          <button onClick={handleClose} className="text-slate-400 hover:text-white text-lg" type="button">
             ✕
           </button>
         </div>
@@ -122,16 +168,31 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               />
             </div>
           </div>
-          <div>
-            <label className="block text-slate-400 mb-1">Зургийн URL</label>
-            <input
-              type="url"
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              placeholder="https://images.unsplash.com/..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
-            />
-          </div>
+          {isCloudinaryConfigured ? (
+            <div>
+              <label className="block text-slate-400 mb-1">Зураг (5MB хүртэл)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:text-xs file:font-semibold"
+              />
+              {preview ? (
+                <img src={preview} alt="Урьдчилан харах" className="mt-2 h-32 w-full object-cover rounded-lg border border-slate-700" />
+              ) : null}
+            </div>
+          ) : (
+            <div>
+              <label className="block text-slate-400 mb-1">Зургийн URL</label>
+              <input
+                type="url"
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                placeholder="https://images.unsplash.com/..."
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-slate-400 mb-1">Google Maps холбоос</label>
             <input
@@ -152,12 +213,13 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
+          {error ? <p className="text-rose-400">{error}</p> : null}
           <button
             type="submit"
             disabled={saving}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 mt-2"
           >
-            {saving ? "Хадгалж байна..." : "Сайтад байршуулах"}
+            {saving ? (imageFile ? "Зураг хуулж байна..." : "Хадгалж байна...") : "Сайтад байршуулах"}
           </button>
         </form>
       </div>

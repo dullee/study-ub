@@ -1,4 +1,4 @@
--- Supabase SQL Editor дээр нэг удаа ажиллуулна.
+-- Supabase GitHub integration main руу push хийхэд автоматаар ажиллуулна.
 
 create table if not exists public.spots (
   id bigint generated always as identity primary key,
@@ -27,8 +27,31 @@ create table if not exists public.reviews (
   created_at timestamptz default now()
 );
 
+create table if not exists public.events (
+  id bigint generated always as identity primary key,
+  title text not null,
+  description text not null default '',
+  spot_id bigint references public.spots (id) on delete set null,
+  place_name text not null,
+  lat double precision,
+  lng double precision,
+  starts_at timestamptz not null,
+  host_name text not null,
+  max_people int check (max_people is null or max_people > 0),
+  created_at timestamptz default now()
+);
+
+create table if not exists public.event_attendees (
+  id bigint generated always as identity primary key,
+  event_id bigint not null references public.events (id) on delete cascade,
+  name text not null,
+  created_at timestamptz default now()
+);
+
 alter table public.spots enable row level security;
 alter table public.reviews enable row level security;
+alter table public.events enable row level security;
+alter table public.event_attendees enable row level security;
 
 create policy "spots_public_read" on public.spots
   for select using (true);
@@ -52,4 +75,22 @@ create policy "reviews_public_update" on public.reviews
   for update using (true) with check (true);
 
 create policy "reviews_public_delete" on public.reviews
+  for delete using (true);
+
+create policy "events_public_read" on public.events
+  for select using (true);
+
+create policy "events_public_insert" on public.events
+  for insert with check (true);
+
+create policy "events_public_delete" on public.events
+  for delete using (true);
+
+create policy "event_attendees_public_read" on public.event_attendees
+  for select using (true);
+
+create policy "event_attendees_public_insert" on public.event_attendees
+  for insert with check (true);
+
+create policy "event_attendees_public_delete" on public.event_attendees
   for delete using (true);

@@ -1,12 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 interface HeaderProps {
   onAddClick: () => void;
+  addLabel?: string;
 }
 
-export default function Header({ onAddClick }: HeaderProps) {
+const TABS = [
+  { href: "/", label: "📍 Газрууд" },
+  { href: "/events", label: "📅 Эвентүүд" },
+];
+
+export default function Header({ onAddClick, addLabel = "Шинэ газар нэмэх" }: HeaderProps) {
+  const pathname = usePathname();
+
   return (
     <header className="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-[1000]">
       <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center gap-3">
@@ -37,10 +46,28 @@ export default function Header({ onAddClick }: HeaderProps) {
             onClick={onAddClick}
             className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-1"
           >
-            <span>➕</span> Шинэ газар нэмэх
+            <span>➕</span> {addLabel}
           </button>
         </div>
       </div>
+      <nav className="max-w-7xl mx-auto px-4 flex gap-1">
+        {TABS.map((tab) => {
+          const active = pathname === tab.href;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors ${
+                active
+                  ? "border-indigo-500 text-white"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }
