@@ -1,34 +1,35 @@
 "use client";
 
-import { AMENITIES } from "@/types";
+type Option = { key: string; icon: string; label: string };
 
-interface AmenityPickerProps {
+interface OptionPickerProps {
+  options: readonly Option[];
   value: string[];
   onChange: (value: string[]) => void;
 }
 
-// Газар нэмэх болон админы засах хэсэгт үйлчилгээг сонгоно.
-export default function AmenityPicker({ value, onChange }: AmenityPickerProps) {
+// Газар нэмэх болон админы засах хэсэгт үйлчилгээ, хүртээмжийг олноор сонгоно.
+export default function OptionPicker({ options, value, onChange }: OptionPickerProps) {
   const toggle = (key: string) =>
     onChange(value.includes(key) ? value.filter((item) => item !== key) : [...value, key]);
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      {AMENITIES.map((amenity) => {
-        const selected = value.includes(amenity.key);
+      {options.map((option) => {
+        const selected = value.includes(option.key);
         return (
           <button
-            key={amenity.key}
+            key={option.key}
             type="button"
             aria-pressed={selected}
-            onClick={() => toggle(amenity.key)}
+            onClick={() => toggle(option.key)}
             className={`px-2.5 py-1 rounded-lg border text-xs transition-colors ${
               selected
                 ? "bg-indigo-600 border-indigo-500 text-white"
                 : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
             }`}
           >
-            {amenity.icon} {amenity.label}
+            <span aria-hidden="true">{option.icon}</span> {option.label}
           </button>
         );
       })}

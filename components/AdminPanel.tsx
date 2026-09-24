@@ -3,10 +3,21 @@
 import Link from "next/link";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { UserButton, useAuth } from "@clerk/nextjs";
-import { googleMapsUrl, PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
+import {
+  ACCESSIBILITY,
+  AMENITIES,
+  googleMapsUrl,
+  PLACEHOLDER_IMAGE,
+  Review,
+  SPOT_CATEGORIES,
+  SpotCategory,
+  StudySpot,
+} from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
-import AmenityPicker from "@/components/AmenityPicker";
+import OptionPicker from "@/components/OptionPicker";
+import ScoreFields from "@/components/ScoreFields";
+import ReviewScoreLine from "@/components/ReviewScoreLine";
 import {
   deleteReview,
   deleteSpot,
@@ -259,7 +270,7 @@ export default function AdminPanel() {
                   {editingReview?.id === review.id ? (
                     <form onSubmit={saveReview} className="space-y-2 text-xs">
                       <input className={inputClass} type="number" min={1} max={5} value={editingReview.rating} onChange={(e) => setEditingReview({ ...editingReview, rating: Number(e.target.value) })} />
-                      <input className={inputClass} value={editingReview.wifi_speed_test} onChange={(e) => setEditingReview({ ...editingReview, wifi_speed_test: e.target.value })} />
+                      <ScoreFields value={editingReview} onChange={(scores) => setEditingReview({ ...editingReview, ...scores })} />
                       <textarea className={inputClass} rows={3} value={editingReview.comment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
                       <div className="flex gap-2">
                         <button className="px-3 py-1.5 rounded-lg bg-indigo-600">Хадгалах</button>
@@ -271,7 +282,7 @@ export default function AdminPanel() {
                       <div>
                         <p className="font-semibold text-indigo-300">{review.rating}/5</p>
                         <p>{review.comment}</p>
-                        {review.wifi_speed_test ? <p className="text-xs text-slate-400">⚡ {review.wifi_speed_test}</p> : null}
+                        <ReviewScoreLine review={review} />
                       </div>
                       <div className="flex gap-2">
                         <button onClick={() => setEditingReview(review)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">Засах</button>
@@ -412,10 +423,48 @@ function SpotEditForm({
       <input className={inputClass} type="number" step="any" required value={draft.lat} onChange={(e) => setDraft({ ...draft, lat: Number(e.target.value) })} />
       <input className={inputClass} type="number" step="any" required value={draft.lng} onChange={(e) => setDraft({ ...draft, lng: Number(e.target.value) })} />
       <input className={`${inputClass} col-span-2`} type="url" placeholder="Google Maps холбоос" value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
+      <select
+        className={`${inputClass} col-span-2`}
+        value={draft.category ?? ""}
+        onChange={(e) => setDraft({ ...draft, category: (e.target.value || undefined) as SpotCategory | undefined })}
+      >
+        <option value="">Төрөл сонгоогүй</option>
+        {SPOT_CATEGORIES.map((category) => (
+          <option key={category.key} value={category.key}>
+            {category.icon} {category.label}
+          </option>
+        ))}
+      </select>
+      <textarea
+        className={`${inputClass} col-span-2 resize-none`}
+        rows={3}
+        maxLength={500}
+        placeholder="Товч тайлбар"
+        value={draft.description ?? ""}
+        onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+      />
       <div className="col-span-2 space-y-2">
         <label className="block text-slate-400">Үйлчилгээ</label>
-        <AmenityPicker value={draft.amenities ?? []} onChange={(amenities) => setDraft({ ...draft, amenities })} />
+        <OptionPicker options={AMENITIES} value={draft.amenities ?? []} onChange={(amenities) => setDraft({ ...draft, amenities })} />
       </div>
+      <div className="col-span-2 space-y-2">
+        <label className="block text-slate-400">Хүртээмж</label>
+        <OptionPicker options={ACCESSIBILITY} value={draft.accessibility ?? []} onChange={(accessibility) => setDraft({ ...draft, accessibility })} />
+      </div>
+      <fieldset className="col-span-2 space-y-2 border border-slate-800 rounded-xl p-3">
+        <legend className="px-1 text-slate-400">Анхны үнэлгээ (сэтгэгдлүүдтэй хамт дундажлагдана)</legend>
+        <ScoreFields
+          value={draft}
+          onChange={(scores) =>
+            setDraft({
+              ...draft,
+              wifi_mbps: scores.wifi_mbps ?? undefined,
+              quiet_rating: scores.quiet_rating ?? undefined,
+              outlet_rating: scores.outlet_rating ?? undefined,
+            })
+          }
+        />
+      </fieldset>
 
       <div className="col-span-2 space-y-2">
         <label className="block text-slate-400">Зураг</label>

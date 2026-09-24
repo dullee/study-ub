@@ -2,12 +2,26 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { AMENITIES, displayName, googleMapsUrl, PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
+import {
+  ACCESSIBILITY,
+  ACCESSIBILITY_GROUPS,
+  AMENITIES,
+  displayName,
+  googleMapsUrl,
+  PLACEHOLDER_IMAGE,
+  Review,
+  spotCategory,
+  StudySpot,
+  TAG_INFO,
+} from "@/types";
 import { fetchReviews, insertReview } from "@/lib/supabase/spots";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { reviewsForSpot, saveLocalReview } from "@/lib/localStore";
 import Stars from "@/components/Stars";
 import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
+import { formatOutlets, formatQuiet, formatWifi, summarizeSpot } from "@/lib/scores";
+import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
+import ReviewScoreLine from "@/components/ReviewScoreLine";
 
 interface SpotDetailDialogProps {
   spot: StudySpot;
@@ -43,7 +57,7 @@ export default function SpotDetailDialog({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");
-  const [wifi, setWifi] = useState("");
+  const [scores, setScores] = useState<ScoreValues>({});
   const [rating, setRating] = useState(5);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -88,14 +102,64 @@ export default function SpotDetailDialog({
     reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
 
   const status = now === null ? null : openStatus(spot, now);
-  const amenities = AMENITIES.filter((amenity) => spot.amenities?.includes(amenity.key));
+  const category = spotCategory(spot.category);
+  const accessibility = ACCESSIBILITY_GROUPS.map((group) => ({
+    ...group,
+    items: ACCESSIBILITY.filter(
+      (item) => item.group === group.key && spot.accessibility?.includes(item.key)
+    ),
+  })).filter((group) => group.items.length > 0);
 
-  const facts = [
+  // Шошго, төрөл, үйлчилгээг нэг жагсаалтын оронд бүлгээр нь харуулна.
+  const tagChips = (group: string) =>
+    spot.tags
+      .filter((tag) => (TAG_INFO[tag]?.group ?? "other") === group)
+      .map((tag) => ({ key: `tag:${tag}`, icon: TAG_INFO[tag]?.icon ?? "🏷️", label: tag }));
+  const featureGroups = [
+    {
+      key: "type",
+      title: "Төрөл",
+      chips: [
+        ...(category ? [{ key: `category:${category.key}`, icon: category.icon, label: category.label }] : []),
+        ...tagChips("type").filter((chip) => chip.label.toLowerCase() !== category?.label.toLowerCase()),
+      ],
+    },
+    { key: "environment", title: "Орчин", chips: tagChips("environment") },
+    {
+      key: "amenities",
+      title: "Үйлчилгээ",
+      chips: [
+        ...tagChips("amenities"),
+        ...AMENITIES.filter((amenity) => spot.amenities?.includes(amenity.key)),
+      ],
+    },
+    { key: "other", title: "Бусад", chips: tagChips("other") },
+  ].filter((group) => group.chips.length > 0);
+
+  // Газар нэмэгчийн утга + сэтгэгдлүүдийн утгаас нэгтгэсэн оноо.
+  const summary = summarizeSpot(spot, reviews);
+  const votes = (count: number) => `${count} үнэлгээнээс`;
+  const facts: { icon: string; label: string; value?: string; note?: string }[] = [
     { icon: "📍", label: "Байршил", value: spot.location },
     { icon: "⏰", label: "Цагийн хуваарь (өдөр бүр)", value: status ? status.schedule : spot.hours },
-    { icon: "⚡", label: "Wi-Fi", value: spot.wifi_speed },
-    { icon: "🤫", label: "Чимээгүй байдал", value: spot.quiet_score },
-    { icon: "🔌", label: "Розетка", value: spot.socket_score },
+    {
+      icon: "⚡",
+      label: "Wi-Fi (медиан)",
+      value: summary.wifi && formatWifi(summary.wifi),
+      note: summary.wifi && votes(summary.wifi.count),
+    },
+    {
+      icon: "🤫",
+      label: "Чимээгүй байдал",
+      value: summary.quiet && formatQuiet(summary.quiet),
+      note: summary.quiet && votes(summary.quiet.count),
+    },
+    {
+      icon: "🔌",
+      label: "Розетка",
+      value: summary.outlets && formatOutlets(summary.outlets),
+      note: summary.outlets && votes(summary.outlets.count),
+    },
   ].filter((fact) => fact.value);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -106,8 +170,10 @@ export default function SpotDetailDialog({
     const draft = {
       spot_id: spot.id,
       comment,
-      wifi_speed_test: wifi,
       rating,
+      wifi_mbps: scores.wifi_mbps ?? null,
+      quiet_rating: scores.quiet_rating ?? null,
+      outlet_rating: scores.outlet_rating ?? null,
       user_id: user.id,
       author_name: displayName(user),
     };
@@ -127,7 +193,7 @@ export default function SpotDetailDialog({
     setReviews((prev) => [added, ...prev]);
     onReviewAdded?.(added);
     setComment("");
-    setWifi("");
+    setScores({});
     setRating(5);
     setSaving(false);
   };
@@ -185,15 +251,15 @@ export default function SpotDetailDialog({
                     </button>
                   ))}
                 </div>
-                <input
-                  type="text"
-                  value={wifi}
-                  onChange={(e) => setWifi(e.target.value)}
-                  placeholder="⚡ Wi-Fi хурд (ж: 72 Mbps)"
-                  aria-label="Wi-Fi хурдны тест"
-                  className={`${inputClass} sm:max-w-[220px]`}
-                />
               </div>
+              <details className="group/scores bg-slate-900/40 border border-slate-800 rounded-lg">
+                <summary className="cursor-pointer select-none px-3 py-2 text-slate-300">
+                  ⚡🤫🔌 Wi-Fi, чимээгүй байдал, розеткыг үнэлэх (заавал биш)
+                </summary>
+                <div className="px-3 pb-3">
+                  <ScoreFields value={scores} onChange={setScores} />
+                </div>
+              </details>
               <textarea
                 required
                 value={comment}
@@ -238,9 +304,7 @@ export default function SpotDetailDialog({
                   </div>
                   <Stars value={review.rating} className="text-sm" />
                   <p className="text-slate-200 whitespace-pre-line">{review.comment}</p>
-                  {review.wifi_speed_test ? (
-                    <p className="text-xs text-slate-400">⚡ {review.wifi_speed_test}</p>
-                  ) : null}
+                  <ReviewScoreLine review={review} />
                 </li>
               ))
             )}
@@ -261,6 +325,11 @@ export default function SpotDetailDialog({
               ✕
             </button>
             <div className="absolute bottom-0 left-0 right-0 p-5">
+              {category ? (
+                <span className="inline-block mb-2 text-xs font-semibold bg-slate-900/80 backdrop-blur text-indigo-300 border border-slate-700 px-2.5 py-1 rounded-lg">
+                  {category.icon} {category.label}
+                </span>
+              ) : null}
               <h2 id="spot-dialog-title" className="text-2xl font-bold text-white">
                 {spot.name}
               </h2>
@@ -282,6 +351,9 @@ export default function SpotDetailDialog({
           </div>
 
           <div className="p-5 space-y-5">
+            {spot.description ? (
+              <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-line">{spot.description}</p>
+            ) : null}
             {status ? (
               <p className={`text-sm font-semibold ${STATUS_TONE[status.tone]}`}>● {status.detail}</p>
             ) : null}
@@ -292,38 +364,28 @@ export default function SpotDetailDialog({
                     {fact.icon} {fact.label}
                   </p>
                   <p className="text-sm text-white font-medium mt-0.5">{fact.value}</p>
+                  {fact.note ? <p className="text-[11px] text-slate-500 mt-0.5">{fact.note}</p> : null}
                 </div>
               ))}
             </div>
 
-            {amenities.length > 0 ? (
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-slate-400">Үйлчилгээ</h3>
-                <ul className="grid grid-cols-2 gap-2">
-                  {amenities.map((amenity) => (
-                    <li
-                      key={amenity.key}
-                      className="flex items-center gap-2 text-sm text-slate-200 bg-slate-800/50 border border-slate-700/60 rounded-xl px-3 py-2"
-                    >
-                      <span aria-hidden="true">{amenity.icon}</span>
-                      {amenity.label}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+            {featureGroups.map((group) => (
+              <section key={group.key} className="space-y-2">
+                <h3 className="text-xs font-semibold text-slate-400">{group.title}</h3>
+                <ChipList chips={group.chips} />
+              </section>
+            ))}
 
-            {spot.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {spot.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-xs bg-slate-800 border border-slate-700 text-slate-300 px-2.5 py-1 rounded-lg"
-                  >
-                    {tag}
-                  </span>
+            {accessibility.length > 0 ? (
+              <section className="space-y-2">
+                <h3 className="text-xs font-semibold text-slate-400">Хүртээмж</h3>
+                {accessibility.map((group) => (
+                  <div key={group.key} className="space-y-1.5">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">{group.label}</p>
+                    <ChipList chips={group.items} />
+                  </div>
                 ))}
-              </div>
+              </section>
             ) : null}
 
             <div className="grid grid-cols-2 gap-2">
@@ -350,5 +412,21 @@ export default function SpotDetailDialog({
         </aside>
       </div>
     </div>
+  );
+}
+
+function ChipList({ chips }: { chips: readonly { key: string; icon: string; label: string }[] }) {
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {chips.map((chip) => (
+        <li
+          key={chip.key}
+          className="flex items-center gap-1.5 text-xs text-slate-200 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg"
+        >
+          <span aria-hidden="true">{chip.icon}</span>
+          {chip.label}
+        </li>
+      ))}
+    </ul>
   );
 }

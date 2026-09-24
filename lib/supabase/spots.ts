@@ -1,5 +1,6 @@
 import { PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
 import { supabase, supabaseAuthed } from "@/lib/supabase/client";
+import { ReviewScores } from "@/lib/scores";
 
 type SpotRow = {
   id: number;
@@ -10,13 +11,16 @@ type SpotRow = {
   lng: number;
   tags: string[] | null;
   image: string | null;
-  wifi_speed: string | null;
-  quiet_score: string | null;
-  socket_score: string | null;
+  wifi_mbps: number | null;
+  quiet_rating: number | null;
+  outlet_rating: number | null;
   is_24h: boolean | null;
   status: StudySpot["status"] | null;
   maps_url: string | null;
   amenities: string[] | null;
+  category: StudySpot["category"] | null;
+  description: string | null;
+  accessibility: string[] | null;
 };
 
 function mapSpot(row: SpotRow): StudySpot {
@@ -29,13 +33,16 @@ function mapSpot(row: SpotRow): StudySpot {
     lng: row.lng,
     tags: row.tags ?? [],
     image: row.image ?? PLACEHOLDER_IMAGE,
-    wifi_speed: row.wifi_speed ?? undefined,
-    quiet_score: row.quiet_score ?? undefined,
-    socket_score: row.socket_score ?? undefined,
+    wifi_mbps: row.wifi_mbps ?? undefined,
+    quiet_rating: row.quiet_rating ?? undefined,
+    outlet_rating: row.outlet_rating ?? undefined,
     is_24h: row.is_24h ?? undefined,
     status: row.status ?? "approved",
     maps_url: row.maps_url ?? undefined,
     amenities: row.amenities ?? [],
+    category: row.category ?? undefined,
+    description: row.description ?? undefined,
+    accessibility: row.accessibility ?? [],
   };
 }
 
@@ -48,13 +55,16 @@ function spotPayload(spot: Omit<StudySpot, "id">) {
     lng: spot.lng,
     tags: spot.tags,
     image: spot.image,
-    wifi_speed: spot.wifi_speed ?? null,
-    quiet_score: spot.quiet_score ?? null,
-    socket_score: spot.socket_score ?? null,
+    wifi_mbps: spot.wifi_mbps ?? null,
+    quiet_rating: spot.quiet_rating ?? null,
+    outlet_rating: spot.outlet_rating ?? null,
     is_24h: spot.is_24h ?? false,
     status: spot.status ?? "pending",
     maps_url: spot.maps_url?.trim() || null,
     amenities: spot.amenities ?? [],
+    category: spot.category ?? null,
+    description: spot.description?.trim() || null,
+    accessibility: spot.accessibility ?? [],
   };
 }
 
@@ -97,15 +107,17 @@ export async function fetchReviews(spotId: number): Promise<Review[] | null> {
   return data as Review[];
 }
 
-// Картууд дээрх дундаж үнэлгээнд: бүх сэтгэгдлийн зөвхөн spot_id, rating.
-export async function fetchReviewRatings(): Promise<Pick<Review, "spot_id" | "rating">[] | null> {
+// Картын оноонд: бүх сэтгэгдлийн зөвхөн тоон утгууд.
+export async function fetchReviewScores(): Promise<ReviewScores[] | null> {
   if (!supabase) return null;
-  const { data, error } = await supabase.from("reviews").select("spot_id, rating");
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("spot_id, rating, wifi_mbps, quiet_rating, outlet_rating");
   if (error) {
-    console.error("Supabase review ratings:", error.message);
+    console.error("Supabase review scores:", error.message);
     return null;
   }
-  return data as Pick<Review, "spot_id" | "rating">[];
+  return data as ReviewScores[];
 }
 
 export async function insertReview(
@@ -179,8 +191,10 @@ export async function updateReview(review: Review): Promise<Review | null> {
     .from("reviews")
     .update({
       comment: review.comment,
-      wifi_speed_test: review.wifi_speed_test,
       rating: review.rating,
+      wifi_mbps: review.wifi_mbps ?? null,
+      quiet_rating: review.quiet_rating ?? null,
+      outlet_rating: review.outlet_rating ?? null,
     })
     .eq("id", review.id)
     .select("*")

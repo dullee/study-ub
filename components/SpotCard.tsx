@@ -1,29 +1,35 @@
 "use client";
 
-import { googleMapsUrl, PLACEHOLDER_IMAGE, RatingSummary, StudySpot } from "@/types";
+import { googleMapsUrl, OUTLET_LEVELS, PLACEHOLDER_IMAGE, QUIET_LEVELS, StudySpot } from "@/types";
 import Stars from "@/components/Stars";
 import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
+import { formatWifi, SpotSummary } from "@/lib/scores";
 
 interface SpotCardProps {
   spot: StudySpot;
   onFocus: (lat: number, lng: number) => void;
   onOpenDetails: (spot: StudySpot) => void;
-  // null — үнэлгээ ачаалж байна; undefined — сэтгэгдэлгүй.
-  rating: RatingSummary | undefined | null;
+  // Газар нэмэгч + сэтгэгдлүүдээс нэгтгэсэн оноо (lib/scores.ts).
+  summary: SpotSummary | undefined;
+  // Сэтгэгдэл ачаалж байх үед одны үнэлгээний оронд placeholder.
+  ratingsLoading: boolean;
 }
 
-export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotCardProps) {
+// Карт бүхэлдээ дарагдана: гарчгийн товчны after:inset-0 картыг бүрхэнэ, доорх товчнууд z-10-оор дээр нь гарна.
+export default function SpotCard({ spot, onFocus, onOpenDetails, summary, ratingsLoading }: SpotCardProps) {
   const now = useNow();
   const status = now === null ? null : openStatus(spot, now);
+  const rating = summary?.rating;
+  const level = (levels: readonly string[], value: number) => levels[Math.round(value) - 1];
+  const scoreLine = [
+    summary?.wifi ? `⚡ ${formatWifi(summary.wifi)}` : null,
+    summary?.quiet ? `🤫 ${level(QUIET_LEVELS, summary.quiet.value)}` : null,
+    summary?.outlets ? `🔌 ${level(OUTLET_LEVELS, summary.outlets.value)}` : null,
+  ].filter(Boolean);
   return (
-    <div className="bg-slate-800/50 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-500 transition-all group shadow-lg">
+    <div className="relative bg-slate-800/50 border border-slate-700/60 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-slate-500 transition-all group shadow-lg cursor-pointer has-focus-visible:ring-2 has-focus-visible:ring-indigo-500">
       <div>
-        <button
-          type="button"
-          onClick={() => onOpenDetails(spot)}
-          aria-label={`${spot.name} — дэлгэрэнгүй`}
-          className="relative block h-44 w-full overflow-hidden bg-slate-900 cursor-pointer"
-        >
+        <div className="relative h-44 w-full overflow-hidden bg-slate-900">
           <img
             src={spot.image || PLACEHOLDER_IMAGE}
             alt={spot.name}
@@ -36,20 +42,26 @@ export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotC
           >
             {now === null ? "⏰" : status ? `● ${status.short}` : `⏰ ${spot.hours}`}
           </span>
-        </button>
+        </div>
         <div className="p-4 space-y-3">
           <h3 className="font-bold text-white text-base group-hover:text-indigo-400 transition-colors">
-            <button type="button" onClick={() => onOpenDetails(spot)} className="text-left">
+            <button
+              type="button"
+              data-card-open
+              onClick={() => onOpenDetails(spot)}
+              aria-label={`${spot.name} — дэлгэрэнгүй ба сэтгэгдэл`}
+              className="text-left focus:outline-none after:absolute after:inset-0 after:content-['']"
+            >
               {spot.name}
             </button>
           </h3>
           <div className="flex items-center gap-1.5 text-xs min-h-4">
-            {rating === null ? (
+            {ratingsLoading ? (
               <span className="h-3 w-28 rounded bg-slate-700/70 animate-pulse" aria-hidden="true" />
             ) : rating ? (
               <>
-                <Stars value={rating.average} />
-                <span className="text-slate-300 font-semibold">{rating.average.toFixed(1)}</span>
+                <Stars value={rating.value} />
+                <span className="text-slate-300 font-semibold">{rating.value.toFixed(1)}</span>
                 <span className="text-slate-500">({rating.count})</span>
               </>
             ) : (
@@ -57,13 +69,7 @@ export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotC
             )}
           </div>
           <p className="text-xs text-slate-400 flex items-center gap-1">📍 {spot.location}</p>
-          {(spot.wifi_speed || spot.quiet_score || spot.socket_score) && (
-            <p className="text-[11px] text-slate-400">
-              {spot.wifi_speed ? `⚡ ${spot.wifi_speed}` : ""}
-              {spot.quiet_score ? ` · 🤫 ${spot.quiet_score}` : ""}
-              {spot.socket_score ? ` · 🔌 ${spot.socket_score}` : ""}
-            </p>
-          )}
+          {scoreLine.length > 0 ? <p className="text-[11px] text-slate-400">{scoreLine.join(" · ")}</p> : null}
           <div className="flex flex-wrap gap-1.5 pt-1">
             {spot.tags.map((tag, idx) => (
               <span
@@ -78,8 +84,9 @@ export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotC
       </div>
       <div className="p-4 pt-0 grid grid-cols-2 gap-2">
         <button
+          type="button"
           onClick={() => onFocus(spot.lat, spot.lng)}
-          className="w-full py-2 bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-slate-700 hover:border-indigo-500"
+          className="relative z-10 w-full py-2 bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-slate-700 hover:border-indigo-500"
         >
           Карт дээр 🎯
         </button>
@@ -87,16 +94,10 @@ export default function SpotCard({ spot, onFocus, onOpenDetails, rating }: SpotC
           href={googleMapsUrl(spot)}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-slate-700 text-center"
+          className="relative z-10 block w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-slate-700 text-center"
         >
           Google Maps
         </a>
-        <button
-          onClick={() => onOpenDetails(spot)}
-          className="col-span-2 w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-slate-700"
-        >
-          Дэлгэрэнгүй ба сэтгэгдэл
-        </button>
       </div>
     </div>
   );

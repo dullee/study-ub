@@ -1,10 +1,18 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
-import { PLACEHOLDER_IMAGE, StudySpot } from "@/types";
+import {
+  ACCESSIBILITY,
+  AMENITIES,
+  PLACEHOLDER_IMAGE,
+  SPOT_CATEGORIES,
+  SpotCategory,
+  StudySpot,
+} from "@/types";
+import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import { isShortMapsLink, MapsLinkInfo, parseMapsLink } from "@/lib/maps";
-import AmenityPicker from "@/components/AmenityPicker";
+import OptionPicker from "@/components/OptionPicker";
 
 type MapsStatus = { kind: "hint" | "loading" | "ok" | "error"; text: string };
 
@@ -29,6 +37,10 @@ const emptyForm = {
   tags: "",
   maps_url: "",
   amenities: [] as string[],
+  accessibility: [] as string[],
+  scores: {} as ScoreValues,
+  category: "" as SpotCategory | "",
+  description: "",
 };
 
 export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModalProps) {
@@ -143,6 +155,12 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       is_24h: tags.includes("24 цаг") || /24/.test(formData.hours),
       maps_url: formData.maps_url.trim() || undefined,
       amenities: formData.amenities,
+      accessibility: formData.accessibility,
+      wifi_mbps: formData.scores.wifi_mbps ?? undefined,
+      quiet_rating: formData.scores.quiet_rating ?? undefined,
+      outlet_rating: formData.scores.outlet_rating ?? undefined,
+      category: formData.category || undefined,
+      description: formData.description.trim() || undefined,
     };
     await onAddSpot(newSpot);
     setSaving(false);
@@ -190,6 +208,35 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ж: Coffee Names (Сүхбаатарын салбар)"
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-400 mb-1">Газрын төрөл</label>
+            <select
+              required
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value as SpotCategory | "" })}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+            >
+              <option value="" disabled>
+                Сонгоно уу
+              </option>
+              {SPOT_CATEGORIES.map((category) => (
+                <option key={category.key} value={category.key}>
+                  {category.icon} {category.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-slate-400 mb-1">Товч тайлбар</label>
+            <textarea
+              rows={3}
+              maxLength={500}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Ж: 2 давхарт чимээгүй уншлагын танхимтай, оюутны үнэмлэхээр 10% хямдралтай."
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -266,6 +313,13 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               />
             </div>
           )}
+          <fieldset className="space-y-3 bg-slate-800/30 border border-slate-800 rounded-xl p-3">
+            <legend className="px-1 text-slate-400">Орчны үнэлгээ (заавал биш)</legend>
+            <ScoreFields
+              value={formData.scores}
+              onChange={(scores) => setFormData({ ...formData, scores })}
+            />
+          </fieldset>
           <div>
             <label className="block text-slate-400 mb-1">Онцлог Тагууд (Таслалаар тусгаарлах)</label>
             <input
@@ -278,9 +332,18 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
           </div>
           <div>
             <label className="block text-slate-400 mb-1">Үйлчилгээ</label>
-            <AmenityPicker
+            <OptionPicker
+              options={AMENITIES}
               value={formData.amenities}
               onChange={(amenities) => setFormData({ ...formData, amenities })}
+            />
+          </div>
+          <div>
+            <label className="block text-slate-400 mb-1">Хүртээмж</label>
+            <OptionPicker
+              options={ACCESSIBILITY}
+              value={formData.accessibility}
+              onChange={(accessibility) => setFormData({ ...formData, accessibility })}
             />
           </div>
           {error ? <p className="text-rose-400">{error}</p> : null}

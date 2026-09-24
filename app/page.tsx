@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { StudySpot, AVAILABLE_TAGS, RatingSummary, Review, summarizeRatings } from "@/types";
+import { StudySpot, AVAILABLE_TAGS, Review } from "@/types";
 import { initialSpots } from "@/data/initialSpots";
 import SpotCard from "@/components/SpotCard";
 import FilterSection from "@/components/FilterSection";
@@ -10,7 +10,8 @@ import AddSpotModal from "@/components/AddSpotModal";
 import Header from "@/components/Header";
 import SpotDetailDialog from "@/components/SpotDetailDialog";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
-import { fetchReviewRatings, fetchSpots, insertSpot } from "@/lib/supabase/spots";
+import { fetchReviewScores, fetchSpots, insertSpot } from "@/lib/supabase/spots";
+import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { sortByActiveTags } from "@/lib/spotSort";
 
@@ -33,31 +34,30 @@ export default function Home() {
   const [focusCoords, setFocusCoords] = useState<[number, number] | null>(null);
   const [detailSpot, setDetailSpot] = useState<StudySpot | null>(null);
   const closeDetails = useCallback(() => setDetailSpot(null), []);
-  // null — ачаалж байна.
-  const [ratings, setRatings] = useState<Record<number, RatingSummary> | null>(null);
+  // Бүх сэтгэгдлийн тоон утгууд (үнэлгээ, Wi-Fi, чимээгүй, розетка). null — ачаалж байна.
+  const [reviewScores, setReviewScores] = useState<ReviewScores[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    async function loadRatings() {
-      const remote = isSupabaseConfigured ? await fetchReviewRatings() : null;
-      if (!cancelled) setRatings(summarizeRatings(remote ?? loadLocalReviews()));
+    async function loadScores() {
+      const remote = isSupabaseConfigured ? await fetchReviewScores() : null;
+      if (!cancelled) setReviewScores(remote ?? loadLocalReviews());
     }
-    loadRatings();
+    loadScores();
     return () => {
       cancelled = true;
     };
   }, []);
 
   const handleReviewAdded = useCallback((review: Review) => {
-    setRatings((prev) => {
-      const current = prev?.[review.spot_id] ?? { average: 0, count: 0 };
-      const count = current.count + 1;
-      return {
-        ...prev,
-        [review.spot_id]: { average: (current.average * current.count + review.rating) / count, count },
-      };
-    });
+    setReviewScores((prev) => [...(prev ?? []), review]);
   }, []);
+
+  // Газар нэмэгчийн утга + сэтгэгдлүүдээс нэгтгэсэн оноо — карт, эрэмбэлэлтэд.
+  const summaries = useMemo(
+    () => summarizeSpots(spots, reviewScores ?? []),
+    [spots, reviewScores]
+  );
   const [usingRemote, setUsingRemote] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -106,8 +106,8 @@ export default function Home() {
         activeTags.includes("Бүгд") || activeTags.every((t) => spot.tags.includes(t));
       return matchesSearch && matchesTags;
     });
-    return sortByActiveTags(matching, activeTags);
-  }, [spots, searchQuery, activeTags]);
+    return sortByActiveTags(matching, activeTags, summaries);
+  }, [spots, searchQuery, activeTags, summaries]);
 
   const handleAddSpot = async (draft: Omit<StudySpot, "id">) => {
     const pending = { ...draft, status: "pending" as const };
@@ -164,7 +164,8 @@ export default function Home() {
                   spot={spot}
                   onFocus={handleFocus}
                   onOpenDetails={setDetailSpot}
-                  rating={ratings ? ratings[spot.id] : null}
+                  summary={summaries[spot.id]}
+                  ratingsLoading={reviewScores === null}
                 />
               ))}
             </div>
