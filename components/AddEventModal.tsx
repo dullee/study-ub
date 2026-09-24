@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useI18n } from "@/components/LanguageProvider";
 import { StudyEvent, StudySpot } from "@/types";
+import { normalizeChatUrl } from "@/lib/chatLinks";
 
 export type EventDraft = Omit<StudyEvent, "id" | "created_at" | "host_name" | "user_id">;
 
@@ -11,7 +12,8 @@ interface AddEventModalProps {
   spots: StudySpot[];
   hostName: string;
   onClose: () => void;
-  onAddEvent: (event: EventDraft) => Promise<boolean>;
+  // chatUrl — групп чатын холбоос (заавал биш), эвент үүссэний дараа тусад нь хадгалагдана.
+  onAddEvent: (event: EventDraft, chatUrl: string | null) => Promise<boolean>;
 }
 
 const OTHER_PLACE = "other";
@@ -34,6 +36,7 @@ const emptyForm = {
   startsAt: "",
   maxPeople: "",
   description: "",
+  chatUrl: "",
 };
 
 export default function AddEventModal({
@@ -61,6 +64,11 @@ export default function AddEventModal({
       setError(t.eventInPast);
       return;
     }
+    const chatUrl = formData.chatUrl.trim() ? normalizeChatUrl(formData.chatUrl) : null;
+    if (formData.chatUrl.trim() && !chatUrl) {
+      setError(t.chatLinkInvalid);
+      return;
+    }
     setSaving(true);
     setError("");
     const ok = await onAddEvent({
@@ -72,7 +80,7 @@ export default function AddEventModal({
       lng: spot?.lng ?? null,
       starts_at: new Date(formData.startsAt).toISOString(),
       max_people: formData.maxPeople ? Number(formData.maxPeople) : null,
-    });
+    }, chatUrl);
     setSaving(false);
     if (!ok) {
       setError(t.eventSaveFailed);
@@ -171,6 +179,18 @@ export default function AddEventModal({
               placeholder={t.eventDetailsPlaceholder}
               className={inputClass}
             />
+          </div>
+          <div>
+            <label className="block text-slate-400 mb-1">{t.chatLinkLabel}</label>
+            <input
+              type="url"
+              inputMode="url"
+              value={formData.chatUrl}
+              onChange={(e) => setFormData({ ...formData, chatUrl: e.target.value })}
+              placeholder={t.chatLinkPlaceholder}
+              className={inputClass}
+            />
+            <p className="mt-1 text-slate-500">{t.chatLinkHint}</p>
           </div>
           {error ? <p className="text-rose-400">{error}</p> : null}
           <button

@@ -6,13 +6,26 @@ import { UserButton, useAuth } from "@clerk/nextjs";
 import {
   ACCESSIBILITY,
   AMENITIES,
+  EventAttendee,
   googleMapsUrl,
   PLACEHOLDER_IMAGE,
   Review,
   SPOT_CATEGORIES,
   SpotCategory,
+  StudyEvent,
   StudySpot,
 } from "@/types";
+import {
+  deleteChatLink,
+  deleteEvent,
+  fetchAttendees,
+  fetchChatLink,
+  fetchEvents,
+  saveChatLink,
+  updateEvent,
+} from "@/lib/supabase/events";
+import { normalizeChatUrl } from "@/lib/chatLinks";
+import { formatEventTime } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import OptionPicker from "@/components/OptionPicker";
@@ -29,28 +42,40 @@ import {
   updateSpot,
 } from "@/lib/supabase/spots";
 import {
+  loadLocalAttendees,
+  loadLocalChatLink,
+  loadLocalEvents,
   loadLocalReviews,
   loadLocalSpots,
+  removeLocalEvent,
   removeLocalReview,
+  saveLocalChatLink,
   saveLocalReview,
   saveLocalSpots,
+  updateLocalEvent,
 } from "@/lib/localStore";
 
 const inputClass =
   "w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500";
 
-type Tab = "pending" | "places" | "comments";
+type Tab = "pending" | "places" | "comments" | "events";
 
 // app/admin/page.tsx сервер дээр Clerk-ийн админ эрхийг шалгасны дараа л харагдана.
 export default function AdminPanel() {
   const { isLoaded } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [tab, setTab] = useState<Tab>("pending");
   const [remote, setRemote] = useState(false);
   const [spots, setSpots] = useState<StudySpot[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [editingSpotId, setEditingSpotId] = useState<number | null>(null);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [events, setEvents] = useState<StudyEvent[]>([]);
+  const [attendees, setAttendees] = useState<EventAttendee[]>([]);
+  const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  const [eventError, setEventError] = useState("");
+  // "Өнгөрсөн" тэмдэглэгээнд — панел нээгдсэн мөчийн цаг.
+  const [nowMs] = useState(() => Date.now());
 
   useEffect(() => {
     // Clerk ачаалагдаж token бэлэн болсны дараа л уншина — эс бөгөөс хүлээгдэж буй газрууд харагдахгүй.
@@ -58,10 +83,17 @@ export default function AdminPanel() {
     let cancelled = false;
     async function load() {
       if (isSupabaseConfigured) {
-        const [spotRows, reviewRows] = await Promise.all([fetchAllSpots(), fetchAllReviews()]);
+        const [spotRows, reviewRows, eventRows, attendeeRows] = await Promise.all([
+          fetchAllSpots(),
+          fetchAllReviews(),
+          fetchEvents(),
+          fetchAttendees(),
+        ]);
         if (!cancelled && spotRows && reviewRows) {
           setSpots(spotRows);
           setReviews(reviewRows);
+          setEvents(eventRows ?? []);
+          setAttendees(attendeeRows ?? []);
           setRemote(true);
           return;
         }
@@ -69,6 +101,8 @@ export default function AdminPanel() {
       if (!cancelled) {
         setSpots(loadLocalSpots());
         setReviews(loadLocalReviews());
+        setEvents(loadLocalEvents());
+        setAttendees(loadLocalAttendees());
       }
     }
     load();
@@ -152,7 +186,42 @@ export default function AdminPanel() {
     setReviews(reviews.filter((item) => item.id !== id));
   };
 
+  const saveEvent = async (updated: StudyEvent, chatUrl: string | null, chatChanged: boolean) => {
+    if (remote) {
+      const saved = await updateEvent(updated);
+      if (!saved) return false;
+      if (chatChanged && !(chatUrl ? await saveChatLink(updated.id, chatUrl) : await deleteChatLink(updated.id))) {
+        return false;
+      }
+      setEvents((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
+    } else {
+      updateLocalEvent(updated);
+      if (chatChanged) saveLocalChatLink(updated.id, chatUrl);
+      setEvents((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    }
+    setEditingEventId(null);
+    return true;
+  };
+
+  // Эвент устгахад бүртгэл, групп чатын холбоос ч устана — тиймээс баталгаажуулна.
+  const removeEvent = async (event: StudyEvent) => {
+    if (!window.confirm(t.confirmDeleteEvent(event.title))) return;
+    setEventError("");
+    if (remote) {
+      if (!(await deleteEvent(event.id))) {
+        setEventError(t.deleteFailed);
+        return;
+      }
+    } else {
+      removeLocalEvent(event.id);
+    }
+    setEvents((prev) => prev.filter((item) => item.id !== event.id));
+    setAttendees((prev) => prev.filter((attendee) => attendee.event_id !== event.id));
+  };
+
   const spotName = (id: number) => spots.find((spot) => spot.id === id)?.name ?? `#${id}`;
+  // Шинэ нь эхэнд — удахгүй болох эвентүүд дээд талд.
+  const sortedEvents = [...events].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
   const pending = spots.filter((spot) => spot.status === "pending");
 
   return (
@@ -176,6 +245,7 @@ export default function AdminPanel() {
               ["pending", t.tabPending(pending.length)],
               ["places", t.tabPlaces],
               ["comments", t.tabReviews],
+              ["events", t.tabEvents],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -296,6 +366,60 @@ export default function AdminPanel() {
                   )}
                 </article>
               ))
+            )}
+          </section>
+        )}
+
+        {tab === "events" && (
+          <section className="space-y-3">
+            {eventError ? <p className="text-sm text-rose-400">{eventError}</p> : null}
+            {sortedEvents.length === 0 ? (
+              <p className="text-sm text-slate-500">{t.noEventsAdmin}</p>
+            ) : (
+              sortedEvents.map((event) => {
+                const going = attendees.filter((attendee) => attendee.event_id === event.id).length;
+                const isPast = new Date(event.starts_at).getTime() < nowMs;
+                return (
+                  <article key={event.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40">
+                    {editingEventId === event.id ? (
+                      <EventEditForm
+                        event={event}
+                        remote={remote}
+                        onSave={saveEvent}
+                        onCancel={() => setEditingEventId(null)}
+                      />
+                    ) : (
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-start">
+                        <div className="space-y-1 min-w-0">
+                          <h2 className="font-semibold">
+                            {event.title}
+                            {isPast ? (
+                              <span className="ml-2 align-middle text-[10px] font-semibold bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">
+                                {t.statusPast}
+                              </span>
+                            ) : null}
+                          </h2>
+                          <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
+                          <p className="text-xs text-slate-400">
+                            📍 {event.place_name} · {t.host} {event.host_name}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {t.attending} {going}
+                            {event.max_people !== null ? ` / ${event.max_people}` : ""}
+                          </p>
+                          {event.description ? (
+                            <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line">{event.description}</p>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap gap-2 shrink-0">
+                          <button onClick={() => setEditingEventId(event.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">{t.edit}</button>
+                          <button onClick={() => removeEvent(event)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">{t.delete}</button>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })
             )}
           </section>
         )}
@@ -509,6 +633,126 @@ function SpotEditForm({
       <div className="sm:col-span-2 flex gap-2">
         <button disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
           {saving ? (imageFile ? t.uploadingImage : t.saving) : t.save}
+        </button>
+        <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-lg bg-slate-700">
+          {t.cancel}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// datetime-local талбарт хөтчийн цагийн бүсээр харуулна.
+function toLocalInput(iso: string) {
+  const date = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+// Админы эвент засах маягт: үндсэн мэдээлэл ба групп чатын холбоос.
+function EventEditForm({
+  event,
+  remote,
+  onSave,
+  onCancel,
+}: {
+  event: StudyEvent;
+  remote: boolean;
+  onSave: (event: StudyEvent, chatUrl: string | null, chatChanged: boolean) => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const { t } = useI18n();
+  const [draft, setDraft] = useState({
+    title: event.title,
+    place_name: event.place_name,
+    startsAt: toLocalInput(event.starts_at),
+    maxPeople: event.max_people === null ? "" : String(event.max_people),
+    description: event.description,
+  });
+  // undefined — ачаалж байна; холбоосыг ачаалсны дараа л засварлана.
+  const [originalChat, setOriginalChat] = useState<string | null | undefined>(undefined);
+  const [chatUrl, setChatUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const value = remote ? await fetchChatLink(event.id) : loadLocalChatLink(event.id);
+      if (cancelled) return;
+      setOriginalChat(value ?? null);
+      setChatUrl(value ?? "");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [event.id, remote]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    const normalized = chatUrl.trim() ? normalizeChatUrl(chatUrl) : null;
+    if (chatUrl.trim() && !normalized) {
+      setError(t.chatLinkInvalid);
+      return;
+    }
+    setSaving(true);
+    setError("");
+    const ok = await onSave(
+      {
+        ...event,
+        title: draft.title.trim(),
+        place_name: draft.place_name.trim(),
+        starts_at: new Date(draft.startsAt).toISOString(),
+        max_people: draft.maxPeople ? Number(draft.maxPeople) : null,
+        description: draft.description.trim(),
+      },
+      normalized,
+      originalChat !== undefined && normalized !== originalChat
+    );
+    if (!ok) {
+      setError(t.saveFailed);
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+      <label className="space-y-1 sm:col-span-2">
+        <span className="block text-slate-400">{t.eventTitle}</span>
+        <input className={inputClass} required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-slate-400">{t.placeName}</span>
+        <input className={inputClass} required value={draft.place_name} onChange={(e) => setDraft({ ...draft, place_name: e.target.value })} />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-slate-400">{t.dateTime}</span>
+        <input className={inputClass} type="datetime-local" required value={draft.startsAt} onChange={(e) => setDraft({ ...draft, startsAt: e.target.value })} />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-slate-400">{t.maxPeople}</span>
+        <input className={inputClass} type="number" min={1} placeholder={t.unlimited} value={draft.maxPeople} onChange={(e) => setDraft({ ...draft, maxPeople: e.target.value })} />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-slate-400">{t.chatLinkLabel}</span>
+        <input
+          className={inputClass}
+          type="url"
+          inputMode="url"
+          placeholder={originalChat === undefined ? t.loading : t.chatLinkPlaceholder}
+          disabled={originalChat === undefined}
+          value={chatUrl}
+          onChange={(e) => setChatUrl(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1 sm:col-span-2">
+        <span className="block text-slate-400">{t.eventDetails}</span>
+        <textarea className={`${inputClass} resize-none`} rows={3} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+      </label>
+      {error ? <p className="sm:col-span-2 text-rose-400">{error}</p> : null}
+      <div className="sm:col-span-2 flex flex-wrap gap-2">
+        <button disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
+          {saving ? t.saving : t.save}
         </button>
         <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-lg bg-slate-700">
           {t.cancel}

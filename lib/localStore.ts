@@ -94,3 +94,32 @@ export function removeLocalAttendee(id: number) {
     JSON.stringify(loadLocalAttendees().filter((item) => item.id !== id))
   );
 }
+
+const CHAT_LINKS_KEY = "studyspots_ub_event_chat_links";
+
+export function loadLocalChatLink(eventId: number): string | null {
+  return readJson<Record<string, string>>(CHAT_LINKS_KEY, {})[String(eventId)] ?? null;
+}
+
+export function saveLocalChatLink(eventId: number, url: string | null) {
+  const links = readJson<Record<string, string>>(CHAT_LINKS_KEY, {});
+  if (url) links[String(eventId)] = url;
+  else delete links[String(eventId)];
+  localStorage.setItem(CHAT_LINKS_KEY, JSON.stringify(links));
+}
+
+export function updateLocalEvent(event: StudyEvent) {
+  localStorage.setItem(
+    EVENTS_KEY,
+    JSON.stringify(loadLocalEvents().map((item) => (item.id === event.id ? event : item)))
+  );
+}
+
+export function removeLocalEvent(id: number) {
+  localStorage.setItem(EVENTS_KEY, JSON.stringify(loadLocalEvents().filter((item) => item.id !== id)));
+  localStorage.setItem(
+    ATTENDEES_KEY,
+    JSON.stringify(loadLocalAttendees().filter((attendee) => attendee.event_id !== id))
+  );
+  saveLocalChatLink(id, null);
+}

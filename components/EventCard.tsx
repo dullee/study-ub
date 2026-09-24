@@ -13,6 +13,8 @@ interface EventCardProps {
   isPast: boolean;
   onJoin: (event: StudyEvent) => Promise<void> | void;
   onLeave: (event: StudyEvent) => Promise<void> | void;
+  // Карт дарахад дэлгэрэнгүй, групп чатын цонх нээнэ.
+  onOpen: (event: StudyEvent) => void;
 }
 
 export default function EventCard({
@@ -23,6 +25,7 @@ export default function EventCard({
   isPast,
   onJoin,
   onLeave,
+  onOpen,
 }: EventCardProps) {
   const [busy, setBusy] = useState(false);
 
@@ -44,7 +47,7 @@ export default function EventCard({
 
   return (
     <article
-      className={`bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4 flex flex-col gap-3 shadow-lg ${
+      className={`relative bg-slate-800/50 border border-slate-700/60 rounded-2xl p-4 flex flex-col gap-3 shadow-lg cursor-pointer has-focus-visible:ring-2 has-focus-visible:ring-indigo-500 ${
         isPast ? "opacity-60" : "hover:border-slate-500 transition-all"
       }`}
     >
@@ -70,7 +73,7 @@ export default function EventCard({
               href={googleMapsUrl({ lat: event.lat as number, lng: event.lng as number })}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-indigo-300 hover:text-indigo-200 ml-1"
+              className="relative z-10 text-indigo-300 hover:text-indigo-200 ml-1"
             >
               Google Maps ↗
             </a>
@@ -80,7 +83,7 @@ export default function EventCard({
       </div>
 
       {event.description ? (
-        <p className="text-sm text-slate-200 whitespace-pre-line">{event.description}</p>
+        <p className="text-sm text-slate-200 whitespace-pre-line line-clamp-3">{event.description}</p>
       ) : null}
 
       <div className="space-y-2">
@@ -111,7 +114,7 @@ export default function EventCard({
           <button
             onClick={handleLeave}
             disabled={busy}
-            className="w-full py-2 bg-emerald-900/40 hover:bg-slate-700 text-emerald-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-emerald-700/60 disabled:opacity-60"
+            className="relative z-10 w-full py-2 bg-emerald-900/40 hover:bg-slate-700 text-emerald-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-emerald-700/60 disabled:opacity-60"
           >
             {t.youreGoing}
           </button>
@@ -119,12 +122,20 @@ export default function EventCard({
           <button
             onClick={handleJoin}
             disabled={busy || isFull}
-            className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:shadow-none disabled:bg-slate-700"
+            className="relative z-10 w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:shadow-none disabled:bg-slate-700"
           >
             {isFull ? t.eventFull : t.imGoing}
           </button>
         )}
       </div>
+
+      {/* Карт бүхэлдээ дарагдана — Google Maps холбоос, бүртгэлийн товч z-10-оор дээр нь. */}
+      <button
+        type="button"
+        onClick={() => onOpen(event)}
+        aria-label={t.openEvent(event.title)}
+        className="absolute inset-0 rounded-2xl focus:outline-none"
+      />
     </article>
   );
 }
