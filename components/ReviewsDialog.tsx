@@ -95,7 +95,7 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
 
   return (
     <div
-      className="fixed inset-0 bg-slate-950/70 z-[1200] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-slate-950/70 z-[1200] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -104,20 +104,20 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
         role="dialog"
         aria-modal="true"
         aria-labelledby="reviews-dialog-title"
-        className="relative bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl max-h-[88vh] overflow-y-auto p-5 sm:p-6 space-y-4"
+        className="relative bg-slate-900 sm:border border-slate-800 w-full max-w-2xl rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[88vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6 space-y-4"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <h2 id="reviews-dialog-title" className="text-lg font-bold text-white">
               💬 Сэтгэгдэл {loading ? "" : `(${reviews.length})`}
             </h2>
-            <p className="text-xs text-slate-400">{spot.name}</p>
+            <p className="text-xs text-slate-400 truncate">{spot.name}</p>
           </div>
           <button
             onClick={onClose}
             type="button"
             aria-label="Сэтгэгдлийг хаах"
-            className="h-9 w-9 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
+            className="h-10 w-10 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
           >
             ✕
           </button>

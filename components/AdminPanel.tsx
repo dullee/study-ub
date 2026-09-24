@@ -155,7 +155,7 @@ export default function AdminPanel() {
   return (
     <main className="min-h-screen bg-slate-900 text-slate-100">
       <header className="border-b border-slate-800 sticky top-0 bg-slate-900/90 backdrop-blur z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
           <h1 className="font-bold">StudySpots админ</h1>
           <div className="flex items-center gap-3">
             <Link href="/" className="text-xs text-slate-400 hover:text-white">
@@ -166,7 +166,7 @@ export default function AdminPanel() {
         </div>
       </header>
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {(
             [
               ["pending", `Хүлээгдэж буй (${pending.length})`],
@@ -207,7 +207,7 @@ export default function AdminPanel() {
                     Google Maps
                   </a>
                   <SpotImage spot={spot} />
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">
                       Зөвшөөрөх
                     </button>
@@ -234,7 +234,7 @@ export default function AdminPanel() {
                   {editingSpotId === spot.id ? (
                     <SpotEditForm spot={spot} onSave={saveSpot} onCancel={() => setEditingSpotId(null)} />
                   ) : (
-                    <div className="flex justify-between gap-3 items-start">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-3 sm:items-start">
                       <div className="space-y-2">
                         <h2 className="font-semibold">{spot.name}</h2>
                         <p className="text-xs text-slate-400">
@@ -242,7 +242,7 @@ export default function AdminPanel() {
                         </p>
                         <SpotImage spot={spot} />
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">Засах</button>
                         {spot.status === "rejected" ? (
                           <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">Зөвшөөрөх</button>
@@ -272,19 +272,19 @@ export default function AdminPanel() {
                       <input className={inputClass} type="number" min={1} max={5} value={editingReview.rating} onChange={(e) => setEditingReview({ ...editingReview, rating: Number(e.target.value) })} />
                       <ScoreFields value={editingReview} onChange={(scores) => setEditingReview({ ...editingReview, ...scores })} />
                       <textarea className={inputClass} rows={3} value={editingReview.comment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button className="px-3 py-1.5 rounded-lg bg-indigo-600">Хадгалах</button>
                         <button type="button" onClick={() => setEditingReview(null)} className="px-3 py-1.5 rounded-lg bg-slate-700">Болих</button>
                       </div>
                     </form>
                   ) : (
-                    <div className="flex justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
                       <div>
                         <p className="font-semibold text-indigo-300">{review.rating}/5</p>
                         <p>{review.comment}</p>
                         <ReviewScoreLine review={review} />
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button onClick={() => setEditingReview(review)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">Засах</button>
                         <button onClick={() => removeReview(review.id)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">Устгах</button>
                       </div>
@@ -415,16 +415,16 @@ function SpotEditForm({
   const shownImage = preview || (hasPhoto(draft.image) ? draft.image : "");
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-2 text-xs">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
       <input className={inputClass} required placeholder="Нэр" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
       <input className={inputClass} required placeholder="Байршил" value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
       <input className={inputClass} placeholder="Ажиллах цаг" value={draft.hours} onChange={(e) => setDraft({ ...draft, hours: e.target.value })} />
       <input className={inputClass} placeholder="Шошго, таслалаар тусгаарлана" value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
       <input className={inputClass} type="number" step="any" required value={draft.lat} onChange={(e) => setDraft({ ...draft, lat: Number(e.target.value) })} />
       <input className={inputClass} type="number" step="any" required value={draft.lng} onChange={(e) => setDraft({ ...draft, lng: Number(e.target.value) })} />
-      <input className={`${inputClass} col-span-2`} type="url" placeholder="Google Maps холбоос" value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
+      <input className={`${inputClass} sm:col-span-2`} type="url" placeholder="Google Maps холбоос" value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
       <select
-        className={`${inputClass} col-span-2`}
+        className={`${inputClass} sm:col-span-2`}
         value={draft.category ?? ""}
         onChange={(e) => setDraft({ ...draft, category: (e.target.value || undefined) as SpotCategory | undefined })}
       >
@@ -436,22 +436,22 @@ function SpotEditForm({
         ))}
       </select>
       <textarea
-        className={`${inputClass} col-span-2 resize-none`}
+        className={`${inputClass} sm:col-span-2 resize-none`}
         rows={3}
         maxLength={500}
         placeholder="Товч тайлбар"
         value={draft.description ?? ""}
         onChange={(e) => setDraft({ ...draft, description: e.target.value })}
       />
-      <div className="col-span-2 space-y-2">
+      <div className="sm:col-span-2 space-y-2">
         <label className="block text-slate-400">Үйлчилгээ</label>
         <OptionPicker options={AMENITIES} value={draft.amenities ?? []} onChange={(amenities) => setDraft({ ...draft, amenities })} />
       </div>
-      <div className="col-span-2 space-y-2">
+      <div className="sm:col-span-2 space-y-2">
         <label className="block text-slate-400">Хүртээмж</label>
         <OptionPicker options={ACCESSIBILITY} value={draft.accessibility ?? []} onChange={(accessibility) => setDraft({ ...draft, accessibility })} />
       </div>
-      <fieldset className="col-span-2 space-y-2 border border-slate-800 rounded-xl p-3">
+      <fieldset className="sm:col-span-2 space-y-2 border border-slate-800 rounded-xl p-3">
         <legend className="px-1 text-slate-400">Анхны үнэлгээ (сэтгэгдлүүдтэй хамт дундажлагдана)</legend>
         <ScoreFields
           value={draft}
@@ -466,7 +466,7 @@ function SpotEditForm({
         />
       </fieldset>
 
-      <div className="col-span-2 space-y-2">
+      <div className="sm:col-span-2 space-y-2">
         <label className="block text-slate-400">Зураг</label>
         {shownImage ? (
           <img src={shownImage} alt={draft.name} className="max-h-48 w-full max-w-md object-cover rounded-lg border border-slate-700" />
@@ -498,8 +498,8 @@ function SpotEditForm({
         ) : null}
       </div>
 
-      {error ? <p className="col-span-2 text-rose-400">{error}</p> : null}
-      <div className="col-span-2 flex gap-2">
+      {error ? <p className="sm:col-span-2 text-rose-400">{error}</p> : null}
+      <div className="sm:col-span-2 flex gap-2">
         <button disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
           {saving ? (imageFile ? "Зураг хуулж байна..." : "Хадгалж байна...") : "Хадгалах"}
         </button>

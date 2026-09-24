@@ -37,7 +37,7 @@ export default function Dropdown({ label, active = false, align = "left", childr
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="sm:relative">
       <button
         ref={buttonRef}
         type="button"
@@ -58,8 +58,8 @@ export default function Dropdown({ label, active = false, align = "left", childr
       {open ? (
         <div
           id={panelId}
-          className={`absolute top-full mt-2 z-50 w-[min(22rem,calc(100vw-2rem))] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 space-y-3 ${
-            align === "right" ? "right-0" : "left-0"
+          className={`absolute top-full mt-2 z-50 inset-x-4 sm:inset-x-auto sm:w-[22rem] max-h-[70dvh] overflow-y-auto bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 space-y-3 ${
+            align === "right" ? "sm:right-0" : "sm:left-0"
           }`}
         >
           {children}

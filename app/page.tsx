@@ -166,7 +166,7 @@ export default function Home() {
   return (
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
       <Header onAddClick={() => setIsModalOpen(true)} wide={wide} />
-      <main className={`${wide ? "max-w-none" : "max-w-7xl"} mx-auto px-4 pt-6 space-y-6`}>
+      <main className={`${wide ? "max-w-none" : "max-w-7xl"} mx-auto px-4 pt-2 sm:pt-6 space-y-3 sm:space-y-6`}>
         {notice ? (
           <p className="text-sm text-indigo-200 bg-indigo-950/60 border border-indigo-800/50 rounded-xl px-4 py-3">
             {notice}
@@ -188,7 +188,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_1fr] gap-3 lg:gap-0 items-start">
           <div
             ref={mapWrapperRef}
-            className="order-1 lg:order-2 h-[350px] lg:sticky lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
+            className="order-1 lg:order-2 h-[42dvh] min-h-[240px] max-h-[380px] lg:max-h-none lg:min-h-0 lg:sticky lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
           >
             <Map
               spots={matchingSpots}
@@ -201,11 +201,9 @@ export default function Home() {
           </div>
           <section className="order-2 lg:order-1 space-y-2">
             <div className="flex justify-between items-center gap-2 border-b border-slate-800 pb-2">
-              <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-                📍 Сонгогдсон газрууд
-              </h2>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2.5 py-1 rounded-md">
+              <h2 className="text-sm font-semibold text-slate-300 truncate min-w-0">📍 Газрууд</h2>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs whitespace-nowrap text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2 py-1 rounded-md">
                   {filteredSpots.length} газар
                 </span>
                 <button
@@ -213,14 +211,14 @@ export default function Home() {
                   onClick={() => setWide(!wide)}
                   aria-pressed={wide}
                   title={wide ? "Энгийн өргөн" : "Бүтэн өргөн — газрын зургийг томруулна"}
-                  className={`hidden lg:inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors ${
+                  className={`hidden lg:inline-flex items-center gap-1 whitespace-nowrap text-xs px-2 py-1 rounded-md border transition-colors ${
                     wide
                       ? "bg-indigo-600 border-indigo-500 text-white"
                       : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
                   }`}
                 >
                   <span aria-hidden="true">{wide ? "⇥⇤" : "⇤⇥"}</span>
-                  {wide ? "Энгийн" : "Бүтэн өргөн"}
+                  {wide ? "Энгийн" : "Өргөн"}
                 </button>
               </div>
             </div>

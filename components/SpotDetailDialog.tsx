@@ -146,7 +146,7 @@ export default function SpotDetailDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-center justify-center p-4"
+      className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -155,16 +155,18 @@ export default function SpotDetailDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="spot-dialog-title"
-        className="relative bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl max-h-[92vh] overflow-y-auto"
+        className="relative bg-slate-900 sm:border border-slate-800 w-full max-w-4xl rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92vh] overflow-y-auto"
       >
-        <button
-          onClick={onClose}
-          type="button"
-          aria-label="Хаах"
-          className="absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-slate-900/80 backdrop-blur text-slate-200 hover:text-white border border-slate-700"
-        >
-          ✕
-        </button>
+        <div className="sticky top-0 z-10 h-0 flex justify-end">
+          <button
+            onClick={onClose}
+            type="button"
+            aria-label="Хаах"
+            className="mt-3 mr-3 h-10 w-10 shrink-0 rounded-full bg-slate-900/80 backdrop-blur text-slate-200 hover:text-white border border-slate-700"
+          >
+            ✕
+          </button>
+        </div>
 
         <div className="relative h-56 sm:h-72 w-full bg-slate-950">
           <img src={spot.image || PLACEHOLDER_IMAGE} alt={spot.name} className="w-full h-full object-cover" />
@@ -265,7 +267,7 @@ export default function SpotDetailDialog({
             )}
           </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => {

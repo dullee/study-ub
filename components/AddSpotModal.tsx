@@ -169,9 +169,9 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 space-y-4 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-slate-900 sm:border border-slate-800 w-full max-w-lg rounded-none sm:rounded-2xl px-5 pb-5 sm:px-6 sm:pb-6 space-y-4 relative shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 flex justify-between items-center border-b border-slate-800">
           <h3 className="text-base font-bold text-white">➕ Шинэ Study Spot нэмэх</h3>
           <button onClick={handleClose} className="text-slate-400 hover:text-white text-lg" type="button">
             ✕

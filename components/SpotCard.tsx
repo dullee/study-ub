@@ -21,7 +21,7 @@ interface SpotCardProps {
 const MAX_TAGS = 3;
 
 const iconButtonClass =
-  "relative z-10 h-8 w-8 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300 hover:text-white hover:bg-indigo-600 hover:border-indigo-500 transition-colors";
+  "relative z-10 h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-sm text-slate-300 hover:text-white hover:bg-indigo-600 hover:border-indigo-500 transition-colors";
 
 // Нягт карт: нэр, үнэлгээ, төлөв, зай зураг дээр; хажууд нь жижиг хоёр товч.
 // Карт бүхэлдээ дарагдана — хамгийн сүүлийн товч картыг бүрхэж, жижиг товчнууд z-10-оор дээр нь гарна.

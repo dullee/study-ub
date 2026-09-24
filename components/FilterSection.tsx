@@ -54,7 +54,7 @@ export default function FilterSection({
     <section
       ref={barRef}
       aria-label="Хайлт ба шүүлтүүр"
-      className="sticky top-[var(--header-h,120px)] z-[900] -mx-4 px-4 py-3 bg-slate-900/95 backdrop-blur border-b border-slate-800 space-y-2"
+      className="sticky top-0 lg:top-[var(--header-h,120px)] z-[900] -mx-4 px-4 py-3 bg-slate-900/95 backdrop-blur border-b border-slate-800 space-y-2"
     >
       <div className="flex items-center gap-2">
         <div className="relative flex-1 min-w-0">
