@@ -4,6 +4,8 @@ import { useRef } from "react";
 import { UserLocationState } from "@/lib/geo";
 import { useHeightVar } from "@/lib/useHeightVar";
 import Dropdown from "@/components/Dropdown";
+import { useI18n } from "@/components/LanguageProvider";
+import { tagLabel } from "@/types";
 
 // Зайн шүүлтүүрийн сонголтууд (км). null — хязгааргүй.
 export const DISTANCE_OPTIONS = [1, 3, 5, 10] as const;
@@ -43,17 +45,18 @@ export default function FilterSection({
   maxDistanceKm,
   setMaxDistanceKm,
 }: FilterSectionProps) {
+  const { t, locale } = useI18n();
   const barRef = useRef<HTMLElement>(null);
   useHeightVar(barRef, "--filters-h");
 
   const ready = location.status === "ready";
   const selectedTags = activeTags.filter((tag) => tag !== ALL_TAG);
-  const distanceLabel = !ready ? "Байршил" : maxDistanceKm === null ? "Ойрхон" : `${maxDistanceKm} км дотор`;
+  const distanceLabel = !ready ? t.locationLabel : maxDistanceKm === null ? t.nearby : t.withinKm(maxDistanceKm);
 
   return (
     <section
       ref={barRef}
-      aria-label="Хайлт ба шүүлтүүр"
+      aria-label={t.filterBarLabel}
       className="sticky top-0 lg:top-[var(--header-h,120px)] z-[900] -mx-4 px-4 py-3 bg-slate-900/95 backdrop-blur border-b border-slate-800 space-y-2"
     >
       <div className="flex items-center gap-2">
@@ -62,8 +65,8 @@ export default function FilterSection({
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Газрын нэр эсвэл байршлаар хайх..."
-            aria-label="Газар хайх"
+            placeholder={t.searchPlaceholder}
+            aria-label={t.searchLabel}
             className="w-full h-10 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 pl-10 pr-3 rounded-xl text-sm focus:outline-none focus:border-indigo-500 transition-colors"
           />
           <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm" aria-hidden="true">
@@ -76,14 +79,14 @@ export default function FilterSection({
           label={
             <>
               <span aria-hidden="true">🏷️</span>
-              <span className="hidden sm:inline">Шүүлтүүр</span>
+              <span className="hidden sm:inline">{t.filters}</span>
               {selectedTags.length > 0 ? (
                 <span className="bg-white/20 rounded-full px-1.5 text-[10px]">{selectedTags.length}</span>
               ) : null}
             </>
           }
         >
-          <p className="text-xs font-semibold text-slate-400">Шүүлтүүр (олныг сонгож болно)</p>
+          <p className="text-xs font-semibold text-slate-400">{t.filtersHeading}</p>
           <div className="flex flex-wrap gap-2">
             {availableTags
               .filter((tag) => tag !== ALL_TAG)
@@ -95,7 +98,7 @@ export default function FilterSection({
                   onClick={() => toggleTag(tag)}
                   className={chipClass(activeTags.includes(tag))}
                 >
-                  {tag}
+                  {tagLabel(tag, locale)}
                 </button>
               ))}
           </div>
@@ -105,7 +108,7 @@ export default function FilterSection({
               onClick={() => toggleTag(ALL_TAG)}
               className="text-xs text-indigo-300 hover:text-white"
             >
-              Бүгдийг цэвэрлэх
+              {t.clearAll}
             </button>
           ) : null}
         </Dropdown>
@@ -122,7 +125,7 @@ export default function FilterSection({
         >
           {ready ? (
             <button type="button" onClick={onClearLocation} className={chipClass(true)}>
-              📍 Миний байршил ✕
+              {t.myLocationClear}
             </button>
           ) : (
             <button
@@ -131,11 +134,11 @@ export default function FilterSection({
               disabled={location.status === "locating"}
               className={chipClass(false)}
             >
-              {location.status === "locating" ? "📍 Байршил тодорхойлж байна..." : "📍 Миний байршлыг ашиглах"}
+              {location.status === "locating" ? t.locating : t.useMyLocation}
             </button>
           )}
           <p className="text-xs font-semibold text-slate-400" id="distance-label">
-            Зай
+            {t.distance}
           </p>
           <div className="flex flex-wrap gap-2" role="group" aria-labelledby="distance-label">
             <button
@@ -145,7 +148,7 @@ export default function FilterSection({
               onClick={() => setMaxDistanceKm(null)}
               className={chipClass(ready && maxDistanceKm === null)}
             >
-              Хязгааргүй
+              {t.noLimit}
             </button>
             {DISTANCE_OPTIONS.map((km) => (
               <button
@@ -156,19 +159,19 @@ export default function FilterSection({
                 onClick={() => setMaxDistanceKm(km)}
                 className={chipClass(ready && maxDistanceKm === km)}
               >
-                {km} км дотор
+                {t.withinKm(km)}
               </button>
             ))}
           </div>
           {location.status === "error" ? (
-            <p className="text-xs text-rose-400">{location.message}</p>
+            <p className="text-xs text-rose-400">{t[location.error]}</p>
           ) : !ready ? (
             <p className="text-xs text-slate-500">
-              Зайгаар шүүх, ойрын газрыг эхэнд харуулахын тулд байршлаа зөвшөөрнө үү.
+              {t.locationHint}
             </p>
           ) : location.accuracy > 500 ? (
             <p className="text-xs text-amber-400">
-              Байршил ойролцоогоор ({Math.round(location.accuracy)} м нарийвчлалтай) — зай бага зэрэг зөрж болно.
+              {t.approxLocation(Math.round(location.accuracy))}
             </p>
           ) : null}
         </Dropdown>
@@ -182,20 +185,20 @@ export default function FilterSection({
               key={tag}
               type="button"
               onClick={() => toggleTag(tag)}
-              aria-label={`${tag} шүүлтүүрийг хасах`}
+              aria-label={t.removeTagFilter(tagLabel(tag, locale))}
               className="text-[11px] bg-indigo-950/60 border border-indigo-800/60 text-indigo-200 hover:text-white px-2 py-0.5 rounded-md"
             >
-              {tag} ✕
+              {tagLabel(tag, locale)} ✕
             </button>
           ))}
           {ready && maxDistanceKm !== null ? (
             <button
               type="button"
               onClick={() => setMaxDistanceKm(null)}
-              aria-label="Зайн шүүлтүүрийг хасах"
+              aria-label={t.removeDistanceFilter}
               className="text-[11px] bg-indigo-950/60 border border-indigo-800/60 text-indigo-200 hover:text-white px-2 py-0.5 rounded-md"
             >
-              📍 {maxDistanceKm} км дотор ✕
+              📍 {t.withinKm(maxDistanceKm)} ✕
             </button>
           ) : null}
         </div>

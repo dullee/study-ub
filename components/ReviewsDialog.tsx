@@ -9,6 +9,7 @@ import { saveLocalReview } from "@/lib/localStore";
 import Stars from "@/components/Stars";
 import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface ReviewsDialogProps {
   spot: StudySpot;
@@ -36,10 +37,11 @@ function ReviewSkeleton() {
 }
 
 export function ReviewItem({ review, clamp = false }: { review: Review; clamp?: boolean }) {
+  const { t } = useI18n();
   return (
     <li className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-sm space-y-1.5">
       <div className="flex justify-between gap-2 items-center">
-        <span className="font-semibold text-slate-100">{review.author_name ?? "Зочин"}</span>
+        <span className="font-semibold text-slate-100">{review.author_name ?? t.guest}</span>
         <span className="text-xs text-slate-500">{new Date(review.created_at).toLocaleDateString("en-CA")}</span>
       </div>
       <Stars value={review.rating} className="text-sm" />
@@ -52,6 +54,7 @@ export function ReviewItem({ review, clamp = false }: { review: Review; clamp?: 
 // Газрын цонхны дээр нээгддэг тусдаа цонх: сэтгэгдэл бичих, бүх сэтгэгдлийг харах.
 // Esc-ийг SpotDetailDialog барина — эхлээд энэ цонх, дараа нь газрын цонх хаагдана.
 export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, onClose }: ReviewsDialogProps) {
+  const { t } = useI18n();
   const [comment, setComment] = useState("");
   const [scores, setScores] = useState<ScoreValues>({});
   const [rating, setRating] = useState(5);
@@ -78,7 +81,7 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
     if (isSupabaseConfigured) {
       saved = await insertReview(draft);
       if (!saved) {
-        setError("Сэтгэгдэл хадгалагдсангүй. Дахин оролдоно уу.");
+        setError(t.reviewSaveFailed);
         setSaving(false);
         return;
       }
@@ -109,14 +112,14 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
         <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 id="reviews-dialog-title" className="text-lg font-bold text-white">
-              💬 Сэтгэгдэл {loading ? "" : `(${reviews.length})`}
+              {t.reviewsHeading} {loading ? "" : `(${reviews.length})`}
             </h2>
             <p className="text-xs text-slate-400 truncate">{spot.name}</p>
           </div>
           <button
             onClick={onClose}
             type="button"
-            aria-label="Сэтгэгдлийг хаах"
+            aria-label={t.closeReviews}
             className="h-10 w-10 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
           >
             ✕
@@ -125,23 +128,23 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
 
         {!isLoaded ? null : !user ? (
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center space-y-2 text-xs">
-            <p className="text-slate-400">Сэтгэгдэл бичихийн тулд нэвтэрнэ үү.</p>
+            <p className="text-slate-400">{t.signInToReview}</p>
             <SignInButton mode="modal">
               <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-semibold">
-                Нэвтрэх
+                {t.signIn}
               </button>
             </SignInButton>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3 text-xs bg-slate-800/30 border border-slate-800 rounded-xl p-4">
-            <div className="flex items-center gap-1" role="radiogroup" aria-label="Үнэлгээ">
+            <div className="flex items-center gap-1" role="radiogroup" aria-label={t.ratingLabel}>
               {[1, 2, 3, 4, 5].map((value) => (
                 <button
                   key={value}
                   type="button"
                   role="radio"
                   aria-checked={rating === value}
-                  aria-label={`${value} од`}
+                  aria-label={t.stars(value)}
                   onClick={() => setRating(value)}
                   className={`text-2xl leading-none ${
                     value <= rating ? "text-amber-400" : "text-slate-600 hover:text-slate-400"
@@ -153,7 +156,7 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
             </div>
             <details className="bg-slate-900/40 border border-slate-800 rounded-lg">
               <summary className="cursor-pointer select-none px-3 py-2 text-slate-300">
-                ⚡🤫🔌 Wi-Fi, чимээгүй байдал, розеткыг үнэлэх (заавал биш)
+                {t.rateScoresOptional}
               </summary>
               <div className="px-3 pb-3">
                 <ScoreFields value={scores} onChange={setScores} />
@@ -164,8 +167,8 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={3}
-              placeholder="Розетка, чимээгүй байдал, цагийн хуваарь..."
-              aria-label="Сэтгэгдэл бичих"
+              placeholder={t.reviewPlaceholder}
+              aria-label={t.writeReview}
               className={inputClass}
             />
             <button
@@ -173,7 +176,7 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
               disabled={saving}
               className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl"
             >
-              {saving ? "Илгээж байна..." : `${displayName(user)} нэрээр сэтгэгдэл үлдээх`}
+              {saving ? t.sending : t.postReviewAs(displayName(user))}
             </button>
             {error ? <p className="text-rose-400">{error}</p> : null}
           </form>
@@ -188,7 +191,7 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
             </>
           ) : reviews.length === 0 ? (
             <li className="text-xs text-slate-500 text-center py-8">
-              Одоогоор сэтгэгдэл алга. Анхны сэтгэгдлийг та үлдээгээрэй!
+              {t.noReviewsYet}
             </li>
           ) : (
             reviews.map((review) => <ReviewItem key={review.id} review={review} />)

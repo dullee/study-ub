@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { googleMapsUrl, StudySpot } from "@/types";
 import { LatLng } from "@/lib/geo";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface MapProps {
   spots: StudySpot[];
@@ -74,6 +75,7 @@ export default function Map({
   fullscreen,
   onToggleFullscreen,
 }: MapProps) {
+  const { t } = useI18n();
   const customIcon = useMemo(() => L.icon(ICON_OPTIONS), []);
   const dimmedIcon = useMemo(() => L.icon({ ...ICON_OPTIONS, className: "grayscale opacity-50" }), []);
 
@@ -87,8 +89,8 @@ export default function Map({
         type="button"
         onClick={onToggleFullscreen}
         aria-pressed={fullscreen}
-        aria-label={fullscreen ? "Бүтэн дэлгэцээс гарах" : "Газрын зургийг бүтэн дэлгэцээр харах"}
-        title={fullscreen ? "Бүтэн дэлгэцээс гарах (Esc)" : "Бүтэн дэлгэц"}
+        aria-label={fullscreen ? t.exitFullscreen : t.enterFullscreen}
+        title={fullscreen ? t.exitFullscreenTitle : t.fullscreen}
         className="absolute top-3 right-3 z-[1000] h-10 w-10 flex items-center justify-center rounded-lg bg-white text-slate-800 shadow-md border border-black/20 hover:bg-slate-100"
       >
         <svg
@@ -132,7 +134,7 @@ export default function Map({
             pathOptions={{ color: "#ffffff", weight: 3, fillColor: "#2563eb", fillOpacity: 1 }}
           >
             <Popup>
-              <span className="font-sans text-xs font-semibold">📍 Та энд байна</span>
+              <span className="font-sans text-xs font-semibold">{t.youAreHere}</span>
             </Popup>
           </CircleMarker>
         ) : null}
@@ -155,7 +157,7 @@ export default function Map({
                   <br />
                   {dimmed ? (
                     <>
-                      <span className="text-slate-500">Сонгосон зайнаас гадна</span>
+                      <span className="text-slate-500">{t.outsideDistance}</span>
                       <br />
                     </>
                   ) : null}
@@ -168,7 +170,7 @@ export default function Map({
                     onClick={() => onOpenDetails(spot)}
                     className="text-indigo-600 font-semibold hover:underline"
                   >
-                    Дэлгэрэнгүй
+                    {t.details}
                   </button>
                 </div>
               </Popup>

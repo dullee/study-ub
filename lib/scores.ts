@@ -1,4 +1,5 @@
-import { OUTLET_LEVELS, QUIET_LEVELS, Review, StudySpot } from "@/types";
+import { Localized, OUTLET_LEVELS, QUIET_LEVELS, Review, StudySpot } from "@/types";
+import { Locale } from "@/lib/i18n/dictionaries";
 
 // Газрын оноог газар нэмэгчийн утга (нэг санал) + сэтгэгдлүүдээс нэгтгэнэ.
 // Wi-Fi: медиан — нэг хэт хурдан/удаан тест дүнг гажуудуулахгүй. Чимээгүй, розетка: дундаж.
@@ -49,9 +50,12 @@ export function summarizeSpots(spots: StudySpot[], reviews: ReviewScores[]) {
   ) as Record<number, SpotSummary>;
 }
 
-const level = (levels: readonly string[], value: number) =>
-  levels[Math.min(Math.max(Math.round(value), 1), 5) - 1];
+// 1–5 онооны тайлбарыг сонгосон хэлээр ("Чимээгүй" / "Quiet").
+export const levelLabel = (levels: readonly Localized[], value: number, locale: Locale) =>
+  levels[Math.min(Math.max(Math.round(value), 1), 5) - 1][locale];
 
 export const formatWifi = (score: Score) => `${Math.round(score.value)} Mbps`;
-export const formatQuiet = (score: Score) => `${level(QUIET_LEVELS, score.value)} (${score.value.toFixed(1)}/5)`;
-export const formatOutlets = (score: Score) => `${level(OUTLET_LEVELS, score.value)} (${score.value.toFixed(1)}/5)`;
+export const formatQuiet = (score: Score, locale: Locale) =>
+  `${levelLabel(QUIET_LEVELS, score.value, locale)} (${score.value.toFixed(1)}/5)`;
+export const formatOutlets = (score: Score, locale: Locale) =>
+  `${levelLabel(OUTLET_LEVELS, score.value, locale)} (${score.value.toFixed(1)}/5)`;

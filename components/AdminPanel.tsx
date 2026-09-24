@@ -16,6 +16,8 @@ import {
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import OptionPicker from "@/components/OptionPicker";
+import { useI18n } from "@/components/LanguageProvider";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import ScoreFields from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
 import {
@@ -42,6 +44,7 @@ type Tab = "pending" | "places" | "comments";
 // app/admin/page.tsx сервер дээр Clerk-ийн админ эрхийг шалгасны дараа л харагдана.
 export default function AdminPanel() {
   const { isLoaded } = useAuth();
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("pending");
   const [remote, setRemote] = useState(false);
   const [spots, setSpots] = useState<StudySpot[]>([]);
@@ -156,11 +159,12 @@ export default function AdminPanel() {
     <main className="min-h-screen bg-slate-900 text-slate-100">
       <header className="border-b border-slate-800 sticky top-0 bg-slate-900/90 backdrop-blur z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
-          <h1 className="font-bold">StudySpots админ</h1>
+          <h1 className="font-bold">{t.adminTitle}</h1>
           <div className="flex items-center gap-3">
             <Link href="/" className="text-xs text-slate-400 hover:text-white">
-              Нүүр хуудас
+              {t.home}
             </Link>
+            <LanguageSwitcher />
             <UserButton />
           </div>
         </div>
@@ -169,9 +173,9 @@ export default function AdminPanel() {
         <div className="flex flex-wrap gap-2">
           {(
             [
-              ["pending", `Хүлээгдэж буй (${pending.length})`],
-              ["places", "Газрууд"],
-              ["comments", "Сэтгэгдэл"],
+              ["pending", t.tabPending(pending.length)],
+              ["places", t.tabPlaces],
+              ["comments", t.tabReviews],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -189,7 +193,7 @@ export default function AdminPanel() {
         {tab === "pending" && (
           <section className="space-y-3">
             {pending.length === 0 ? (
-              <p className="text-sm text-slate-500">Хүлээгдэж буй газар алга.</p>
+              <p className="text-sm text-slate-500">{t.noPending}</p>
             ) : (
               pending.map((spot) =>
                 editingSpotId === spot.id ? (
@@ -209,13 +213,13 @@ export default function AdminPanel() {
                   <SpotImage spot={spot} />
                   <div className="flex flex-wrap gap-2">
                     <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">
-                      Зөвшөөрөх
+                      {t.approve}
                     </button>
                     <button onClick={() => rejectSpot(spot)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">
-                      Татгалзах
+                      {t.reject}
                     </button>
                     <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">
-                      Засах
+                      {t.edit}
                     </button>
                   </div>
                 </article>
@@ -238,16 +242,16 @@ export default function AdminPanel() {
                       <div className="space-y-2">
                         <h2 className="font-semibold">{spot.name}</h2>
                         <p className="text-xs text-slate-400">
-                          {spot.location} · {spot.status === "rejected" ? "Татгалзсан" : "Нийтлэгдсэн"}
+                          {spot.location} · {spot.status === "rejected" ? t.statusRejected : t.statusPublished}
                         </p>
                         <SpotImage spot={spot} />
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">Засах</button>
+                        <button onClick={() => setEditingSpotId(spot.id)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">{t.edit}</button>
                         {spot.status === "rejected" ? (
-                          <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">Зөвшөөрөх</button>
+                          <button onClick={() => acceptSpot(spot)} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-xs">{t.approve}</button>
                         ) : null}
-                        <button onClick={() => removeSpot(spot.id)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">Устгах</button>
+                        <button onClick={() => removeSpot(spot.id)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">{t.delete}</button>
                       </div>
                     </div>
                   )}
@@ -259,13 +263,13 @@ export default function AdminPanel() {
         {tab === "comments" && (
           <section className="space-y-3">
             {reviews.length === 0 ? (
-              <p className="text-sm text-slate-500">Сэтгэгдэл алга.</p>
+              <p className="text-sm text-slate-500">{t.noReviews}</p>
             ) : (
               reviews.map((review) => (
                 <article key={review.id} className="border border-slate-800 rounded-2xl p-4 bg-slate-800/40 text-sm">
                   <p className="text-xs text-indigo-300 mb-2">
                     {spotName(review.spot_id)}
-                    <span className="text-slate-400"> · {review.author_name ?? "Зочин"}</span>
+                    <span className="text-slate-400"> · {review.author_name ?? t.guest}</span>
                   </p>
                   {editingReview?.id === review.id ? (
                     <form onSubmit={saveReview} className="space-y-2 text-xs">
@@ -273,8 +277,8 @@ export default function AdminPanel() {
                       <ScoreFields value={editingReview} onChange={(scores) => setEditingReview({ ...editingReview, ...scores })} />
                       <textarea className={inputClass} rows={3} value={editingReview.comment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
                       <div className="flex flex-wrap gap-2">
-                        <button className="px-3 py-1.5 rounded-lg bg-indigo-600">Хадгалах</button>
-                        <button type="button" onClick={() => setEditingReview(null)} className="px-3 py-1.5 rounded-lg bg-slate-700">Болих</button>
+                        <button className="px-3 py-1.5 rounded-lg bg-indigo-600">{t.save}</button>
+                        <button type="button" onClick={() => setEditingReview(null)} className="px-3 py-1.5 rounded-lg bg-slate-700">{t.cancel}</button>
                       </div>
                     </form>
                   ) : (
@@ -285,8 +289,8 @@ export default function AdminPanel() {
                         <ReviewScoreLine review={review} />
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setEditingReview(review)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">Засах</button>
-                        <button onClick={() => removeReview(review.id)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">Устгах</button>
+                        <button onClick={() => setEditingReview(review)} className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs">{t.edit}</button>
+                        <button onClick={() => removeReview(review.id)} className="px-3 py-1.5 rounded-lg bg-rose-900/70 text-xs">{t.delete}</button>
                       </div>
                     </div>
                   )}
@@ -302,11 +306,12 @@ export default function AdminPanel() {
 
 // Зургийг товч дарсны дараа л ачаална — жагсаалт олон зураг нэг дор татахгүй.
 function SpotImage({ spot }: { spot: StudySpot }) {
+  const { t } = useI18n();
   const [shown, setShown] = useState(false);
   if (!hasPhoto(spot.image)) {
     return (
       <span className="inline-block px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-400">
-        Зураг оруулаагүй
+        {t.noPhoto}
       </span>
     );
   }
@@ -317,7 +322,7 @@ function SpotImage({ spot }: { spot: StudySpot }) {
         onClick={() => setShown((value) => !value)}
         className="px-3 py-1.5 rounded-lg bg-slate-700 text-xs"
       >
-        {shown ? "Зураг нуух" : "Зураг харах"}
+        {shown ? t.hidePhoto : t.showPhoto}
       </button>
       {shown ? (
         <a href={spot.image} target="_blank" rel="noopener noreferrer" className="block">
@@ -344,6 +349,7 @@ function SpotEditForm({
   onSave: (spot: StudySpot) => Promise<boolean>;
   onCancel: () => void;
 }) {
+  const { t, locale } = useI18n();
   const [draft, setDraft] = useState(spot);
   // Шошгыг текстээр хадгалж, хадгалахдаа массив болгоно — бичиж байхад таслал, зай арилахгүй.
   const [tagsText, setTagsText] = useState(spot.tags.join(", "));
@@ -369,12 +375,12 @@ function SpotEditForm({
     setError("");
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Зөвхөн зургийн файл сонгоно уу.");
+      setError(t.onlyImages);
       e.target.value = "";
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setError("Зураг 5MB-аас бага байх ёстой.");
+      setError(t.imageTooBig);
       e.target.value = "";
       return;
     }
@@ -396,7 +402,8 @@ function SpotEditForm({
       try {
         image = await uploadImage(imageFile);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Зураг хуулахад алдаа гарлаа.");
+        console.error("Image upload:", err);
+        setError(t.imageUploadFailed);
         setSaving(false);
         return;
       }
@@ -407,7 +414,7 @@ function SpotEditForm({
       tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
     });
     if (!ok) {
-      setError("Хадгалж чадсангүй. Дахин оролдоно уу.");
+      setError(t.saveFailed);
       setSaving(false);
     }
   };
@@ -416,22 +423,22 @@ function SpotEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-      <input className={inputClass} required placeholder="Нэр" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-      <input className={inputClass} required placeholder="Байршил" value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
-      <input className={inputClass} placeholder="Ажиллах цаг" value={draft.hours} onChange={(e) => setDraft({ ...draft, hours: e.target.value })} />
-      <input className={inputClass} placeholder="Шошго, таслалаар тусгаарлана" value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
+      <input className={inputClass} required placeholder={t.namePlaceholder} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+      <input className={inputClass} required placeholder={t.locationPlaceholderShort} value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
+      <input className={inputClass} placeholder={t.openingHours} value={draft.hours} onChange={(e) => setDraft({ ...draft, hours: e.target.value })} />
+      <input className={inputClass} placeholder={t.tagsCommaPlaceholder} value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
       <input className={inputClass} type="number" step="any" required value={draft.lat} onChange={(e) => setDraft({ ...draft, lat: Number(e.target.value) })} />
       <input className={inputClass} type="number" step="any" required value={draft.lng} onChange={(e) => setDraft({ ...draft, lng: Number(e.target.value) })} />
-      <input className={`${inputClass} sm:col-span-2`} type="url" placeholder="Google Maps холбоос" value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
+      <input className={`${inputClass} sm:col-span-2`} type="url" placeholder={t.mapsLink} value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
       <select
         className={`${inputClass} sm:col-span-2`}
         value={draft.category ?? ""}
         onChange={(e) => setDraft({ ...draft, category: (e.target.value || undefined) as SpotCategory | undefined })}
       >
-        <option value="">Төрөл сонгоогүй</option>
+        <option value="">{t.noCategory}</option>
         {SPOT_CATEGORIES.map((category) => (
           <option key={category.key} value={category.key}>
-            {category.icon} {category.label}
+            {category.icon} {category.label[locale]}
           </option>
         ))}
       </select>
@@ -439,20 +446,20 @@ function SpotEditForm({
         className={`${inputClass} sm:col-span-2 resize-none`}
         rows={3}
         maxLength={500}
-        placeholder="Товч тайлбар"
+        placeholder={t.shortDescription}
         value={draft.description ?? ""}
         onChange={(e) => setDraft({ ...draft, description: e.target.value })}
       />
       <div className="sm:col-span-2 space-y-2">
-        <label className="block text-slate-400">Үйлчилгээ</label>
+        <label className="block text-slate-400">{t.amenities}</label>
         <OptionPicker options={AMENITIES} value={draft.amenities ?? []} onChange={(amenities) => setDraft({ ...draft, amenities })} />
       </div>
       <div className="sm:col-span-2 space-y-2">
-        <label className="block text-slate-400">Хүртээмж</label>
+        <label className="block text-slate-400">{t.accessibility}</label>
         <OptionPicker options={ACCESSIBILITY} value={draft.accessibility ?? []} onChange={(accessibility) => setDraft({ ...draft, accessibility })} />
       </div>
       <fieldset className="sm:col-span-2 space-y-2 border border-slate-800 rounded-xl p-3">
-        <legend className="px-1 text-slate-400">Анхны үнэлгээ (сэтгэгдлүүдтэй хамт дундажлагдана)</legend>
+        <legend className="px-1 text-slate-400">{t.initialRatings}</legend>
         <ScoreFields
           value={draft}
           onChange={(scores) =>
@@ -467,12 +474,12 @@ function SpotEditForm({
       </fieldset>
 
       <div className="sm:col-span-2 space-y-2">
-        <label className="block text-slate-400">Зураг</label>
+        <label className="block text-slate-400">{t.photo}</label>
         {shownImage ? (
           <img src={shownImage} alt={draft.name} className="max-h-48 w-full max-w-md object-cover rounded-lg border border-slate-700" />
         ) : (
           <span className="inline-block px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">
-            Зураг оруулаагүй
+            {t.noPhoto}
           </span>
         )}
         {isCloudinaryConfigured ? (
@@ -486,14 +493,14 @@ function SpotEditForm({
           <input
             className={inputClass}
             type="url"
-            placeholder="Зургийн URL"
+            placeholder={t.imageUrl}
             value={hasPhoto(draft.image) ? draft.image : ""}
             onChange={(e) => setDraft({ ...draft, image: e.target.value })}
           />
         )}
         {shownImage ? (
           <button type="button" onClick={removePhoto} className="px-3 py-1.5 rounded-lg bg-rose-900/70">
-            Зураг устгах
+            {t.removePhoto}
           </button>
         ) : null}
       </div>
@@ -501,10 +508,10 @@ function SpotEditForm({
       {error ? <p className="sm:col-span-2 text-rose-400">{error}</p> : null}
       <div className="sm:col-span-2 flex gap-2">
         <button disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
-          {saving ? (imageFile ? "Зураг хуулж байна..." : "Хадгалж байна...") : "Хадгалах"}
+          {saving ? (imageFile ? t.uploadingImage : t.saving) : t.save}
         </button>
         <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-lg bg-slate-700">
-          Болих
+          {t.cancel}
         </button>
       </div>
     </form>

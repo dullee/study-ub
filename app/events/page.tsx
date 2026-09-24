@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useClerk, useUser } from "@clerk/nextjs";
+import { useI18n } from "@/components/LanguageProvider";
 import { displayName, EventAttendee, StudyEvent, StudySpot } from "@/types";
 import { initialSpots } from "@/data/initialSpots";
 import Header from "@/components/Header";
@@ -36,6 +37,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
+  const { t } = useI18n();
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
   const { user } = useUser();
   const { openSignIn } = useClerk();
@@ -93,12 +95,12 @@ export default function EventsPage() {
       const res = await fetch(`/api/events/${eventId}/rsvp`, { method: "POST" });
       const body = await res.json();
       if (body.sent) {
-        setNotice({ text: "📧 Эвентийн мэдээллийг имэйлээр илгээлээ. Эхлэхээс 1 цагийн өмнө сануулна." });
+        setNotice({ text: t.rsvpEmailSent });
       } else if (!res.ok) {
-        setNotice({ text: "Бүртгэгдсэн ч имэйл илгээж чадсангүй.", error: true });
+        setNotice({ text: t.rsvpEmailFailed, error: true });
       }
     } catch {
-      setNotice({ text: "Бүртгэгдсэн ч имэйл илгээж чадсангүй.", error: true });
+      setNotice({ text: t.rsvpEmailFailed, error: true });
     }
   };
 
@@ -150,7 +152,7 @@ export default function EventsPage() {
     if (myAttendance(event.id)) return;
     setNotice(null);
     const attendee = await addAttendee(event.id);
-    if (!attendee) setNotice({ text: "Бүртгэл хадгалагдсангүй. Дахин оролдоно уу.", error: true });
+    if (!attendee) setNotice({ text: t.rsvpSaveFailed, error: true });
   };
 
   const handleLeave = async (event: StudyEvent) => {
@@ -159,7 +161,7 @@ export default function EventsPage() {
     setNotice(null);
     if (usingRemote) {
       if (!(await deleteAttendee(attendance.id))) {
-        setNotice({ text: "Бүртгэл цуцлагдсангүй. Дахин оролдоно уу.", error: true });
+        setNotice({ text: t.rsvpCancelFailed, error: true });
         return;
       }
     } else {
@@ -187,7 +189,7 @@ export default function EventsPage() {
 
   return (
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
-      <Header onAddClick={handleAddClick} addLabel="Эвент үүсгэх" />
+      <Header onAddClick={handleAddClick} addLabel={t.createEvent} />
       <main className="max-w-7xl mx-auto px-4 pt-6 space-y-8">
         {notice ? (
           <p
@@ -203,22 +205,22 @@ export default function EventsPage() {
         <section className="space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
             <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
-              📅 Удахгүй болох эвентүүд
+              {t.upcomingEvents}
             </h2>
             <span className="text-xs text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2.5 py-1 rounded-md">
-              {upcoming.length} эвент
+              {t.eventCount(upcoming.length)}
             </span>
           </div>
           {loading ? (
-            <p className="text-center text-slate-500 py-12 text-sm">Ачаалж байна...</p>
+            <p className="text-center text-slate-500 py-12 text-sm">{t.loading}</p>
           ) : upcoming.length === 0 ? (
             <div className="text-center py-12 space-y-3">
-              <p className="text-slate-500 text-sm">Одоогоор эвент алга. Хамт хичээллэх хүмүүсээ урь!</p>
+              <p className="text-slate-500 text-sm">{t.noEvents}</p>
               <button
                 onClick={handleAddClick}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold"
               >
-                ➕ Эвент үүсгэх
+                {t.createEventButton}
               </button>
             </div>
           ) : (
@@ -229,7 +231,7 @@ export default function EventsPage() {
         {past.length > 0 ? (
           <section className="space-y-4">
             <h2 className="text-sm font-semibold text-slate-500 border-b border-slate-800 pb-2">
-              Өнгөрсөн эвентүүд
+              {t.pastEvents}
             </h2>
             {renderGrid(past, true)}
           </section>

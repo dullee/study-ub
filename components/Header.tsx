@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRef } from "react";
 import { useHeightVar } from "@/lib/useHeightVar";
+import { useI18n } from "@/components/LanguageProvider";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 
@@ -14,11 +16,13 @@ interface HeaderProps {
 }
 
 const TABS = [
-  { href: "/", label: "📍 Газрууд" },
-  { href: "/events", label: "📅 Эвентүүд" },
-];
+  { href: "/", label: "navPlaces" },
+  { href: "/events", label: "navEvents" },
+] as const;
 
-export default function Header({ onAddClick, addLabel = "Шинэ газар нэмэх", wide = false }: HeaderProps) {
+export default function Header({ onAddClick, addLabel, wide = false }: HeaderProps) {
+  const { t } = useI18n();
+  const addText = addLabel ?? t.addPlace;
   const widthClass = wide ? "max-w-none" : "max-w-7xl";
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
@@ -40,34 +44,35 @@ export default function Header({ onAddClick, addLabel = "Шинэ газар н�
           <div className="min-w-0">
             <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
               StudySpots{" "}
-              <span className="text-xs font-mono bg-indigo-600 text-white px-2 py-0.5 rounded-full">
+              <span className="hidden sm:inline text-xs font-mono bg-indigo-600 text-white px-2 py-0.5 rounded-full">
                 UB
               </span>
             </h1>
             <p className="hidden sm:block text-xs text-slate-400">
-              Улаанбаатарын тухтай, Wi-Fi хурдан, чимээгүй газруудын гид
+              {t.siteTagline}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={onAddClick}
-            aria-label={addLabel}
-            title={addLabel}
+            aria-label={addText}
+            title={addText}
             className="bg-indigo-600 hover:bg-indigo-500 text-white h-9 px-3 sm:px-4 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-1"
           >
             <span aria-hidden="true">➕</span>
-            <span className="hidden sm:inline">{addLabel}</span>
+            <span className="hidden sm:inline">{addText}</span>
           </button>
+          <LanguageSwitcher />
           <Show when="signed-out">
             <SignInButton mode="modal">
               <button className="text-slate-300 hover:text-white h-9 px-3 rounded-xl text-xs font-semibold border border-slate-700 hover:border-slate-500">
-                Нэвтрэх
+                {t.signIn}
               </button>
             </SignInButton>
             <SignUpButton mode="modal">
               <button className="hidden sm:block bg-white/10 hover:bg-white/20 text-white h-9 px-3 rounded-xl text-xs font-semibold">
-                Бүртгүүлэх
+                {t.signUp}
               </button>
             </SignUpButton>
           </Show>
@@ -89,7 +94,7 @@ export default function Header({ onAddClick, addLabel = "Шинэ газар н�
                   : "border-transparent text-slate-400 hover:text-slate-200"
               }`}
             >
-              {tab.label}
+              {t[tab.label]}
             </Link>
           );
         })}

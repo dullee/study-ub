@@ -26,38 +26,41 @@ export interface StudySpot {
   accessibility?: string[];
 }
 
+// Хоёр хэлээр бичсэн нэр. Бүрэлдэхүүн хэсэгт `label[locale]`-ээр харуулна.
+export type Localized = { mn: string; en: string };
+
 // Хүртээмж. group-оор нь цонхонд бүлэглэж харуулна; key нь өгөгдлийн санд хадгалагдана.
 export const ACCESSIBILITY_GROUPS = [
-  { key: "mobility", label: "Хөдөлгөөн" },
-  { key: "vision", label: "Хараа" },
-  { key: "hearing", label: "Сонсгол" },
-  { key: "other", label: "Бусад" },
+  { key: "mobility", label: { mn: "Хөдөлгөөн", en: "Mobility" } },
+  { key: "vision", label: { mn: "Хараа", en: "Vision" } },
+  { key: "hearing", label: { mn: "Сонсгол", en: "Hearing" } },
+  { key: "other", label: { mn: "Бусад", en: "Other" } },
 ] as const;
 
 export const ACCESSIBILITY = [
-  { key: "wheelchair", group: "mobility", icon: "♿", label: "Тэргэнцэрээр нэвтрэх боломжтой" },
-  { key: "step_free", group: "mobility", icon: "🚪", label: "Шатгүй орц / налуу зам" },
-  { key: "elevator", group: "mobility", icon: "🛗", label: "Лифт" },
-  { key: "accessible_restroom", group: "mobility", icon: "🚻", label: "Тэргэнцэрт тохирсон ариун цэврийн өрөө" },
-  { key: "accessible_parking", group: "mobility", icon: "🅿️", label: "ХБИ-ийн зогсоол" },
-  { key: "braille", group: "vision", icon: "⠃", label: "Брайль бичигтэй тэмдэг" },
-  { key: "tactile_paving", group: "vision", icon: "🦯", label: "Хараагүй хүний зам" },
-  { key: "screen_reader", group: "vision", icon: "🔊", label: "Дэлгэц уншигчтай компьютер" },
-  { key: "hearing_loop", group: "hearing", icon: "🦻", label: "Сонсголын гогцоо" },
-  { key: "sign_language", group: "hearing", icon: "🤟", label: "Дохионы хэлтэй ажилтан" },
-  { key: "visual_alerts", group: "hearing", icon: "💡", label: "Гэрлэн дохиолол" },
-  { key: "service_animal", group: "other", icon: "🦮", label: "Туслах амьтан зөвшөөрнө" },
-  { key: "quiet_room", group: "other", icon: "🤫", label: "Мэдрэхүйн ачаалалгүй тайван өрөө" },
+  { key: "wheelchair", group: "mobility", icon: "♿", label: { mn: "Тэргэнцэрээр нэвтрэх боломжтой", en: "Wheelchair accessible" } },
+  { key: "step_free", group: "mobility", icon: "🚪", label: { mn: "Шатгүй орц / налуу зам", en: "Step-free entrance / ramp" } },
+  { key: "elevator", group: "mobility", icon: "🛗", label: { mn: "Лифт", en: "Elevator" } },
+  { key: "accessible_restroom", group: "mobility", icon: "🚻", label: { mn: "Тэргэнцэрт тохирсон ариун цэврийн өрөө", en: "Wheelchair-accessible restroom" } },
+  { key: "accessible_parking", group: "mobility", icon: "🅿️", label: { mn: "ХБИ-ийн зогсоол", en: "Accessible parking" } },
+  { key: "braille", group: "vision", icon: "⠃", label: { mn: "Брайль бичигтэй тэмдэг", en: "Braille signage" } },
+  { key: "tactile_paving", group: "vision", icon: "🦯", label: { mn: "Хараагүй хүний зам", en: "Tactile paving" } },
+  { key: "screen_reader", group: "vision", icon: "🔊", label: { mn: "Дэлгэц уншигчтай компьютер", en: "Computer with screen reader" } },
+  { key: "hearing_loop", group: "hearing", icon: "🦻", label: { mn: "Сонсголын гогцоо", en: "Hearing loop" } },
+  { key: "sign_language", group: "hearing", icon: "🤟", label: { mn: "Дохионы хэлтэй ажилтан", en: "Staff who use sign language" } },
+  { key: "visual_alerts", group: "hearing", icon: "💡", label: { mn: "Гэрлэн дохиолол", en: "Visual (light) alarms" } },
+  { key: "service_animal", group: "other", icon: "🦮", label: { mn: "Туслах амьтан зөвшөөрнө", en: "Service animals welcome" } },
+  { key: "quiet_room", group: "other", icon: "🤫", label: { mn: "Мэдрэхүйн ачаалалгүй тайван өрөө", en: "Quiet low-sensory room" } },
 ] as const;
 
 // Газрын төрөл. key нь өгөгдлийн санд хадгалагдана; шинэ төрөл нэмбэл migration-ы check-ийг ч шинэчилнэ.
 export const SPOT_CATEGORIES = [
-  { key: "library", icon: "📚", label: "Номын сан" },
-  { key: "cafe", icon: "☕", label: "Кафе" },
-  { key: "coworking", icon: "💼", label: "Коворкинг" },
-  { key: "university", icon: "🎓", label: "Их сургууль" },
-  { key: "reading_room", icon: "📖", label: "Уншлагын танхим" },
-  { key: "other", icon: "📍", label: "Бусад" },
+  { key: "library", icon: "📚", label: { mn: "Номын сан", en: "Library" } },
+  { key: "cafe", icon: "☕", label: { mn: "Кафе", en: "Café" } },
+  { key: "coworking", icon: "💼", label: { mn: "Коворкинг", en: "Coworking" } },
+  { key: "university", icon: "🎓", label: { mn: "Их сургууль", en: "University" } },
+  { key: "reading_room", icon: "📖", label: { mn: "Уншлагын танхим", en: "Reading room" } },
+  { key: "other", icon: "📍", label: { mn: "Бусад", en: "Other" } },
 ] as const;
 
 export type SpotCategory = (typeof SPOT_CATEGORIES)[number]["key"];
@@ -68,16 +71,16 @@ export function spotCategory(key?: string | null) {
 
 // Газрын үйлчилгээ. key нь өгөгдлийн санд хадгалагдана — нэрийг нь солиход өгөгдөл өөрчлөгдөхгүй.
 export const AMENITIES = [
-  { key: "printer", icon: "🖨️", label: "Принтер" },
-  { key: "food", icon: "🍽️", label: "Хоол" },
-  { key: "drinks", icon: "☕", label: "Кофе, ундаа" },
-  { key: "water", icon: "🚰", label: "Үнэгүй ус" },
-  { key: "restroom", icon: "🚻", label: "Ариун цэврийн өрөө" },
-  { key: "group_room", icon: "👥", label: "Бүлгийн өрөө" },
-  { key: "whiteboard", icon: "📝", label: "Самбар" },
-  { key: "ac", icon: "❄️", label: "Агааржуулалт" },
-  { key: "parking", icon: "🅿️", label: "Зогсоол" },
-  { key: "lockers", icon: "🔐", label: "Шүүгээ" },
+  { key: "printer", icon: "🖨️", label: { mn: "Принтер", en: "Printer" } },
+  { key: "food", icon: "🍽️", label: { mn: "Хоол", en: "Food" } },
+  { key: "drinks", icon: "☕", label: { mn: "Кофе, ундаа", en: "Coffee & drinks" } },
+  { key: "water", icon: "🚰", label: { mn: "Үнэгүй ус", en: "Free water" } },
+  { key: "restroom", icon: "🚻", label: { mn: "Ариун цэврийн өрөө", en: "Restroom" } },
+  { key: "group_room", icon: "👥", label: { mn: "Бүлгийн өрөө", en: "Group room" } },
+  { key: "whiteboard", icon: "📝", label: { mn: "Самбар", en: "Whiteboard" } },
+  { key: "ac", icon: "❄️", label: { mn: "Агааржуулалт", en: "Air conditioning" } },
+  { key: "parking", icon: "🅿️", label: { mn: "Зогсоол", en: "Parking" } },
+  { key: "lockers", icon: "🔐", label: { mn: "Шүүгээ", en: "Lockers" } },
 ] as const;
 
 export function googleMapsUrl(spot: Pick<StudySpot, "maps_url" | "lat" | "lng">) {
@@ -100,8 +103,20 @@ export interface Review {
 }
 
 // 1–5 үнэлгээний тайлбар. Индекс = үнэлгээ − 1.
-export const QUIET_LEVELS = ["Шуугиантай", "Чимээтэй", "Дунд зэрэг", "Чимээгүй", "Маш чимээгүй"] as const;
-export const OUTLET_LEVELS = ["Байхгүй", "Цөөн", "Дунд зэрэг", "Ихтэй", "Ширээ бүрт"] as const;
+export const QUIET_LEVELS: readonly Localized[] = [
+  { mn: "Шуугиантай", en: "Noisy" },
+  { mn: "Чимээтэй", en: "Somewhat noisy" },
+  { mn: "Дунд зэрэг", en: "Moderate" },
+  { mn: "Чимээгүй", en: "Quiet" },
+  { mn: "Маш чимээгүй", en: "Very quiet" },
+];
+export const OUTLET_LEVELS: readonly Localized[] = [
+  { mn: "Байхгүй", en: "None" },
+  { mn: "Цөөн", en: "Few" },
+  { mn: "Дунд зэрэг", en: "Some" },
+  { mn: "Ихтэй", en: "Many" },
+  { mn: "Ширээ бүрт", en: "At every table" },
+];
 
 export interface StudyEvent {
   id: number;
@@ -159,10 +174,16 @@ export const AVAILABLE_TAGS: TagType[] = [
 ];
 
 // Цонхонд шошгыг бүлэглэж харуулна. Энд байхгүй (хэрэглэгчийн бичсэн) шошго "Бусад"-д орно.
-export const TAG_INFO: Record<string, { group: "type" | "environment" | "amenities"; icon: string }> = {
-  "Номын сан": { group: "type", icon: "📚" },
-  "Маш чимээгүй": { group: "environment", icon: "🤫" },
-  "24 цаг": { group: "environment", icon: "🕒" },
-  "Wi-Fi хурдан": { group: "amenities", icon: "⚡" },
-  "Розетка ихтэй": { group: "amenities", icon: "🔌" },
+// Шошго өгөгдлийн санд монголоор хадгалагдана; en нь зөвхөн харуулах нэр.
+export const TAG_INFO: Record<string, { group: "type" | "environment" | "amenities"; icon: string; en: string }> = {
+  "Номын сан": { group: "type", icon: "📚", en: "Library" },
+  "Маш чимээгүй": { group: "environment", icon: "🤫", en: "Very quiet" },
+  "24 цаг": { group: "environment", icon: "🕒", en: "Open 24 hours" },
+  "Wi-Fi хурдан": { group: "amenities", icon: "⚡", en: "Fast Wi-Fi" },
+  "Розетка ихтэй": { group: "amenities", icon: "🔌", en: "Lots of outlets" },
 };
+
+// Шошгыг сонгосон хэлээр: суурь шошгыг орчуулна, хэрэглэгчийн бичсэнийг хэвээр нь.
+export function tagLabel(tag: string, locale: "mn" | "en") {
+  return locale === "en" ? (TAG_INFO[tag]?.en ?? tag) : tag;
+}

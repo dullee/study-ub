@@ -11,6 +11,7 @@ import {
   spotCategory,
   StudySpot,
   TAG_INFO,
+  tagLabel,
 } from "@/types";
 import { fetchReviews } from "@/lib/supabase/spots";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
@@ -19,6 +20,7 @@ import Stars from "@/components/Stars";
 import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 import { formatOutlets, formatQuiet, formatWifi, summarizeSpot } from "@/lib/scores";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface SpotDetailDialogProps {
   spot: StudySpot;
@@ -33,6 +35,7 @@ export default function SpotDetailDialog({
   onShowOnMap,
   onReviewAdded,
 }: SpotDetailDialogProps) {
+  const { t, locale } = useI18n();
   const now = useNow();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,12 +81,13 @@ export default function SpotDetailDialog({
   const average =
     reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
 
-  const status = now === null ? null : openStatus(spot, now);
+  const status = now === null ? null : openStatus(spot, now, t);
   const category = spotCategory(spot.category);
   const accessibility = ACCESSIBILITY_GROUPS.map((group) => ({
-    ...group,
-    items: ACCESSIBILITY.filter(
-      (item) => item.group === group.key && spot.accessibility?.includes(item.key)
+    key: group.key,
+    label: group.label[locale],
+    items: ACCESSIBILITY.filter((item) => item.group === group.key && spot.accessibility?.includes(item.key)).map(
+      (item) => ({ key: item.key, icon: item.icon, label: item.label[locale] })
     ),
   })).filter((group) => group.items.length > 0);
 
@@ -91,51 +95,55 @@ export default function SpotDetailDialog({
   const tagChips = (group: string) =>
     spot.tags
       .filter((tag) => (TAG_INFO[tag]?.group ?? "other") === group)
-      .map((tag) => ({ key: `tag:${tag}`, icon: TAG_INFO[tag]?.icon ?? "🏷️", label: tag }));
+      .map((tag) => ({ key: `tag:${tag}`, icon: TAG_INFO[tag]?.icon ?? "🏷️", label: tagLabel(tag, locale), raw: tag }));
   const featureGroups = [
     {
       key: "type",
-      title: "Төрөл",
+      title: t.groupType,
       chips: [
-        ...(category ? [{ key: `category:${category.key}`, icon: category.icon, label: category.label }] : []),
-        ...tagChips("type").filter((chip) => chip.label.toLowerCase() !== category?.label.toLowerCase()),
+        ...(category ? [{ key: `category:${category.key}`, icon: category.icon, label: category.label[locale] }] : []),
+        // "Номын сан" шошго нь төрөлтэй давхцвал нэг л удаа (шошго монголоор хадгалагддаг).
+        ...tagChips("type").filter((chip) => chip.raw.toLowerCase() !== category?.label.mn.toLowerCase()),
       ],
     },
-    { key: "environment", title: "Орчин", chips: tagChips("environment") },
+    { key: "environment", title: t.groupEnvironment, chips: tagChips("environment") },
     {
       key: "amenities",
-      title: "Үйлчилгээ",
+      title: t.groupAmenities,
       chips: [
         ...tagChips("amenities"),
-        ...AMENITIES.filter((amenity) => spot.amenities?.includes(amenity.key)),
+        ...AMENITIES.filter((amenity) => spot.amenities?.includes(amenity.key)).map((amenity) => ({
+          key: amenity.key,
+          icon: amenity.icon,
+          label: amenity.label[locale],
+        })),
       ],
     },
-    { key: "other", title: "Бусад", chips: tagChips("other") },
+    { key: "other", title: t.groupOther, chips: tagChips("other") },
   ].filter((group) => group.chips.length > 0);
 
   // Газар нэмэгчийн утга + сэтгэгдлүүдийн утгаас нэгтгэсэн оноо.
   const summary = summarizeSpot(spot, reviews);
-  const votes = (count: number) => `${count} үнэлгээнээс`;
   const facts: { icon: string; label: string; value?: string; note?: string }[] = [
-    { icon: "📍", label: "Байршил", value: spot.location },
-    { icon: "⏰", label: "Цагийн хуваарь (өдөр бүр)", value: status ? status.schedule : spot.hours },
+    { icon: "📍", label: t.factLocation, value: spot.location },
+    { icon: "⏰", label: t.factHours, value: status ? status.schedule : spot.hours },
     {
       icon: "⚡",
-      label: "Wi-Fi (медиан)",
+      label: t.factWifi,
       value: summary.wifi && formatWifi(summary.wifi),
-      note: summary.wifi && votes(summary.wifi.count),
+      note: summary.wifi && t.fromRatings(summary.wifi.count),
     },
     {
       icon: "🤫",
-      label: "Чимээгүй байдал",
-      value: summary.quiet && formatQuiet(summary.quiet),
-      note: summary.quiet && votes(summary.quiet.count),
+      label: t.factQuiet,
+      value: summary.quiet && formatQuiet(summary.quiet, locale),
+      note: summary.quiet && t.fromRatings(summary.quiet.count),
     },
     {
       icon: "🔌",
-      label: "Розетка",
-      value: summary.outlets && formatOutlets(summary.outlets),
-      note: summary.outlets && votes(summary.outlets.count),
+      label: t.factOutlets,
+      value: summary.outlets && formatOutlets(summary.outlets, locale),
+      note: summary.outlets && t.fromRatings(summary.outlets.count),
     },
   ].filter((fact) => fact.value);
 
@@ -161,7 +169,7 @@ export default function SpotDetailDialog({
           <button
             onClick={onClose}
             type="button"
-            aria-label="Хаах"
+            aria-label={t.close}
             className="mt-3 mr-3 h-10 w-10 shrink-0 rounded-full bg-slate-900/80 backdrop-blur text-slate-200 hover:text-white border border-slate-700"
           >
             ✕
@@ -174,7 +182,7 @@ export default function SpotDetailDialog({
           <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
             {category ? (
               <span className="inline-block mb-2 text-xs font-semibold bg-slate-900/80 backdrop-blur text-indigo-300 border border-slate-700 px-2.5 py-1 rounded-lg">
-                {category.icon} {category.label}
+                {category.icon} {category.label[locale]}
               </span>
             ) : null}
             <h2 id="spot-dialog-title" className="text-2xl sm:text-3xl font-bold text-white">
@@ -187,11 +195,11 @@ export default function SpotDetailDialog({
                 <>
                   <Stars value={average} />
                   <span>
-                    {average.toFixed(1)} · {reviews.length} сэтгэгдэл
+                    {average.toFixed(1)} · {t.reviewCount(reviews.length)}
                   </span>
                 </>
               ) : (
-                <span className="text-slate-400">Одоогоор үнэлгээ алга</span>
+                <span className="text-slate-400">{t.noRatingsYet}</span>
               )}
             </div>
           </div>
@@ -227,7 +235,7 @@ export default function SpotDetailDialog({
               ))}
               {accessibility.length > 0 ? (
                 <section className="space-y-2 md:col-span-2">
-                  <h3 className="text-xs font-semibold text-slate-400">Хүртээмж</h3>
+                  <h3 className="text-xs font-semibold text-slate-400">{t.accessibility}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {accessibility.map((group) => (
                       <div key={group.key} className="space-y-1.5">
@@ -244,20 +252,20 @@ export default function SpotDetailDialog({
           <section className="space-y-3 border-t border-slate-800 pt-5">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold text-slate-200">
-                💬 Сэтгэгдэл {loading ? "" : `(${reviews.length})`}
+                {t.reviewsHeading} {loading ? "" : `(${reviews.length})`}
               </h3>
               <button
                 type="button"
                 onClick={() => setReviewsOpen(true)}
                 className="text-xs font-semibold text-indigo-300 hover:text-white"
               >
-                {reviews.length > 0 ? "Бүгдийг харах, бичих →" : "Сэтгэгдэл бичих →"}
+                {reviews.length > 0 ? t.seeAllAndWrite : t.writeReviewLink}
               </button>
             </div>
             {loading ? (
               <div className="h-16 rounded-xl bg-slate-800/40 animate-pulse" aria-hidden="true" />
             ) : reviews.length === 0 ? (
-              <p className="text-xs text-slate-500">Одоогоор сэтгэгдэл алга. Анхны сэтгэгдлийг та үлдээгээрэй!</p>
+              <p className="text-xs text-slate-500">{t.noReviewsYet}</p>
             ) : (
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {reviews.slice(0, 2).map((review) => (
@@ -276,7 +284,7 @@ export default function SpotDetailDialog({
               }}
               className="py-2.5 bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white text-sm font-semibold rounded-xl border border-slate-700 hover:border-indigo-500 transition-all"
             >
-              Карт дээр 🎯
+              {t.showOnMapButton}
             </button>
             <a
               href={googleMapsUrl(spot)}

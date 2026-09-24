@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { EventAttendee, googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface EventCardProps {
   event: StudyEvent;
@@ -25,6 +26,7 @@ export default function EventCard({
 }: EventCardProps) {
   const [busy, setBusy] = useState(false);
 
+  const { t, locale } = useI18n();
   const isFull = event.max_people !== null && attendees.length >= event.max_people;
   const hasCoords = event.lat !== null && event.lng !== null;
 
@@ -51,12 +53,12 @@ export default function EventCard({
           {event.title}
           {isHost ? (
             <span className="ml-2 align-middle text-[10px] font-semibold bg-indigo-600/30 text-indigo-200 px-1.5 py-0.5 rounded">
-              Таны эвент
+              {t.yourEvent}
             </span>
           ) : null}
         </h3>
         <span className="shrink-0 text-[11px] font-semibold bg-slate-900/90 text-indigo-400 px-2.5 py-1 rounded-lg border border-slate-700">
-          {formatEventTime(event.starts_at)}
+          {formatEventTime(event.starts_at, undefined, locale)}
         </span>
       </div>
 
@@ -74,7 +76,7 @@ export default function EventCard({
             </a>
           ) : null}
         </p>
-        <p>🙋 Зохион байгуулагч: {event.host_name}</p>
+        <p>{t.host} {event.host_name}</p>
       </div>
 
       {event.description ? (
@@ -83,7 +85,7 @@ export default function EventCard({
 
       <div className="space-y-2">
         <p className="text-xs font-semibold text-slate-300">
-          👥 Ирэх хүмүүс: {attendees.length}
+          {t.attending} {attendees.length}
           {event.max_people !== null ? ` / ${event.max_people}` : ""}
         </p>
         {attendees.length > 0 ? (
@@ -98,20 +100,20 @@ export default function EventCard({
             ))}
           </div>
         ) : (
-          <p className="text-[11px] text-slate-500">Одоогоор хэн ч бүртгүүлээгүй байна.</p>
+          <p className="text-[11px] text-slate-500">{t.noAttendees}</p>
         )}
       </div>
 
       <div className="mt-auto pt-1">
         {isPast ? (
-          <p className="text-center text-xs text-slate-500 py-2">Өнгөрсөн эвент</p>
+          <p className="text-center text-xs text-slate-500 py-2">{t.pastEvent}</p>
         ) : isGoing ? (
           <button
             onClick={handleLeave}
             disabled={busy}
             className="w-full py-2 bg-emerald-900/40 hover:bg-slate-700 text-emerald-300 hover:text-white text-xs font-semibold rounded-xl transition-all border border-emerald-700/60 disabled:opacity-60"
           >
-            ✓ Та ирнэ гэж бүртгүүлсэн · Болих
+            {t.youreGoing}
           </button>
         ) : (
           <button
@@ -119,7 +121,7 @@ export default function EventCard({
             disabled={busy || isFull}
             className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:shadow-none disabled:bg-slate-700"
           >
-            {isFull ? "Хүн дүүрсэн" : "✋ Би ирнэ"}
+            {isFull ? t.eventFull : t.imGoing}
           </button>
         )}
       </div>

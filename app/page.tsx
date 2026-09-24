@@ -16,6 +16,7 @@ import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localSto
 import { sortByActiveTags } from "@/lib/spotSort";
 import { distanceKm, useUserLocation } from "@/lib/geo";
 import { useWideLayout } from "@/lib/useWideLayout";
+import { useI18n } from "@/components/LanguageProvider";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -99,6 +100,7 @@ export default function Home() {
     setActiveTags(updated);
   };
 
+  const { t } = useI18n();
   const [wide, setWide] = useWideLayout();
   const { location, locate, clear: clearLocation } = useUserLocation();
   const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(null);
@@ -147,13 +149,13 @@ export default function Home() {
     if (usingRemote) {
       const saved = await insertSpot(pending);
       if (saved) {
-        setNotice("Хүсэлт илгээгдлээ. Админ зөвшөөрсний дараа газрын зурагт гарна.");
+        setNotice(t.spotSubmitted);
         return;
       }
     }
     const newSpot: StudySpot = { ...pending, id: Date.now() };
     saveLocalSpots([newSpot, ...loadLocalSpots()]);
-    setNotice("Хүсэлт илгээгдлээ. Админ зөвшөөрсний дараа газрын зурагт гарна.");
+    setNotice(t.spotSubmitted);
   };
 
   // Том дэлгэцэнд газрын зураг наалдсан тул харагдаж байгаа — зөвхөн утсан дээр түүн рүү гүйлгэнэ.
@@ -225,16 +227,16 @@ export default function Home() {
           </div>
           <section className="order-2 lg:order-1 space-y-2">
             <div className="flex justify-between items-center gap-2 border-b border-slate-800 pb-2">
-              <h2 className="text-sm font-semibold text-slate-300 truncate min-w-0">📍 Газрууд</h2>
+              <h2 className="text-sm font-semibold text-slate-300 truncate min-w-0">{t.placesHeading}</h2>
               <div className="flex items-center gap-1.5 shrink-0">
                 <span className="text-xs whitespace-nowrap text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2 py-1 rounded-md">
-                  {filteredSpots.length} газар
+                  {t.placesCount(filteredSpots.length)}
                 </span>
                 <button
                   type="button"
                   onClick={() => setWide(!wide)}
                   aria-pressed={wide}
-                  title={wide ? "Энгийн өргөн" : "Бүтэн өргөн — газрын зургийг томруулна"}
+                  title={wide ? t.wideOffTitle : t.wideOnTitle}
                   className={`hidden lg:inline-flex items-center gap-1 whitespace-nowrap text-xs px-2 py-1 rounded-md border transition-colors ${
                     wide
                       ? "bg-indigo-600 border-indigo-500 text-white"
@@ -242,12 +244,12 @@ export default function Home() {
                   }`}
                 >
                   <span aria-hidden="true">{wide ? "⇥⇤" : "⇤⇥"}</span>
-                  {wide ? "Энгийн" : "Өргөн"}
+                  {wide ? t.wideOff : t.wideOn}
                 </button>
               </div>
             </div>
             {filteredSpots.length === 0 ? (
-              <p className="text-center text-slate-500 py-12 text-sm">Шүүлтүүрт тохирох газар олдсонгүй.</p>
+              <p className="text-center text-slate-500 py-12 text-sm">{t.noResults}</p>
             ) : (
               <div className="flex flex-col gap-1">
                 {filteredSpots.map((spot) => (

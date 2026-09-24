@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { StudySpot } from "@/types";
+import { Dictionary } from "@/lib/i18n/dictionaries";
 
 // "09:00 - 20:00", "9:00–20:00", "24 Цаг", "24/7" гэх мэт чөлөөт текстээс нээлттэй эсэхийг Улаанбаатарын цагаар тооцно.
 
@@ -37,20 +38,7 @@ function parseHours(spot: Pick<StudySpot, "hours" | "is_24h">): Hours | null {
 const clock = (minutes: number) =>
   `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 
-// Карт дээр: "2 ц 15 мин-ийн дараа", дэлгэрэнгүйд: "2 цаг 15 минутын дараа".
-function inShort(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} минутын дараа`;
-  return m === 0 ? `${h} цагийн дараа` : `${h} ц ${m} мин-ийн дараа`;
-}
-
-function inDetail(minutes: number) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m} минутын дараа`;
-  return m === 0 ? `${h} цагийн дараа` : `${h} цаг ${m} минутын дараа`;
-}
+const duration = (minutes: number) => ({ h: Math.floor(minutes / 60), m: minutes % 60 });
 
 function minutesNowInUB(now: number) {
   const parts = Object.fromEntries(
@@ -66,38 +54,42 @@ function minutesNowInUB(now: number) {
   return Number(parts.hour) * 60 + Number(parts.minute);
 }
 
-export function openStatus(spot: Pick<StudySpot, "hours" | "is_24h">, now: number): OpenStatus | null {
+// Бичвэрийг сонгосон хэлний толиноос (t) авна: карт дээр товч, цонхонд дэлгэрэнгүй.
+export function openStatus(
+  spot: Pick<StudySpot, "hours" | "is_24h">,
+  now: number,
+  t: Dictionary
+): OpenStatus | null {
   const hours = parseHours(spot);
   if (!hours) return null;
   if (hours.kind === "24h") {
-    return { open: true, tone: "open", short: "24 цаг нээлттэй", detail: "24 цаг нээлттэй", schedule: "24 цаг" };
+    return { open: true, tone: "open", short: t.open24, detail: t.open24, schedule: t.schedule24 };
   }
 
   const { open, close } = hours;
   const schedule = `${clock(open)} – ${clock(close)}`;
-  const t = minutesNowInUB(now);
+  const nowMinutes = minutesNowInUB(now);
   const overnight = open > close;
-  const isOpen = overnight ? t >= open || t < close : t >= open && t < close;
+  const isOpen = overnight ? nowMinutes >= open || nowMinutes < close : nowMinutes >= open && nowMinutes < close;
 
   if (isOpen) {
-    const left = (close - t + DAY) % DAY;
-    const closesAt = `${clock(close)}-д хаагдана`;
+    const left = (close - nowMinutes + DAY) % DAY;
     return {
       open: true,
       tone: left <= SOON ? "soon" : "open",
-      short: left <= SOON ? `${inShort(left)} хаагдана` : `Нээлттэй · ${clock(close)} хүртэл`,
-      detail: `Нээлттэй · ${closesAt} (${inDetail(left)})`,
+      short: left <= SOON ? t.closesIn(t.durationShort(duration(left))) : t.openUntil(clock(close)),
+      detail: t.openClosesAt(clock(close), t.durationLong(duration(left))),
       schedule,
     };
   }
 
-  const until = (open - t + DAY) % DAY;
-  const day = !overnight && t >= close ? "маргааш " : "";
+  const until = (open - nowMinutes + DAY) % DAY;
+  const tomorrow = !overnight && nowMinutes >= close;
   return {
     open: false,
     tone: "closed",
-    short: until <= SOON ? `Хаалттай · ${inShort(until)} нээгдэнэ` : "Хаалттай",
-    detail: `Хаалттай · ${day}${clock(open)}-д нээгдэнэ (${inDetail(until)})`,
+    short: until <= SOON ? t.closedOpensIn(t.durationShort(duration(until))) : t.closed,
+    detail: t.closedOpensAt(tomorrow, clock(open), t.durationLong(duration(until))),
     schedule,
   };
 }

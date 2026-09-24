@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { mnMN } from "@clerk/localizations";
+import { enUS, mnMN } from "@clerk/localizations";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClerkSupabaseBridge from "@/components/ClerkSupabaseBridge";
+import { LanguageProvider } from "@/components/LanguageProvider";
+import { dictionaries } from "@/lib/i18n/dictionaries";
+import { getLocale } from "@/lib/i18n/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,22 +32,28 @@ const clerkAppearance = {
   },
 };
 
-export const metadata: Metadata = {
-  title: "StudySpots UB",
-  description: "Улаанбаатарын тухтай, Wi-Fi хурдан, чимээгүй сурах газруудын гид",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "StudySpots UB",
+    description: dictionaries[await getLocale()].metaDescription,
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// Хэл cookie-оос уншигдана — хуудас, Clerk-ийн нэвтрэх цонх эхнээсээ сонгосон хэлээр гарна.
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
   return (
     <html
-      lang="mn"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       {/* Хөтчийн өргөтгөлүүд body-д class нэмдэг (ж: vc-init) — зөвхөн body-гийн attribute зөрүүг үл тоомсорлоно. */}
       <body className="min-h-full flex flex-col bg-slate-900" suppressHydrationWarning>
-        <ClerkProvider localization={mnMN} appearance={clerkAppearance}>
-          <ClerkSupabaseBridge />
-          {children}
+        <ClerkProvider localization={locale === "en" ? enUS : mnMN} appearance={clerkAppearance}>
+          <LanguageProvider initialLocale={locale}>
+            <ClerkSupabaseBridge />
+            {children}
+          </LanguageProvider>
         </ClerkProvider>
       </body>
     </html>

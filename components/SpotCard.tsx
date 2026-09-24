@@ -1,10 +1,11 @@
 "use client";
 
-import { googleMapsUrl, OUTLET_LEVELS, PLACEHOLDER_IMAGE, QUIET_LEVELS, spotCategory, StudySpot } from "@/types";
+import { googleMapsUrl, OUTLET_LEVELS, PLACEHOLDER_IMAGE, QUIET_LEVELS, spotCategory, StudySpot, tagLabel } from "@/types";
 import Stars from "@/components/Stars";
 import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
-import { formatWifi, SpotSummary } from "@/lib/scores";
+import { formatWifi, levelLabel, SpotSummary } from "@/lib/scores";
 import { formatDistance } from "@/lib/geo";
+import { useI18n } from "@/components/LanguageProvider";
 
 interface SpotCardProps {
   spot: StudySpot;
@@ -33,15 +34,15 @@ export default function SpotCard({
   ratingsLoading,
   distanceKm,
 }: SpotCardProps) {
+  const { t, locale } = useI18n();
   const now = useNow();
-  const status = now === null ? null : openStatus(spot, now);
+  const status = now === null ? null : openStatus(spot, now, t);
   const category = spotCategory(spot.category);
   const rating = summary?.rating;
-  const level = (levels: readonly string[], value: number) => levels[Math.round(value) - 1];
   const scoreLine = [
     summary?.wifi ? `⚡ ${formatWifi(summary.wifi)}` : null,
-    summary?.quiet ? `🤫 ${level(QUIET_LEVELS, summary.quiet.value)}` : null,
-    summary?.outlets ? `🔌 ${level(OUTLET_LEVELS, summary.outlets.value)}` : null,
+    summary?.quiet ? `🤫 ${levelLabel(QUIET_LEVELS, summary.quiet.value, locale)}` : null,
+    summary?.outlets ? `🔌 ${levelLabel(OUTLET_LEVELS, summary.outlets.value, locale)}` : null,
   ].filter(Boolean);
   const hiddenTags = spot.tags.length - MAX_TAGS;
 
@@ -58,7 +59,7 @@ export default function SpotCard({
         <div className="absolute top-2 left-2 right-2 flex justify-between items-start gap-2 text-[11px] font-semibold">
           {distanceKm !== undefined ? (
             <span className="bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 text-indigo-300">
-              🚶 {formatDistance(distanceKm)}
+              🚶 {formatDistance(distanceKm, t)}
             </span>
           ) : (
             <span />
@@ -91,7 +92,7 @@ export default function SpotCard({
                 <span className="text-slate-300">({rating.count})</span>
               </>
             ) : (
-              <span className="text-slate-300">Үнэлгээгүй</span>
+              <span className="text-slate-300">{t.noRating}</span>
             )}
           </div>
         </div>
@@ -110,7 +111,7 @@ export default function SpotCard({
                   key={tag}
                   className="text-[10px] bg-slate-900/80 border border-slate-700 text-slate-300 px-1.5 py-0.5 rounded-md font-medium"
                 >
-                  {tag}
+                  {tagLabel(tag, locale)}
                 </span>
               ))}
               {hiddenTags > 0 ? (
@@ -123,8 +124,8 @@ export default function SpotCard({
           <button
             type="button"
             onClick={() => onFocus(spot.lat, spot.lng)}
-            aria-label={`${spot.name} — карт дээр харах`}
-            title="Карт дээр харах"
+            aria-label={t.showOnMapFor(spot.name)}
+            title={t.showOnMap}
             className={iconButtonClass}
           >
             🎯
@@ -133,8 +134,8 @@ export default function SpotCard({
             href={googleMapsUrl(spot)}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`${spot.name} — Google Maps дээр нээх`}
-            title="Google Maps дээр нээх"
+            aria-label={t.openInGoogleMapsFor(spot.name)}
+            title={t.openInGoogleMaps}
             className={iconButtonClass}
           >
             ↗
@@ -145,7 +146,7 @@ export default function SpotCard({
       <button
         type="button"
         onClick={() => onOpenDetails(spot)}
-        aria-label={`${spot.name} — дэлгэрэнгүй ба сэтгэгдэл`}
+        aria-label={t.openDetails(spot.name)}
         className="absolute inset-0 focus:outline-none"
       />
     </article>

@@ -13,13 +13,12 @@ import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import { isShortMapsLink, MapsLinkInfo, parseMapsLink } from "@/lib/maps";
 import OptionPicker from "@/components/OptionPicker";
+import { useI18n } from "@/components/LanguageProvider";
 
+// "hint"-ийн бичвэрийг харуулахдаа сонгосон хэлээр авна; бусдыг үүсэх үед нь.
 type MapsStatus = { kind: "hint" | "loading" | "ok" | "error"; text: string };
 
-const MAPS_HINT: MapsStatus = {
-  kind: "hint",
-  text: "Google Maps дээр газраа олоод «Share» → холбоосыг хуулж энд тавина. Координат автоматаар бөглөгдөнө.",
-};
+const MAPS_HINT: MapsStatus = { kind: "hint", text: "" };
 
 interface AddSpotModalProps {
   isOpen: boolean;
@@ -44,6 +43,7 @@ const emptyForm = {
 };
 
 export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModalProps) {
+  const { t, locale } = useI18n();
   const [formData, setFormData] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -62,7 +62,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       lng: String(info.lng),
       name: prev.name || info.name || "",
     }));
-    setMapsStatus({ kind: "ok", text: `Координат авлаа: ${info.lat}, ${info.lng}` });
+    setMapsStatus({ kind: "ok", text: t.mapsCoordsFound(info.lat, info.lng) });
   };
 
   const handleMapsLinkChange = async (value: string) => {
@@ -79,10 +79,10 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       return;
     }
     if (!isShortMapsLink(link)) {
-      setMapsStatus({ kind: "error", text: "Холбоосоос координат олдсонгүй — доор гараар оруулна уу." });
+      setMapsStatus({ kind: "error", text: t.mapsCoordsMissing });
       return;
     }
-    setMapsStatus({ kind: "loading", text: "Координат уншиж байна..." });
+    setMapsStatus({ kind: "loading", text: t.mapsCoordsLoading });
     try {
       const res = await fetch(`/api/maps/resolve?url=${encodeURIComponent(link)}`);
       if (latestLink.current !== value) return;
@@ -90,7 +90,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       applyMapsInfo((await res.json()) as MapsLinkInfo);
     } catch {
       if (latestLink.current !== value) return;
-      setMapsStatus({ kind: "error", text: "Холбоосоос координат олдсонгүй — доор гараар оруулна уу." });
+      setMapsStatus({ kind: "error", text: t.mapsCoordsMissing });
     }
   };
 
@@ -113,12 +113,12 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
     setError("");
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setError("Зөвхөн зургийн файл сонгоно уу.");
+      setError(t.onlyImages);
       e.target.value = "";
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setError("Зураг 5MB-аас бага байх ёстой.");
+      setError(t.imageTooBig);
       e.target.value = "";
       return;
     }
@@ -135,7 +135,8 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       try {
         image = await uploadImage(imageFile);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Зураг хуулахад алдаа гарлаа.");
+        console.error("Image upload:", err);
+        setError(t.imageUploadFailed);
         setSaving(false);
         return;
       }
@@ -172,14 +173,14 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4">
       <div className="bg-slate-900 sm:border border-slate-800 w-full max-w-lg rounded-none sm:rounded-2xl px-5 pb-5 sm:px-6 sm:pb-6 space-y-4 relative shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 flex justify-between items-center border-b border-slate-800">
-          <h3 className="text-base font-bold text-white">➕ Шинэ Study Spot нэмэх</h3>
+          <h3 className="text-base font-bold text-white">{t.addSpotTitle}</h3>
           <button onClick={handleClose} className="text-slate-400 hover:text-white text-lg" type="button">
             ✕
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-slate-400 mb-1">Google Maps холбоос</label>
+            <label className="block text-slate-400 mb-1">{t.mapsLink}</label>
             <input
               type="url"
               value={formData.maps_url}
@@ -196,22 +197,22 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                   : "text-slate-500"
               }`}
             >
-              {mapsStatus.text}
+              {mapsStatus.kind === "hint" ? t.mapsHint : mapsStatus.text}
             </p>
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">Газрын нэр</label>
+            <label className="block text-slate-400 mb-1">{t.spotName}</label>
             <input
               type="text"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ж: Coffee Names (Сүхбаатарын салбар)"
+              placeholder={t.spotNamePlaceholder}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">Газрын төрөл</label>
+            <label className="block text-slate-400 mb-1">{t.spotType}</label>
             <select
               required
               value={formData.category}
@@ -219,45 +220,45 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
             >
               <option value="" disabled>
-                Сонгоно уу
+                {t.choose}
               </option>
               {SPOT_CATEGORIES.map((category) => (
                 <option key={category.key} value={category.key}>
-                  {category.icon} {category.label}
+                  {category.icon} {category.label[locale]}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">Товч тайлбар</label>
+            <label className="block text-slate-400 mb-1">{t.shortDescription}</label>
             <textarea
               rows={3}
               maxLength={500}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Ж: 2 давхарт чимээгүй уншлагын танхимтай, оюутны үнэмлэхээр 10% хямдралтай."
+              placeholder={t.descriptionPlaceholder}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-400 mb-1">Байршил (Товч)</label>
+              <label className="block text-slate-400 mb-1">{t.locationShort}</label>
               <input
                 type="text"
                 required
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                placeholder="Ж: Багшийн дээд"
+                placeholder={t.locationPlaceholder}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Ажиллах цаг</label>
+              <label className="block text-slate-400 mb-1">{t.openingHours}</label>
               <input
                 type="text"
                 value={formData.hours}
                 onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
-                placeholder="Ж: 08:00 - 22:00 эсвэл 24/7"
+                placeholder={t.hoursPlaceholder}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
               />
             </div>
@@ -290,7 +291,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
           </div>
           {isCloudinaryConfigured ? (
             <div>
-              <label className="block text-slate-400 mb-1">Зураг (5MB хүртэл)</label>
+              <label className="block text-slate-400 mb-1">{t.imageUpTo5mb}</label>
               <input
                 type="file"
                 accept="image/*"
@@ -298,12 +299,12 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:text-xs file:font-semibold"
               />
               {preview ? (
-                <img src={preview} alt="Урьдчилан харах" className="mt-2 h-32 w-full object-cover rounded-lg border border-slate-700" />
+                <img src={preview} alt={t.imagePreview} className="mt-2 h-32 w-full object-cover rounded-lg border border-slate-700" />
               ) : null}
             </div>
           ) : (
             <div>
-              <label className="block text-slate-400 mb-1">Зургийн URL</label>
+              <label className="block text-slate-400 mb-1">{t.imageUrl}</label>
               <input
                 type="url"
                 value={formData.image}
@@ -314,24 +315,24 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             </div>
           )}
           <fieldset className="space-y-3 bg-slate-800/30 border border-slate-800 rounded-xl p-3">
-            <legend className="px-1 text-slate-400">Орчны үнэлгээ (заавал биш)</legend>
+            <legend className="px-1 text-slate-400">{t.environmentRatings}</legend>
             <ScoreFields
               value={formData.scores}
               onChange={(scores) => setFormData({ ...formData, scores })}
             />
           </fieldset>
           <div>
-            <label className="block text-slate-400 mb-1">Онцлог Тагууд (Таслалаар тусгаарлах)</label>
+            <label className="block text-slate-400 mb-1">{t.tagsLabel}</label>
             <input
               type="text"
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              placeholder="Розетка ихтэй, Wi-Fi хурдан, Маш чимээгүй"
+              placeholder={t.tagsPlaceholder}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">Үйлчилгээ</label>
+            <label className="block text-slate-400 mb-1">{t.amenities}</label>
             <OptionPicker
               options={AMENITIES}
               value={formData.amenities}
@@ -339,7 +340,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">Хүртээмж</label>
+            <label className="block text-slate-400 mb-1">{t.accessibility}</label>
             <OptionPicker
               options={ACCESSIBILITY}
               value={formData.accessibility}
@@ -352,7 +353,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             disabled={saving}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 mt-2"
           >
-            {saving ? (imageFile ? "Зураг хуулж байна..." : "Хадгалж байна...") : "Сайтад байршуулах"}
+            {saving ? (imageFile ? t.uploadingImage : t.saving) : t.submitSpot}
           </button>
         </form>
       </div>
