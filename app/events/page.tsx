@@ -89,7 +89,7 @@ export default function EventsPage() {
         }
       }
       if (cancelled) return;
-      setEvents(loadLocalEvents());
+      setEvents(loadLocalEvents().filter((event) => (event.status ?? "approved") === "approved"));
       setAttendees(loadLocalAttendees());
       const local = loadLocalSpots().filter((spot) => spot.status === "approved");
       if (local.length > 0) setSpots(local);
@@ -192,7 +192,7 @@ export default function EventsPage() {
 
   const handleAddEvent = async (draft: EventDraft, chatUrl: string | null) => {
     if (!user) return false;
-    const full = { ...draft, host_name: displayName(user), user_id: user.id };
+    const full = { ...draft, host_name: displayName(user), user_id: user.id, status: "pending" as const };
     let saved: StudyEvent | null = null;
     if (usingRemote) {
       saved = await insertEvent(full);
@@ -201,15 +201,12 @@ export default function EventsPage() {
       saveLocalEvent(saved);
     }
     if (!saved) return false;
-    const event = saved;
-    setEvents((prev) => [...prev, event]);
-    // Зохион байгуулагч өөрөө автоматаар ирэх хүмүүсийн жагсаалтад орно.
-    await addAttendee(event.id);
-    // Групп чатын холбоос хадгалагдаагүй ч эвент үүссэн хэвээр — зохион байгуулагч цонхноос дахин нэмж болно.
+    // Хүлээгдэж буй эвентийг нийтийн жагсаалтад нэмэхгүй — админ зөвшөөрнө.
     if (chatUrl) {
-      if (usingRemote) await saveChatLink(event.id, chatUrl);
-      else saveLocalChatLink(event.id, chatUrl);
+      if (usingRemote) await saveChatLink(saved.id, chatUrl);
+      else saveLocalChatLink(saved.id, chatUrl);
     }
+    setNotice({ text: t.eventSubmitted });
     return true;
   };
 

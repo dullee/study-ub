@@ -1,7 +1,8 @@
 import { initialSpots } from "@/data/initialSpots";
 import { EventAttendee, Review, StudyEvent, StudySpot, normalizeTags } from "@/types";
 
-const SPOTS_KEY = "studyspots_ub";
+// v2: data/initialSpots.ts 18 бодит газар — хуучин demo cache-ийг алгасна.
+const SPOTS_KEY = "studyspots_ub_v2";
 const REVIEWS_KEY = "studyspots_ub_reviews";
 
 function withStatus(spot: StudySpot): StudySpot {

@@ -21,8 +21,8 @@ import {
   deleteChatLink,
   deleteEvent,
   fetchAttendees,
+  fetchAllEvents,
   fetchChatLink,
-  fetchEvents,
   saveChatLink,
   updateEvent,
 } from "@/lib/supabase/events";
@@ -102,7 +102,7 @@ export default function AdminPanel() {
         const [spotRows, reviewRows, eventRows, attendeeRows] = await Promise.all([
           fetchAllSpots(),
           fetchAllReviews(),
-          fetchEvents(),
+          fetchAllEvents(),
           fetchAttendees(),
         ]);
         if (!cancelled && spotRows && reviewRows) {
@@ -297,21 +297,67 @@ export default function AdminPanel() {
     setAttendees((prev) => prev.filter((attendee) => attendee.event_id !== event.id));
   };
 
+  const persistEvent = async (updated: StudyEvent) => {
+    setEventError("");
+    if (remote) {
+      const saved = await updateEvent(updated);
+      if (!saved) {
+        setEventError(t.saveFailed);
+        return false;
+      }
+      setEvents((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
+    } else {
+      updateLocalEvent(updated);
+      setEvents((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    }
+    return true;
+  };
+
+  const acceptEvent = async (event: StudyEvent) => {
+    const ok = await confirm({
+      title: t.approveEventTitle,
+      message: t.confirmApproveEvent(event.title),
+      confirmLabel: t.approve,
+      cancelLabel: t.cancel,
+      tone: "approve",
+    });
+    if (!ok) return;
+    await persistEvent({ ...event, status: "approved" });
+  };
+
+  const rejectEvent = async (event: StudyEvent) => {
+    const ok = await confirm({
+      title: t.rejectEventTitle,
+      message: t.confirmRejectEvent(event.title),
+      confirmLabel: t.reject,
+      cancelLabel: t.cancel,
+    });
+    if (!ok) return;
+    await persistEvent({ ...event, status: "rejected" });
+  };
+
+  const returnEventToReview = async (event: StudyEvent) => {
+    await persistEvent({ ...event, status: "pending" });
+  };
+
   const spotName = (id: number) => spots.find((spot) => spot.id === id)?.name ?? `#${id}`;
   const editingSpot = editingSpotId === null ? null : spots.find((spot) => spot.id === editingSpotId) ?? null;
   const editingEvent = editingEventId === null ? null : events.find((event) => event.id === editingEventId) ?? null;
-  // Шинэ нь эхэнд — удахгүй болох эвентүүд дээд талд.
-  const sortedEvents = [...events].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
   const pending = spots.filter((spot) => spot.status === "pending");
+  const pendingEvents = events.filter((event) => (event.status ?? "approved") === "pending");
+  const publishedEvents = events.filter((event) => (event.status ?? "approved") === "approved");
+  const rejectedEvents = events.filter((event) => event.status === "rejected");
+  const sortedEvents = [...publishedEvents].sort((a, b) => b.starts_at.localeCompare(a.starts_at));
 
   // "Газрууд" табад зөвхөн зөвшөөрөгдсөн; татгалзсан нь "Хүлээгдэж буй" табын нуусан жагсаалтад.
   const published = spots.filter((spot) => spot.status !== "pending" && spot.status !== "rejected");
   const rejected = spots.filter((spot) => spot.status === "rejected");
+  const pendingCount = pending.length + pendingEvents.length;
   const tabs = [
-    ["pending", t.tabPending, pending.length],
+    ["pending", t.tabPending, pendingCount],
     ["places", t.tabPlaces, published.length],
     ["comments", t.tabReviews, reviews.length],
-    ["events", t.tabEvents, events.length],
+    ["events", t.tabEvents, publishedEvents.length],
   ] as const;
 
   return (
@@ -361,46 +407,83 @@ export default function AdminPanel() {
         ) : null}
 
         {tab === "pending" && (
-          <section className="space-y-2">
-            {pending.length === 0 ? (
-              <p className="text-sm text-slate-500">{t.noPending}</p>
-            ) : (
-              pending.map((spot) =>
-                (
-                  <article key={spot.id} className={`${cardClass} px-4 py-3`}>
-                    <SpotRow
-                      spot={spot}
-                      actions={
-                        <>
-                          <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
-                            ✏️ {t.edit}
-                          </button>
-                          <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
-                          <button onClick={() => rejectSpot(spot)} className={btnReject}>
-                            ✕ {t.reject}
-                          </button>
-                          <button onClick={() => acceptSpot(spot)} className={btnApprove}>
-                            ✓ {t.approve}
-                          </button>
-                        </>
-                      }
-                    >
-                      <h2 className="font-semibold text-white truncate">{spot.name}</h2>
-                      <p className="text-xs text-slate-400 truncate">
-                        {spot.location} · {spot.hours} · {spot.lat}, {spot.lng}
-                      </p>
-                      {spot.tags.length > 0 ? (
-                        <p className="text-[11px] text-slate-500 truncate">🏷 {spot.tags.join(", ")}</p>
-                      ) : null}
-                    </SpotRow>
-                  </article>
+          <section className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pendingPlacesHeading}</h2>
+              {pending.length === 0 ? (
+                <p className="text-sm text-slate-500">{t.noPending}</p>
+              ) : (
+                pending.map((spot) =>
+                  (
+                    <article key={spot.id} className={`${cardClass} px-4 py-3`}>
+                      <SpotRow
+                        spot={spot}
+                        actions={
+                          <>
+                            <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
+                              ✏️ {t.edit}
+                            </button>
+                            <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+                            <button onClick={() => rejectSpot(spot)} className={btnReject}>
+                              ✕ {t.reject}
+                            </button>
+                            <button onClick={() => acceptSpot(spot)} className={btnApprove}>
+                              ✓ {t.approve}
+                            </button>
+                          </>
+                        }
+                      >
+                        <h2 className="font-semibold text-white truncate">{spot.name}</h2>
+                        <p className="text-xs text-slate-400 truncate">
+                          {spot.location} · {spot.hours} · {spot.lat}, {spot.lng}
+                        </p>
+                        {spot.tags.length > 0 ? (
+                          <p className="text-[11px] text-slate-500 truncate">🏷 {spot.tags.join(", ")}</p>
+                        ) : null}
+                      </SpotRow>
+                    </article>
+                  )
                 )
-              )
-            )}
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pendingEventsHeading}</h2>
+              {pendingEvents.length === 0 ? (
+                <p className="text-sm text-slate-500">{t.noPendingEvents}</p>
+              ) : (
+                pendingEvents.map((event) => (
+                  <article key={event.id} className={cardClass}>
+                    <div className="p-4 space-y-1 min-w-0">
+                      <h2 className="font-semibold text-white">{event.title}</h2>
+                      <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
+                      <p className="text-xs text-slate-400">
+                        📍 {event.place_name} · {t.host} {event.host_name}
+                      </p>
+                      {event.description ? (
+                        <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
+                      ) : null}
+                    </div>
+                    <div className={actionBar}>
+                      <button onClick={() => setEditingEventId(event.id)} className={btnNeutral}>
+                        ✏️ {t.edit}
+                      </button>
+                      <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+                      <button onClick={() => rejectEvent(event)} className={btnReject}>
+                        ✕ {t.reject}
+                      </button>
+                      <button onClick={() => acceptEvent(event)} className={btnApprove}>
+                        ✓ {t.approve}
+                      </button>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
 
             {/* Татгалзсан газрууд — анхдагчаар хаалттай; эндээс дахин зөвшөөрөх эсвэл устгана. */}
             {rejected.length > 0 ? (
-              <details className="group pt-4">
+              <details className="group pt-2">
                 <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
                   <span aria-hidden="true" className="transition-transform group-open:rotate-90">
                     ▸
@@ -424,7 +507,6 @@ export default function AdminPanel() {
                               <button onClick={() => acceptSpot(spot)} className={btnApprove}>
                                 ✓ {t.approve}
                               </button>
-                              {/* Устгахыг бусдаас зааглагчаар тусгаарлана. */}
                               <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
                               <button onClick={() => removeSpot(spot)} className={btnDelete}>
                                 🗑 {t.delete}
@@ -438,6 +520,41 @@ export default function AdminPanel() {
                       </article>
                     )
                   )}
+                </div>
+              </details>
+            ) : null}
+
+            {rejectedEvents.length > 0 ? (
+              <details className="group">
+                <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
+                  <span aria-hidden="true" className="transition-transform group-open:rotate-90">
+                    ▸
+                  </span>
+                  {t.rejectedEvents(rejectedEvents.length)}
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {rejectedEvents.map((event) => (
+                    <article key={event.id} className={`${cardClass} opacity-80 hover:opacity-100`}>
+                      <div className="p-4 space-y-1">
+                        <h2 className="font-semibold text-white">{event.title}</h2>
+                        <p className="text-xs text-slate-400">
+                          📍 {event.place_name} · {formatEventTime(event.starts_at, undefined, locale)}
+                        </p>
+                      </div>
+                      <div className={actionBar}>
+                        <button onClick={() => returnEventToReview(event)} className={btnNeutral}>
+                          {t.backToReview}
+                        </button>
+                        <button onClick={() => acceptEvent(event)} className={btnApprove}>
+                          ✓ {t.approve}
+                        </button>
+                        <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                        <button onClick={() => removeEvent(event)} className={btnDelete}>
+                          🗑 {t.delete}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </details>
             ) : null}
