@@ -251,6 +251,7 @@ const mn = {
   onlyMine: "Миний явах",
   hasSpots: "Сул суудалтай",
   noEventsMatch: "Шүүлтүүрт тохирох эвент олдсонгүй.",
+  eventNotFound: "Эвент олдсонгүй — устгагдсан эсвэл хараахан зөвшөөрөгдөөгүй байж магадгүй.",
   clearFilters: "Шүүлтүүр арилгах",
 
   // Эвентийн цонх, групп чат
@@ -550,6 +551,7 @@ const en: Dictionary = {
   onlyMine: "I'm going",
   hasSpots: "Has spots left",
   noEventsMatch: "No events match these filters.",
+  eventNotFound: "Event not found — it may have been removed or not approved yet.",
   clearFilters: "Clear filters",
 
   openEvent: (title) => `${title} — details and chat`,

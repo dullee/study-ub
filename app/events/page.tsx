@@ -67,10 +67,38 @@ export default function EventsPage() {
   const [onlyMine, setOnlyMine] = useState(false);
   const [hasSpots, setHasSpots] = useState(false);
   const [openEventId, setOpenEventId] = useState<number | null>(null);
-  const closeEvent = useCallback(() => setOpenEventId(null), []);
+  // Холбоосоор ирсэн эвент олдсонгүй — бичвэрийг render дээр сонгосон хэлээр харуулна.
+  const [linkedMissing, setLinkedMissing] = useState(false);
+  // Нээлттэй эвентийг хаягт (?event=12) тусгана: холбоосоор хуваалцаж, имэйлийн холбоосоор шууд нээнэ.
+  const setEventInUrl = (id: number | null) => {
+    const url = new URL(window.location.href);
+    if (id === null) url.searchParams.delete("event");
+    else url.searchParams.set("event", String(id));
+    window.history.replaceState(window.history.state, "", url);
+  };
+  const openEventById = (id: number) => {
+    setLinkedMissing(false);
+    setOpenEventId(id);
+    setEventInUrl(id);
+  };
+  const closeEvent = useCallback(() => {
+    setOpenEventId(null);
+    setEventInUrl(null);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    // Имэйлийн "Эвентийг харах" холбоос: /events?event=12. Олдохгүй бол (устгагдсан, зөвшөөрөгдөөгүй) мэдэгдэнэ.
+    const openLinked = (list: StudyEvent[]) => {
+      const linked = Number(new URLSearchParams(window.location.search).get("event"));
+      if (!linked) return;
+      if (list.some((event) => event.id === linked)) {
+        setOpenEventId(linked);
+      } else {
+        setLinkedMissing(true);
+        setEventInUrl(null);
+      }
+    };
     async function load() {
       setNow(Date.now());
       if (isSupabaseConfigured) {
@@ -85,15 +113,18 @@ export default function EventsPage() {
           if (remoteSpots && remoteSpots.length > 0) setSpots(remoteSpots);
           setUsingRemote(true);
           setLoading(false);
+          openLinked(remoteEvents);
           return;
         }
       }
       if (cancelled) return;
-      setEvents(loadLocalEvents().filter((event) => (event.status ?? "approved") === "approved"));
+      const localEvents = loadLocalEvents().filter((event) => (event.status ?? "approved") === "approved");
+      setEvents(localEvents);
       setAttendees(loadLocalAttendees());
       const local = loadLocalSpots().filter((spot) => spot.status === "approved");
       if (local.length > 0) setSpots(local);
       setLoading(false);
+      openLinked(localEvents);
     }
     load();
     return () => {
@@ -258,7 +289,7 @@ export default function EventsPage() {
           isPast={isPast}
           onJoin={handleJoin}
           onLeave={handleLeave}
-          onOpen={(opened) => setOpenEventId(opened.id)}
+          onOpen={(opened) => openEventById(opened.id)}
         />
       ))}
     </div>
@@ -268,6 +299,11 @@ export default function EventsPage() {
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
       <Header onAddClick={handleAddClick} addLabel={t.createEvent} />
       <main className="max-w-7xl mx-auto px-4 pt-6 space-y-8">
+        {linkedMissing ? (
+          <p role="status" className="text-sm rounded-xl px-4 py-3 border text-rose-200 bg-rose-950/60 border-rose-800/50">
+            {t.eventNotFound}
+          </p>
+        ) : null}
         {notice ? (
           <p
             className={`text-sm rounded-xl px-4 py-3 border ${

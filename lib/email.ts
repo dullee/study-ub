@@ -39,6 +39,8 @@ function escapeHtml(value: string) {
 }
 
 function eventDetails(event: StudyEvent, eventsUrl: string) {
+  // /events?event=12 — эвентийн хуудас нээгдэхэд тухайн эвентийн цонх шууд нээгдэнэ.
+  const eventUrl = `${eventsUrl}?event=${event.id}`;
   const time = formatEventTime(event.starts_at, TIME_ZONE);
   const mapsUrl =
     event.lat !== null && event.lng !== null
@@ -62,14 +64,14 @@ function eventDetails(event: StudyEvent, eventsUrl: string) {
         ? `<p style="margin:16px 0 0;color:#334155;white-space:pre-line">${escapeHtml(event.description)}</p>`
         : ""
     }
-    <p style="margin:24px 0 0"><a href="${eventsUrl}" style="background:#4f46e5;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600">Эвентийг харах</a></p>`;
+    <p style="margin:24px 0 0"><a href="${eventUrl}" style="background:#4f46e5;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600">Эвентийг харах</a></p>`;
 
   const text = [
     `Хэзээ: ${time}`,
     `Хаана: ${event.place_name}${mapsUrl ? ` (${mapsUrl})` : ""}`,
     `Зохион байгуулагч: ${event.host_name}`,
     event.description ? `\n${event.description}` : "",
-    `\nЭвентийг харах: ${eventsUrl}`,
+    `\nЭвентийг харах: ${eventUrl}`,
   ].join("\n");
 
   return { html, text };
