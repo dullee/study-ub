@@ -78,6 +78,8 @@ export default function AdminPanel() {
   const { isLoaded } = useAuth();
   const { t, locale } = useI18n();
   const [tab, setTab] = useState<Tab>("pending");
+  // "Хүлээгдэж буй" таб доторх газар / эвентийн дэд таб.
+  const [pendingTab, setPendingTab] = useState<"places" | "events">("places");
   const [remote, setRemote] = useState(false);
   const [spots, setSpots] = useState<StudySpot[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -407,157 +409,194 @@ export default function AdminPanel() {
         ) : null}
 
         {tab === "pending" && (
-          <section className="space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pendingPlacesHeading}</h2>
-              {pending.length === 0 ? (
-                <p className="text-sm text-slate-500">{t.noPending}</p>
-              ) : (
-                pending.map((spot) =>
-                  (
-                    <article key={spot.id} className={`${cardClass} px-4 py-3`}>
-                      <SpotRow
-                        spot={spot}
-                        actions={
-                          <>
-                            <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
-                              ✏️ {t.edit}
-                            </button>
-                            <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
-                            <button onClick={() => rejectSpot(spot)} className={btnReject}>
-                              ✕ {t.reject}
-                            </button>
-                            <button onClick={() => acceptSpot(spot)} className={btnApprove}>
-                              ✓ {t.approve}
-                            </button>
-                          </>
-                        }
-                      >
-                        <h2 className="font-semibold text-white truncate">{spot.name}</h2>
-                        <p className="text-xs text-slate-400 truncate">
-                          {spot.location} · {spot.hours} · {spot.lat}, {spot.lng}
-                        </p>
-                        {spot.tags.length > 0 ? (
-                          <p className="text-[11px] text-slate-500 truncate">🏷 {spot.tags.join(", ")}</p>
-                        ) : null}
-                      </SpotRow>
-                    </article>
-                  )
-                )
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pendingEventsHeading}</h2>
-              {pendingEvents.length === 0 ? (
-                <p className="text-sm text-slate-500">{t.noPendingEvents}</p>
-              ) : (
-                pendingEvents.map((event) => (
-                  <article key={event.id} className={cardClass}>
-                    <div className="p-4 space-y-1 min-w-0">
-                      <h2 className="font-semibold text-white">{event.title}</h2>
-                      <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
-                      <p className="text-xs text-slate-400">
-                        📍 {event.place_name} · {t.host} {event.host_name}
-                      </p>
-                      {event.description ? (
-                        <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
-                      ) : null}
-                    </div>
-                    <div className={actionBar}>
-                      <button onClick={() => setEditingEventId(event.id)} className={btnNeutral}>
-                        ✏️ {t.edit}
-                      </button>
-                      <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
-                      <button onClick={() => rejectEvent(event)} className={btnReject}>
-                        ✕ {t.reject}
-                      </button>
-                      <button onClick={() => acceptEvent(event)} className={btnApprove}>
-                        ✓ {t.approve}
-                      </button>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
-
-            {/* Татгалзсан газрууд — анхдагчаар хаалттай; эндээс дахин зөвшөөрөх эсвэл устгана. */}
-            {rejected.length > 0 ? (
-              <details className="group pt-2">
-                <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
-                  <span aria-hidden="true" className="transition-transform group-open:rotate-90">
-                    ▸
+          <section className="space-y-4">
+            <div className="flex gap-2" role="group" aria-label={t.tabPending}>
+              {(
+                [
+                  ["places", `📍 ${t.tabPlaces}`, pending.length],
+                  ["events", `📅 ${t.tabEvents}`, pendingEvents.length],
+                ] as const
+              ).map(([id, label, count]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setPendingTab(id)}
+                  aria-pressed={pendingTab === id}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+                    pendingTab === id
+                      ? "border-indigo-500 bg-indigo-600/20 text-white"
+                      : "border-slate-700 text-slate-400 hover:text-white hover:border-slate-500"
+                  }`}
+                >
+                  {label}
+                  <span
+                    className={`min-w-5 px-1.5 rounded-full text-[10px] leading-5 text-center ${
+                      count > 0 ? "bg-amber-500 text-slate-950" : "bg-slate-700 text-slate-300"
+                    }`}
+                  >
+                    {count}
                   </span>
-                  {t.rejectedPlaces(rejected.length)}
-                </summary>
-                <div className="mt-2 space-y-2">
-                  {rejected.map((spot) =>
-                    (
-                      <article key={spot.id} className={`${cardClass} px-4 py-3 opacity-80 hover:opacity-100`}>
-                        <SpotRow
-                          spot={spot}
-                          actions={
-                            <>
-                              <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
-                                ✏️ {t.edit}
-                              </button>
-                              <button onClick={() => returnToReview(spot)} className={btnNeutral}>
-                                {t.backToReview}
-                              </button>
-                              <button onClick={() => acceptSpot(spot)} className={btnApprove}>
-                                ✓ {t.approve}
-                              </button>
-                              <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
-                              <button onClick={() => removeSpot(spot)} className={btnDelete}>
-                                🗑 {t.delete}
-                              </button>
-                            </>
-                          }
-                        >
-                          <h2 className="font-semibold text-white truncate">{spot.name}</h2>
-                          <p className="text-xs text-slate-400 truncate">{spot.location}</p>
-                        </SpotRow>
-                      </article>
+                </button>
+              ))}
+            </div>
+
+            {pendingTab === "places" && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  {pending.length === 0 ? (
+                    <p className="text-sm text-slate-500">{t.noPending}</p>
+                  ) : (
+                    pending.map((spot) =>
+                      (
+                        <article key={spot.id} className={`${cardClass} px-4 py-3`}>
+                          <SpotRow
+                            spot={spot}
+                            actions={
+                              <>
+                                <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
+                                  ✏️ {t.edit}
+                                </button>
+                                <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+                                <button onClick={() => rejectSpot(spot)} className={btnReject}>
+                                  ✕ {t.reject}
+                                </button>
+                                <button onClick={() => acceptSpot(spot)} className={btnApprove}>
+                                  ✓ {t.approve}
+                                </button>
+                              </>
+                            }
+                          >
+                            <h2 className="font-semibold text-white truncate">{spot.name}</h2>
+                            <p className="text-xs text-slate-400 truncate">
+                              {spot.location} · {spot.hours} · {spot.lat}, {spot.lng}
+                            </p>
+                            {spot.tags.length > 0 ? (
+                              <p className="text-[11px] text-slate-500 truncate">🏷 {spot.tags.join(", ")}</p>
+                            ) : null}
+                          </SpotRow>
+                        </article>
+                      )
                     )
                   )}
                 </div>
-              </details>
-            ) : null}
 
-            {rejectedEvents.length > 0 ? (
-              <details className="group">
-                <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
-                  <span aria-hidden="true" className="transition-transform group-open:rotate-90">
-                    ▸
-                  </span>
-                  {t.rejectedEvents(rejectedEvents.length)}
-                </summary>
-                <div className="mt-2 space-y-2">
-                  {rejectedEvents.map((event) => (
-                    <article key={event.id} className={`${cardClass} opacity-80 hover:opacity-100`}>
-                      <div className="p-4 space-y-1">
-                        <h2 className="font-semibold text-white">{event.title}</h2>
-                        <p className="text-xs text-slate-400">
-                          📍 {event.place_name} · {formatEventTime(event.starts_at, undefined, locale)}
-                        </p>
-                      </div>
-                      <div className={actionBar}>
-                        <button onClick={() => returnEventToReview(event)} className={btnNeutral}>
-                          {t.backToReview}
-                        </button>
-                        <button onClick={() => acceptEvent(event)} className={btnApprove}>
-                          ✓ {t.approve}
-                        </button>
-                        <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
-                        <button onClick={() => removeEvent(event)} className={btnDelete}>
-                          🗑 {t.delete}
-                        </button>
-                      </div>
-                    </article>
-                  ))}
+                {/* Татгалзсан газрууд — анхдагчаар хаалттай; эндээс дахин зөвшөөрөх эсвэл устгана. */}
+                {rejected.length > 0 ? (
+                  <details className="group pt-2">
+                    <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
+                      <span aria-hidden="true" className="transition-transform group-open:rotate-90">
+                        ▸
+                      </span>
+                      {t.rejectedPlaces(rejected.length)}
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      {rejected.map((spot) =>
+                        (
+                          <article key={spot.id} className={`${cardClass} px-4 py-3 opacity-80 hover:opacity-100`}>
+                            <SpotRow
+                              spot={spot}
+                              actions={
+                                <>
+                                  <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
+                                    ✏️ {t.edit}
+                                  </button>
+                                  <button onClick={() => returnToReview(spot)} className={btnNeutral}>
+                                    {t.backToReview}
+                                  </button>
+                                  <button onClick={() => acceptSpot(spot)} className={btnApprove}>
+                                    ✓ {t.approve}
+                                  </button>
+                                  <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                                  <button onClick={() => removeSpot(spot)} className={btnDelete}>
+                                    🗑 {t.delete}
+                                  </button>
+                                </>
+                              }
+                            >
+                              <h2 className="font-semibold text-white truncate">{spot.name}</h2>
+                              <p className="text-xs text-slate-400 truncate">{spot.location}</p>
+                            </SpotRow>
+                          </article>
+                        )
+                      )}
+                    </div>
+                  </details>
+                ) : null}
+
+              </div>
+            )}
+
+            {pendingTab === "events" && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  {pendingEvents.length === 0 ? (
+                    <p className="text-sm text-slate-500">{t.noPendingEvents}</p>
+                  ) : (
+                    pendingEvents.map((event) => (
+                      <article key={event.id} className={cardClass}>
+                        <div className="p-4 space-y-1 min-w-0">
+                          <h2 className="font-semibold text-white">{event.title}</h2>
+                          <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
+                          <p className="text-xs text-slate-400">
+                            📍 {event.place_name} · {t.host} {event.host_name}
+                          </p>
+                          {event.description ? (
+                            <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
+                          ) : null}
+                        </div>
+                        <div className={actionBar}>
+                          <button onClick={() => setEditingEventId(event.id)} className={btnNeutral}>
+                            ✏️ {t.edit}
+                          </button>
+                          <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+                          <button onClick={() => rejectEvent(event)} className={btnReject}>
+                            ✕ {t.reject}
+                          </button>
+                          <button onClick={() => acceptEvent(event)} className={btnApprove}>
+                            ✓ {t.approve}
+                          </button>
+                        </div>
+                      </article>
+                    ))
+                  )}
                 </div>
-              </details>
-            ) : null}
+
+                {rejectedEvents.length > 0 ? (
+                  <details className="group">
+                    <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
+                      <span aria-hidden="true" className="transition-transform group-open:rotate-90">
+                        ▸
+                      </span>
+                      {t.rejectedEvents(rejectedEvents.length)}
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      {rejectedEvents.map((event) => (
+                        <article key={event.id} className={`${cardClass} opacity-80 hover:opacity-100`}>
+                          <div className="p-4 space-y-1">
+                            <h2 className="font-semibold text-white">{event.title}</h2>
+                            <p className="text-xs text-slate-400">
+                              📍 {event.place_name} · {formatEventTime(event.starts_at, undefined, locale)}
+                            </p>
+                          </div>
+                          <div className={actionBar}>
+                            <button onClick={() => returnEventToReview(event)} className={btnNeutral}>
+                              {t.backToReview}
+                            </button>
+                            <button onClick={() => acceptEvent(event)} className={btnApprove}>
+                              ✓ {t.approve}
+                            </button>
+                            <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                            <button onClick={() => removeEvent(event)} className={btnDelete}>
+                              🗑 {t.delete}
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+              </div>
+            )}
           </section>
         )}
 
