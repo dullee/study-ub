@@ -18,7 +18,15 @@ import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { sortByActiveTags } from "@/lib/spotSort";
 import { recentReviewCounts } from "@/lib/popular";
-import { useNow } from "@/lib/openHours";
+import { openStatus, useNow } from "@/lib/openHours";
+import {
+  activeFilterCount,
+  DEFAULT_FILTERS,
+  FilterContext,
+  matchesFilters,
+  SpotFilters,
+  sortSpots,
+} from "@/lib/spotFilters";
 import { distanceKm, useUserLocation } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
 
@@ -133,8 +141,36 @@ export default function Home() {
     >;
   }, [spots, userCoords]);
 
+  // Үнэлгээ, одоо нээлттэй, төрөл, үйлчилгээ, хүртээмж, эрэмбэ.
+  const [filters, setFilters] = useState<SpotFilters>(DEFAULT_FILTERS);
+
   const handleClearLocation = () => {
     clearLocation();
+    setMaxDistanceKm(null);
+    // Байршилгүй бол "Ойрхон" эрэмбэ утгагүй.
+    setFilters((prev) => (prev.sort === "distance" ? { ...prev, sort: "recommended" } : prev));
+  };
+
+  const filterContext = useMemo<FilterContext>(
+    () => ({
+      summaries,
+      recentCounts,
+      isOpen: now === null ? null : (spot) => openStatus(spot, now, t)?.open ?? null,
+      distances,
+    }),
+    [summaries, recentCounts, now, t, distances]
+  );
+
+  const anyFilterActive =
+    searchQuery.trim() !== "" ||
+    !activeTags.includes("Бүгд") ||
+    activeFilterCount(filters) > 0 ||
+    maxDistanceKm !== null;
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setActiveTags(["Бүгд"]);
+    setFilters((prev) => ({ ...DEFAULT_FILTERS, sort: prev.sort }));
     setMaxDistanceKm(null);
   };
 
@@ -146,10 +182,10 @@ export default function Home() {
         spot.name.toLowerCase().includes(q) || spot.location.toLowerCase().includes(q);
       const matchesTags =
         activeTags.includes("Бүгд") || activeTags.every((t) => spot.tags.includes(t));
-      return matchesSearch && matchesTags;
+      return matchesSearch && matchesTags && matchesFilters(spot, filters, filterContext);
     });
-    return sortByActiveTags(matching, activeTags, summaries, distances);
-  }, [spots, searchQuery, activeTags, summaries, distances]);
+    return sortSpots(sortByActiveTags(matching, activeTags, summaries, distances), filters.sort, filterContext);
+  }, [spots, searchQuery, activeTags, summaries, distances, filters, filterContext]);
 
   const outOfRangeIds = useMemo(() => {
     if (!distances || maxDistanceKm === null) return new Set<number>();
@@ -218,6 +254,9 @@ export default function Home() {
           onClearLocation={handleClearLocation}
           maxDistanceKm={maxDistanceKm}
           setMaxDistanceKm={setMaxDistanceKm}
+          filters={filters}
+          setFilters={setFilters}
+          onClearAll={clearAllFilters}
         />
         {/* Том дэлгэцэнд: зүүн талд картууд нэг баганаар, баруун талд header + шүүлтүүрийн доор наалдсан том газрын зураг. Утсан дээр: зураг дээр, жагсаалт доор. */}
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_1fr] gap-3 lg:gap-0 items-start">
@@ -256,7 +295,18 @@ export default function Home() {
                 ))}
               </div>
             ) : filteredSpots.length === 0 ? (
-              <p className="text-center text-slate-500 py-12 text-sm">{t.noResults}</p>
+              <div className="text-center py-12 space-y-3">
+                <p className="text-slate-500 text-sm">{t.noResults}</p>
+                {anyFilterActive ? (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="text-xs font-semibold text-indigo-300 hover:text-white border border-indigo-800/60 rounded-lg px-3 py-1.5"
+                  >
+                    {t.clearFilters}
+                  </button>
+                ) : null}
+              </div>
             ) : (
               <div className="flex flex-col gap-1">
                 {filteredSpots.map((spot) => (

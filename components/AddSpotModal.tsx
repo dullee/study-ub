@@ -184,27 +184,6 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
         </div>
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-slate-400 mb-1">{t.mapsLink}</label>
-            <input
-              type="url"
-              value={formData.maps_url} maxLength={LIMITS.url}
-              onChange={(e) => handleMapsLinkChange(e.target.value)}
-              placeholder="https://maps.app.goo.gl/..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
-            />
-            <p
-              className={`mt-1 ${
-                mapsStatus.kind === "error"
-                  ? "text-rose-400"
-                  : mapsStatus.kind === "ok"
-                  ? "text-emerald-400"
-                  : "text-slate-500"
-              }`}
-            >
-              {mapsStatus.kind === "hint" ? t.mapsHint : mapsStatus.text}
-            </p>
-          </div>
-          <div>
             <label className="block text-slate-400 mb-1">{t.spotName}</label>
             <input
               type="text"
@@ -242,6 +221,27 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               placeholder={t.descriptionPlaceholder}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 resize-none"
             />
+          </div>
+          <div>
+            <label className="block text-slate-400 mb-1">{t.mapsLink}</label>
+            <input
+              type="url"
+              value={formData.maps_url} maxLength={LIMITS.url}
+              onChange={(e) => handleMapsLinkChange(e.target.value)}
+              placeholder="https://maps.app.goo.gl/..."
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+            />
+            <p
+              className={`mt-1 ${
+                mapsStatus.kind === "error"
+                  ? "text-rose-400"
+                  : mapsStatus.kind === "ok"
+                  ? "text-emerald-400"
+                  : "text-slate-500"
+              }`}
+            >
+              {mapsStatus.kind === "hint" ? t.mapsHint : mapsStatus.text}
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

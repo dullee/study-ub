@@ -43,9 +43,6 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
     >
       <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-indigo-600/20 rounded-xl border border-indigo-500/30 shrink-0">
-            💻
-          </span>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
               StudySpots{" "}
