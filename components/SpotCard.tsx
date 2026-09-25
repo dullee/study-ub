@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { googleMapsUrl, OUTLET_LEVELS, PLACEHOLDER_IMAGE, QUIET_LEVELS, spotCategory, StudySpot, tagLabel } from "@/types";
 import Stars from "@/components/Stars";
-import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
+import { OpenStatus, openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 import { formatWifi, levelLabel, SpotSummary } from "@/lib/scores";
 import { formatDistance } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
@@ -71,13 +72,13 @@ export default function SpotCard({
             </span>
           ) : null}
         </div>
-        <span
-          className={`bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 ${
-            status ? STATUS_TONE[status.tone] : "text-indigo-300"
-          }`}
-        >
-          {now === null ? "⏰" : status ? `● ${status.short}` : `⏰ ${spot.hours}`}
-        </span>
+        {status ? (
+          <StatusChip status={status} />
+        ) : (
+          <span className="bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 text-indigo-300">
+            {now === null ? "⏰" : `⏰ ${spot.hours}`}
+          </span>
+        )}
       </div>
 
       <div className="relative z-10 pointer-events-none mt-auto">
@@ -159,5 +160,42 @@ export default function SpotCard({
         className="absolute inset-0 focus:outline-none"
       />
     </article>
+  );
+}
+
+// "● Нээлттэй" / "● Хаалттай"; заагч очиход (утсан дээр товшиход) хэдий хүртэл гэдэг нь зүүн тийш гулсаж гарна.
+// Нээгдсэн үедээ зүүн талын тэмдгүүдийн дээгүүр давхарлана — нарийн картад ч картаас хальж гарахгүй.
+// Картын агуулга pointer-events-none тул энэ товч л pointer-events-auto — дарахад дэлгэрэнгүй нээгдэхгүй.
+const chipBoxClass = "inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-md border";
+
+function StatusChip({ status }: { status: OpenStatus }) {
+  const [pinned, setPinned] = useState(false);
+  return (
+    <span className="relative shrink-0">
+      {/* Хаалттай үеийн өргөнийг мөрөнд хадгална; жинхэнэ товч дээр нь absolute. */}
+      <span aria-hidden="true" className={`${chipBoxClass} invisible`}>
+        ● {status.label}
+      </span>
+      <button
+        type="button"
+        onClick={() => setPinned((value) => !value)}
+        aria-label={`${status.label} · ${status.hint}`}
+        className={`${chipBoxClass} group/status absolute right-0 top-0 z-20 pointer-events-auto bg-slate-900/90 backdrop-blur border-slate-700 cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+          STATUS_TONE[status.tone]
+        }`}
+      >
+        <span aria-hidden="true">● {status.label}</span>
+        <span
+          aria-hidden="true"
+          className={`overflow-hidden transition-[max-width,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+            pinned
+              ? "max-w-48 opacity-100 ml-1"
+              : "max-w-0 opacity-0 ml-0 group-hover/status:max-w-48 group-hover/status:opacity-100 group-hover/status:ml-1 group-focus-visible/status:max-w-48 group-focus-visible/status:opacity-100 group-focus-visible/status:ml-1"
+          }`}
+        >
+          · {status.hint}
+        </span>
+      </button>
+    </span>
   );
 }

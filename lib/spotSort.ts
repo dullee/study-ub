@@ -5,7 +5,7 @@ import { SpotSummary } from "@/lib/scores";
 const SCORE_BY_TAG: Record<string, (summary: SpotSummary | undefined) => number | undefined> = {
   "Wi-Fi хурдан": (summary) => summary?.wifi?.value,
   "Маш чимээгүй": (summary) => summary?.quiet?.value,
-  "Розетка ихтэй": (summary) => summary?.outlets?.value,
+  "Залгуур ихтэй": (summary) => summary?.outlets?.value,
 };
 
 // Сонгосон дарааллаар нь эрэмбэлнэ: эхний шүүлтүүр гол, дараагийнх нь тэнцсэн үед.

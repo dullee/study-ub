@@ -15,6 +15,7 @@ import {
   SpotCategory,
   StudyEvent,
   StudySpot,
+  normalizeTags,
 } from "@/types";
 import {
   deleteChatLink,
@@ -773,7 +774,7 @@ function SpotEditForm({
     const ok = await onSave({
       ...draft,
       image: image || PLACEHOLDER_IMAGE,
-      tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: normalizeTags(tagsText.split(",").map((t) => t.trim()).filter(Boolean)),
     });
     if (!ok) {
       setError(t.saveFailed);

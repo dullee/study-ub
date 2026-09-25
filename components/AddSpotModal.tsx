@@ -9,6 +9,7 @@ import {
   SPOT_CATEGORIES,
   SpotCategory,
   StudySpot,
+  normalizeTags,
 } from "@/types";
 import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
@@ -142,10 +143,12 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
         return;
       }
     }
-    const tags = formData.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
+    const tags = normalizeTags(
+      formData.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0)
+    );
     const newSpot: Omit<StudySpot, "id"> = {
       name: formData.name,
       location: formData.location,

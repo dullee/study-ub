@@ -3,7 +3,7 @@
 import { OUTLET_LEVELS, QUIET_LEVELS, Review } from "@/types";
 import { useI18n } from "@/components/LanguageProvider";
 
-// Нэг сэтгэгдлийн Wi-Fi, чимээгүй, розеткын утга: "⚡ 72 Mbps · 🤫 Чимээгүй · 🔌 Ихтэй".
+// Нэг сэтгэгдлийн Wi-Fi, чимээгүй, залгуурын утга: "⚡ 72 Mbps · 🤫 Чимээгүй · 🔌 Ихтэй".
 export default function ReviewScoreLine({
   review,
 }: {

@@ -258,7 +258,7 @@ export default function SpotDetailDialog({
               </p>
             ) : null}
 
-            {/* Утсан дээр: байршил бүтэн өргөн, цаг / Wi-Fi / чимээгүй / розетка 2×2. */}
+            {/* Утсан дээр: байршил бүтэн өргөн, цаг / Wi-Fi / чимээгүй / залгуур 2×2. */}
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-2.5">
               {facts.map((fact, index) => (
                 <div

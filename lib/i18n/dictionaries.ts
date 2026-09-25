@@ -39,11 +39,6 @@ const mn = {
 
   // Нүүр хуудас
   placesHeading: "📍 Газрууд",
-  placesCount: (n: number) => `${n} газар`,
-  wideOn: "Өргөн",
-  wideOff: "Энгийн",
-  wideOnTitle: "Бүтэн өргөн — газрын зургийг томруулна",
-  wideOffTitle: "Энгийн өргөн",
   noResults: "Шүүлтүүрт тохирох газар олдсонгүй.",
   spotSubmitted: "Хүсэлт илгээгдлээ. Админ зөвшөөрсний дараа газрын зурагт гарна.",
   mySubmissions: "Миний илгээсэн",
@@ -90,11 +85,14 @@ const mn = {
     h === 0 ? `${m} минутын дараа` : m === 0 ? `${h} цагийн дараа` : `${h} ц ${m} мин-ийн дараа`,
   durationLong: ({ h, m }: Duration) =>
     h === 0 ? `${m} минутын дараа` : m === 0 ? `${h} цагийн дараа` : `${h} цаг ${m} минутын дараа`,
-  closesIn: (duration: string) => `${duration} хаагдана`,
-  openUntil: (time: string) => `Нээлттэй · ${time} хүртэл`,
+  // Карт дээр "Нээлттэй"/"Хаалттай", заагч очиход гулсаж гарах нэмэлт.
+  openLabel: "Нээлттэй",
+  hintUntil: (time: string) => `${time} хүртэл`,
+  hintClosesIn: (duration: string) => `${duration} хаагдана`,
+  hintOpensIn: (duration: string) => `${duration} нээгдэнэ`,
+  hintOpensAt: (tomorrow: boolean, time: string) => `${tomorrow ? "маргааш " : ""}${time}-д нээгдэнэ`,
   openClosesAt: (time: string, duration: string) => `Нээлттэй · ${time}-д хаагдана (${duration})`,
   closed: "Хаалттай",
-  closedOpensIn: (duration: string) => `Хаалттай · ${duration} нээгдэнэ`,
   closedOpensAt: (tomorrow: boolean, time: string, duration: string) =>
     `Хаалттай · ${tomorrow ? "маргааш " : ""}${time}-д нээгдэнэ (${duration})`,
 
@@ -119,7 +117,7 @@ const mn = {
   factHours: "Цагийн хуваарь (өдөр бүр)",
   factWifi: "Wi-Fi (медиан)",
   factQuiet: "Чимээгүй байдал",
-  factOutlets: "Розетка",
+  factOutlets: "Залгуур",
   reviewCount: (n: number) => `${n} сэтгэгдэл`,
   noRatingsYet: "Одоогоор үнэлгээ алга",
   reviewsHeading: "💬 Сэтгэгдэл",
@@ -141,17 +139,17 @@ const mn = {
   signInToReview: "Сэтгэгдэл бичихийн тулд нэвтэрнэ үү.",
   ratingLabel: "Үнэлгээ",
   stars: (n: number) => `${n} од`,
-  rateScoresOptional: "⚡🤫🔌 Wi-Fi, чимээгүй байдал, розеткыг үнэлэх (заавал биш)",
-  reviewPlaceholder: "Розетка, чимээгүй байдал, цагийн хуваарь...",
+  rateScoresOptional: "⚡🤫🔌 Wi-Fi, чимээгүй байдал, залгуурыг үнэлэх (заавал биш)",
+  reviewPlaceholder: "Залгуур, чимээгүй байдал, цагийн хуваарь...",
   writeReview: "Сэтгэгдэл бичих",
   sending: "Илгээж байна...",
   postReviewAs: (name: string) => `${name} нэрээр сэтгэгдэл үлдээх`,
 
-  // Wi-Fi, чимээгүй, розетка
+  // Wi-Fi, чимээгүй, залгуур
   wifiSpeedLabel: "⚡ Wi-Fi хурд (Mbps)",
   wifiPlaceholder: "Ж: 72 — fast.com дээр шалгаж болно",
   quietLabel: "Чимээгүй байдал",
-  outletsLabel: "Розетка",
+  outletsLabel: "Залгуур",
 
   // Газрын зураг
   fullscreen: "Бүтэн дэлгэц",
@@ -187,7 +185,7 @@ const mn = {
   imageUrl: "Зургийн URL",
   environmentRatings: "Орчны үнэлгээ (заавал биш)",
   tagsLabel: "Онцлог Тагууд (Таслалаар тусгаарлах)",
-  tagsPlaceholder: "Розетка ихтэй, Wi-Fi хурдан, Маш чимээгүй",
+  tagsPlaceholder: "Залгуур ихтэй, Wi-Fi хурдан, Маш чимээгүй",
   amenities: "Үйлчилгээ",
   uploadingImage: "Зураг хуулж байна...",
   submitSpot: "Сайтад байршуулах",
@@ -329,11 +327,6 @@ const en: Dictionary = {
   saveFailed: "Couldn't save. Please try again.",
 
   placesHeading: "📍 Places",
-  placesCount: (n) => `${n} ${n === 1 ? "place" : "places"}`,
-  wideOn: "Wide",
-  wideOff: "Normal",
-  wideOnTitle: "Full width — make the map bigger",
-  wideOffTitle: "Normal width",
   noResults: "No places match these filters.",
   spotSubmitted: "Request sent. It will appear on the map once an admin approves it.",
   mySubmissions: "My submissions",
@@ -379,11 +372,13 @@ const en: Dictionary = {
       : m === 0
         ? `in ${h} ${h === 1 ? "hour" : "hours"}`
         : `in ${h} ${h === 1 ? "hour" : "hours"} ${m} ${m === 1 ? "minute" : "minutes"}`,
-  closesIn: (duration) => `Closes ${duration}`,
-  openUntil: (time) => `Open · until ${time}`,
+  openLabel: "Open",
+  hintUntil: (time) => `until ${time}`,
+  hintClosesIn: (duration) => `closes ${duration}`,
+  hintOpensIn: (duration) => `opens ${duration}`,
+  hintOpensAt: (tomorrow, time) => `opens ${tomorrow ? "tomorrow " : ""}at ${time}`,
   openClosesAt: (time, duration) => `Open · closes at ${time} (${duration})`,
   closed: "Closed",
-  closedOpensIn: (duration) => `Closed · opens ${duration}`,
   closedOpensAt: (tomorrow, time, duration) =>
     `Closed · opens ${tomorrow ? "tomorrow " : ""}at ${time} (${duration})`,
 
@@ -470,7 +465,7 @@ const en: Dictionary = {
   imageUrl: "Image URL",
   environmentRatings: "Environment ratings (optional)",
   tagsLabel: "Tags (comma separated)",
-  tagsPlaceholder: "Розетка ихтэй, Wi-Fi хурдан, Маш чимээгүй",
+  tagsPlaceholder: "Залгуур ихтэй, Wi-Fi хурдан, Маш чимээгүй",
   amenities: "Amenities",
   uploadingImage: "Uploading image...",
   submitSpot: "Submit to the site",

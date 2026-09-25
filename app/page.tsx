@@ -20,7 +20,6 @@ import { sortByActiveTags } from "@/lib/spotSort";
 import { recentReviewCounts } from "@/lib/popular";
 import { useNow } from "@/lib/openHours";
 import { distanceKm, useUserLocation } from "@/lib/geo";
-import { useWideLayout } from "@/lib/useWideLayout";
 import { useI18n } from "@/components/LanguageProvider";
 
 const Map = dynamic(() => import("@/components/Map"), {
@@ -44,7 +43,7 @@ export default function Home() {
   const [focusCoords, setFocusCoords] = useState<[number, number] | null>(null);
   const [detailSpot, setDetailSpot] = useState<StudySpot | null>(null);
   const closeDetails = useCallback(() => setDetailSpot(null), []);
-  // Бүх сэтгэгдлийн тоон утгууд (үнэлгээ, Wi-Fi, чимээгүй, розетка). null — ачаалж байна.
+  // Бүх сэтгэгдлийн тоон утгууд (үнэлгээ, Wi-Fi, чимээгүй, залгуур). null — ачаалж байна.
   const [reviewScores, setReviewScores] = useState<ReviewScores[] | null>(null);
 
   useEffect(() => {
@@ -121,7 +120,6 @@ export default function Home() {
   };
 
   const { t } = useI18n();
-  const [wide, setWide] = useWideLayout();
   const { location, locate, clear: clearLocation } = useUserLocation();
   const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(null);
   const userCoords = location.status === "ready" ? location.coords : null;
@@ -207,8 +205,8 @@ export default function Home() {
 
   return (
     <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
-      <Header onAddClick={() => setIsModalOpen(true)} wide={wide} />
-      <main className={`${wide ? "max-w-none" : "max-w-7xl"} mx-auto px-4 pt-2 sm:pt-6 space-y-3 sm:space-y-6`}>
+      <Header onAddClick={() => setIsModalOpen(true)} />
+      <main className="max-w-7xl mx-auto px-4 pt-2 sm:pt-6 space-y-3 sm:space-y-6">
         <FilterSection
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -243,27 +241,6 @@ export default function Home() {
             />
           </div>
           <section aria-label={t.placesHeading} className="order-2 lg:order-1 space-y-2">
-            <div className="flex justify-between items-center gap-2 border-b border-slate-800 pb-2">
-              <div className="flex items-center justify-between gap-1.5 w-full">
-                <span className="text-xs whitespace-nowrap text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2 py-1 rounded-md">
-                  {spotsLoading ? "…" : t.placesCount(filteredSpots.length)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setWide(!wide)}
-                  aria-pressed={wide}
-                  title={wide ? t.wideOffTitle : t.wideOnTitle}
-                  className={`hidden lg:inline-flex items-center gap-1 whitespace-nowrap text-xs px-2 py-1 rounded-md border transition-colors ${
-                    wide
-                      ? "bg-indigo-600 border-indigo-500 text-white"
-                      : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
-                  }`}
-                >
-                  <span aria-hidden="true">{wide ? "⇥⇤" : "⇤⇥"}</span>
-                  {wide ? t.wideOff : t.wideOn}
-                </button>
-              </div>
-            </div>
             {spotsLoading ? (
               <div className="flex flex-col gap-1" aria-busy="true">
                 {[0, 1, 2].map((i) => (

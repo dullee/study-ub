@@ -15,7 +15,7 @@ interface ScoreFieldsProps {
   onChange: (value: ScoreValues) => void;
 }
 
-// Wi-Fi хурд, чимээгүй байдал, розетка — газар нэмэх, сэтгэгдэл, админы засварт адилхан.
+// Wi-Fi хурд, чимээгүй байдал, залгуур — газар нэмэх, сэтгэгдэл, админы засварт адилхан.
 export default function ScoreFields({ value, onChange }: ScoreFieldsProps) {
   const { t, locale } = useI18n();
   return (

@@ -2,7 +2,7 @@ import { Localized, OUTLET_LEVELS, QUIET_LEVELS, Review, StudySpot } from "@/typ
 import { Locale } from "@/lib/i18n/dictionaries";
 
 // Газрын оноог газар нэмэгчийн утга (нэг санал) + сэтгэгдлүүдээс нэгтгэнэ.
-// Wi-Fi: медиан — нэг хэт хурдан/удаан тест дүнг гажуудуулахгүй. Чимээгүй, розетка: дундаж.
+// Wi-Fi: медиан — нэг хэт хурдан/удаан тест дүнг гажуудуулахгүй. Чимээгүй, залгуур: дундаж.
 
 export type ReviewScores = Pick<
   Review,

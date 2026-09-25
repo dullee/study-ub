@@ -162,7 +162,7 @@ export function displayName(user: {
 export type TagType =
   | "Бүгд"
   | "Wi-Fi хурдан"
-  | "Розетка ихтэй"
+  | "Залгуур ихтэй"
   | "Маш чимээгүй"
   | "24 цаг"
   | "Номын сан";
@@ -170,7 +170,7 @@ export type TagType =
 export const AVAILABLE_TAGS: TagType[] = [
   "Бүгд",
   "Wi-Fi хурдан",
-  "Розетка ихтэй",
+  "Залгуур ихтэй",
   "Маш чимээгүй",
   "24 цаг",
   "Номын сан",
@@ -183,8 +183,15 @@ export const TAG_INFO: Record<string, { group: "type" | "environment" | "ameniti
   "Маш чимээгүй": { group: "environment", icon: "🤫", en: "Very quiet" },
   "24 цаг": { group: "environment", icon: "🕒", en: "Open 24 hours" },
   "Wi-Fi хурдан": { group: "amenities", icon: "⚡", en: "Fast Wi-Fi" },
-  "Розетка ихтэй": { group: "amenities", icon: "🔌", en: "Lots of outlets" },
+  "Залгуур ихтэй": { group: "amenities", icon: "🔌", en: "Lots of outlets" },
 };
+
+// Нэр нь солигдсон шошго: өгөгдлийн санд хуучнаар үлдсэн (эсвэл хэрэглэгч хуучнаар бичсэн) бол шинэ рүү.
+const RENAMED_TAGS: Record<string, string> = { "Розетка ихтэй": "Залгуур ихтэй" };
+
+export function normalizeTags(tags: string[]) {
+  return [...new Set(tags.map((tag) => RENAMED_TAGS[tag] ?? tag))];
+}
 
 // Шошгыг сонгосон хэлээр: суурь шошгыг орчуулна, хэрэглэгчийн бичсэнийг хэвээр нь.
 export function tagLabel(tag: string, locale: "mn" | "en") {

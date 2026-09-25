@@ -13,8 +13,10 @@ type Hours = { kind: "24h" } | { kind: "range"; open: number; close: number };
 export type OpenStatus = {
   open: boolean;
   tone: "open" | "soon" | "closed";
-  // Карт дээрх товч бичиг.
-  short: string;
+  // Карт дээрх нэг үг: "Нээлттэй" / "Хаалттай".
+  label: string;
+  // Заагч очиход гулсаж гарах нэмэлт: "22:00 хүртэл", "30 минутын дараа хаагдана" гэх мэт.
+  hint: string;
   // Дэлгэрэнгүй цонхны бичиг: яг цаг, хэдий хугацааны дараа.
   detail: string;
   // "09:00 – 20:00" эсвэл "24 цаг".
@@ -63,7 +65,7 @@ export function openStatus(
   const hours = parseHours(spot);
   if (!hours) return null;
   if (hours.kind === "24h") {
-    return { open: true, tone: "open", short: t.open24, detail: t.open24, schedule: t.schedule24 };
+    return { open: true, tone: "open", label: t.openLabel, hint: t.schedule24, detail: t.open24, schedule: t.schedule24 };
   }
 
   const { open, close } = hours;
@@ -77,7 +79,8 @@ export function openStatus(
     return {
       open: true,
       tone: left <= SOON ? "soon" : "open",
-      short: left <= SOON ? t.closesIn(t.durationShort(duration(left))) : t.openUntil(clock(close)),
+      label: t.openLabel,
+      hint: left <= SOON ? t.hintClosesIn(t.durationShort(duration(left))) : t.hintUntil(clock(close)),
       detail: t.openClosesAt(clock(close), t.durationLong(duration(left))),
       schedule,
     };
@@ -88,7 +91,8 @@ export function openStatus(
   return {
     open: false,
     tone: "closed",
-    short: until <= SOON ? t.closedOpensIn(t.durationShort(duration(until))) : t.closed,
+    label: t.closed,
+    hint: until <= SOON ? t.hintOpensIn(t.durationShort(duration(until))) : t.hintOpensAt(tomorrow, clock(open)),
     detail: t.closedOpensAt(tomorrow, clock(open), t.durationLong(duration(until))),
     schedule,
   };

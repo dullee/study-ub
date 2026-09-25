@@ -1,11 +1,11 @@
 import { initialSpots } from "@/data/initialSpots";
-import { EventAttendee, Review, StudyEvent, StudySpot } from "@/types";
+import { EventAttendee, Review, StudyEvent, StudySpot, normalizeTags } from "@/types";
 
 const SPOTS_KEY = "studyspots_ub";
 const REVIEWS_KEY = "studyspots_ub_reviews";
 
 function withStatus(spot: StudySpot): StudySpot {
-  return { ...spot, status: spot.status ?? "approved" };
+  return { ...spot, status: spot.status ?? "approved", tags: normalizeTags(spot.tags ?? []) };
 }
 
 export function loadLocalSpots(): StudySpot[] {

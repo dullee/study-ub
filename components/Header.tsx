@@ -15,8 +15,6 @@ import { useMySubmissions } from "@/lib/useMySubmissions";
 interface HeaderProps {
   onAddClick: () => void;
   addLabel?: string;
-  // Нүүрний "бүтэн өргөн" горимд header-ийн агуулга ч бүтэн өргөнөөр.
-  wide?: boolean;
 }
 
 const TABS = [
@@ -24,10 +22,9 @@ const TABS = [
   { href: "/events", label: "navEvents" },
 ] as const;
 
-export default function Header({ onAddClick, addLabel, wide = false }: HeaderProps) {
+export default function Header({ onAddClick, addLabel }: HeaderProps) {
   const { t } = useI18n();
   const addText = addLabel ?? t.addPlace;
-  const widthClass = wide ? "max-w-none" : "max-w-7xl";
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const { submissions, pendingCount } = useMySubmissions();
@@ -44,7 +41,7 @@ export default function Header({ onAddClick, addLabel, wide = false }: HeaderPro
       ref={headerRef}
       className="border-b border-slate-800 bg-slate-900/90 backdrop-blur relative lg:sticky lg:top-0 z-[1000]"
     >
-      <div className={`${widthClass} mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3`}>
+      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-indigo-600/20 rounded-xl border border-indigo-500/30 shrink-0">
             💻
@@ -148,7 +145,7 @@ export default function Header({ onAddClick, addLabel, wide = false }: HeaderPro
           </Show>
         </div>
       </div>
-      <nav className={`${widthClass} mx-auto px-4 flex gap-1`}>
+      <nav className="max-w-7xl mx-auto px-4 flex gap-1">
         {TABS.map((tab) => {
           const active = pathname === tab.href;
           return (

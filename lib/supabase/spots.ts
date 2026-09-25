@@ -1,4 +1,4 @@
-import { PLACEHOLDER_IMAGE, Review, StudySpot } from "@/types";
+import { PLACEHOLDER_IMAGE, Review, StudySpot, normalizeTags } from "@/types";
 import { supabase, supabaseAuthed } from "@/lib/supabase/client";
 import { ReviewScores } from "@/lib/scores";
 
@@ -33,7 +33,7 @@ function mapSpot(row: SpotRow): StudySpot {
     hours: row.hours ?? "Тодорхойгүй",
     lat: row.lat,
     lng: row.lng,
-    tags: row.tags ?? [],
+    tags: normalizeTags(row.tags ?? []),
     image: row.image ?? PLACEHOLDER_IMAGE,
     wifi_mbps: row.wifi_mbps ?? undefined,
     quiet_rating: row.quiet_rating ?? undefined,
