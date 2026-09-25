@@ -22,10 +22,12 @@ interface SpotCardProps {
 const MAX_TAGS = 3;
 
 const iconButtonClass =
-  "relative z-10 h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg bg-slate-900/70 border border-white/15 text-sm text-slate-200 hover:text-white hover:bg-indigo-600 hover:border-indigo-500 transition-colors";
+  "pointer-events-auto h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg bg-slate-900/70 border border-white/15 text-sm text-slate-200 hover:text-white hover:bg-indigo-600 hover:border-indigo-500 transition-colors";
 
 // Нягт карт: нэр, үнэлгээ, төлөв, зай зураг дээр; хажууд нь жижиг хоёр товч.
-// Карт бүхэлдээ дарагдана — хамгийн сүүлийн товч картыг бүрхэж, жижиг товчнууд z-10-оор дээр нь гарна.
+// Карт бүхэлдээ дарагдана: бүрхэх товч доор, агуулга z-10-оор дээр боловч pointer-events-none тул
+// дарахад доорх товч хүлээж авна. Зөвхөн жижиг товчнууд pointer-events-auto.
+// (backdrop-blur шинэ stacking context үүсгэдэг тул товчны өөрийн z-index хангалтгүй.)
 export default function SpotCard({
   spot,
   onFocus,
@@ -56,7 +58,7 @@ export default function SpotCard({
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/10" />
 
-      <div className="flex justify-between items-start gap-2 p-2 text-[11px] font-semibold">
+      <div className="relative z-10 pointer-events-none flex justify-between items-start gap-2 p-2 text-[11px] font-semibold">
         {distanceKm !== undefined ? (
           <span className="bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 text-indigo-300">
             🚶 {formatDistance(distanceKm, t)}
@@ -73,7 +75,7 @@ export default function SpotCard({
         </span>
       </div>
 
-      <div className="mt-auto">
+      <div className="relative z-10 pointer-events-none mt-auto">
         <div className="px-3 pb-2">
           <h3 className="font-bold text-white text-base leading-tight drop-shadow-md group-hover:text-indigo-300 transition-colors truncate">
             {category ? (

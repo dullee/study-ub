@@ -85,6 +85,8 @@ export default function AdminPanel() {
   const [attendees, setAttendees] = useState<EventAttendee[]>([]);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
   const [eventError, setEventError] = useState("");
+  // Газар, сэтгэгдлийн өөрчлөлт хадгалагдаагүй бол.
+  const [actionError, setActionError] = useState("");
   // "Өнгөрсөн" тэмдэглэгээнд — панел нээгдсэн мөчийн цаг.
   const [nowMs] = useState(() => Date.now());
   const [confirm, confirmDialog] = useConfirm();
@@ -123,17 +125,20 @@ export default function AdminPanel() {
     };
   }, [isLoaded]);
 
+  // Өгөгдлийн санд хадгалагдсаны дараа л дэлгэцийг шинэчилнэ; амжилтгүй бол алдаа харуулж, хуучнаараа үлдээнэ.
   const persistSpots = async (next: StudySpot[], changed?: StudySpot, removedId?: number) => {
+    setActionError("");
+    if (remote) {
+      const ok = removedId ? await deleteSpot(removedId) : changed ? Boolean(await updateSpot(changed)) : true;
+      if (!ok) {
+        setActionError(removedId ? t.deleteFailed : t.saveFailed);
+        return false;
+      }
+    } else {
+      saveLocalSpots(next);
+    }
     setSpots(next);
-    if (remote && removedId) {
-      await deleteSpot(removedId);
-      return;
-    }
-    if (remote && changed) {
-      await updateSpot(changed);
-      return;
-    }
-    saveLocalSpots(next);
+    return true;
   };
 
   const acceptSpot = async (spot: StudySpot) => {
@@ -185,11 +190,12 @@ export default function AdminPanel() {
     });
     if (!ok) return;
     const id = spot.id;
-    persistSpots(
+    const deleted = await persistSpots(
       spots.filter((item) => item.id !== id),
       undefined,
       id
     );
+    if (!deleted) return;
     const remaining = reviews.filter((review) => review.spot_id !== id);
     setReviews(remaining);
     if (!remote) {
@@ -214,9 +220,14 @@ export default function AdminPanel() {
   const saveReview = async (e: FormEvent) => {
     e.preventDefault();
     if (!editingReview) return;
+    setActionError("");
     if (remote) {
       const saved = await updateReview(editingReview);
-      if (saved) setReviews(reviews.map((item) => (item.id === saved.id ? saved : item)));
+      if (!saved) {
+        setActionError(t.saveFailed);
+        return;
+      }
+      setReviews(reviews.map((item) => (item.id === saved.id ? saved : item)));
     } else {
       saveLocalReview(editingReview);
       setReviews(reviews.map((item) => (item.id === editingReview.id ? editingReview : item)));
@@ -233,8 +244,15 @@ export default function AdminPanel() {
     });
     if (!ok) return;
     const id = review.id;
-    if (remote) await deleteReview(id);
-    else removeLocalReview(id);
+    setActionError("");
+    if (remote) {
+      if (!(await deleteReview(id))) {
+        setActionError(t.deleteFailed);
+        return;
+      }
+    } else {
+      removeLocalReview(id);
+    }
     setReviews(reviews.filter((item) => item.id !== id));
   };
 
@@ -334,6 +352,11 @@ export default function AdminPanel() {
             </button>
           ))}
         </nav>
+        {actionError ? (
+          <p role="alert" className="text-sm text-rose-300 bg-rose-950/60 border border-rose-800/50 rounded-xl px-4 py-3">
+            {actionError}
+          </p>
+        ) : null}
 
         {tab === "pending" && (
           <section className="space-y-2">

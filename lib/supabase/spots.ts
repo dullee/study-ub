@@ -170,9 +170,10 @@ export async function updateSpot(spot: StudySpot): Promise<StudySpot | null> {
 
 export async function deleteSpot(id: number): Promise<boolean> {
   if (!supabaseAuthed) return false;
-  const { error } = await supabaseAuthed.from("spots").delete().eq("id", id);
-  if (error) {
-    console.error("Supabase delete spot:", error.message);
+  // RLS хаасан устгал алдаагүй 0 мөр буцаадаг — устсан мөрийг буцааж авч шалгана.
+  const { data, error } = await supabaseAuthed.from("spots").delete().eq("id", id).select("id");
+  if (error || !data?.length) {
+    console.error("Supabase delete spot:", error?.message ?? "no rows deleted");
     return false;
   }
   return true;
@@ -214,9 +215,10 @@ export async function updateReview(review: Review): Promise<Review | null> {
 
 export async function deleteReview(id: number): Promise<boolean> {
   if (!supabaseAuthed) return false;
-  const { error } = await supabaseAuthed.from("reviews").delete().eq("id", id);
-  if (error) {
-    console.error("Supabase delete review:", error.message);
+  // RLS хаасан устгал алдаагүй 0 мөр буцаадаг — устсан мөрийг буцааж авч шалгана.
+  const { data, error } = await supabaseAuthed.from("reviews").delete().eq("id", id).select("id");
+  if (error || !data?.length) {
+    console.error("Supabase delete review:", error?.message ?? "no rows deleted");
     return false;
   }
   return true;

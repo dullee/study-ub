@@ -33,7 +33,9 @@ function isPublic(spot: StudySpot) {
 }
 
 export default function Home() {
-  const [spots, setSpots] = useState<StudySpot[]>(initialSpots);
+  // Supabase холбогдсон бол жинхэнэ жагсаалт ирэх хүртэл хоосон (skeleton) — жишээ газрууд түр гарч солигдохгүй.
+  const [spots, setSpots] = useState<StudySpot[]>(isSupabaseConfigured ? [] : initialSpots);
+  const [spotsLoading, setSpotsLoading] = useState(isSupabaseConfigured);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTags, setActiveTags] = useState<string[]>(["Бүгд"]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,15 +77,19 @@ export default function Home() {
     async function load() {
       if (isSupabaseConfigured) {
         const remote = await fetchSpots();
-        if (!cancelled && remote) {
-          // Хүснэгт хоосон ч шинэ газрыг Supabase руу илгээнэ; харуулахдаа анхны газруудыг ашиглана.
-          if (remote.length > 0) setSpots(remote);
+        if (cancelled) return;
+        if (remote) {
+          setSpots(remote);
           setUsingRemote(true);
+          setSpotsLoading(false);
           return;
         }
       }
+      // Supabase тохируулаагүй эсвэл уншиж чадаагүй: энэ хөтчийн хадгалсан эсвэл жишээ газрууд.
       const local = loadLocalSpots().filter(isPublic);
-      if (!cancelled && local.length > 0) setSpots(local);
+      if (cancelled) return;
+      setSpots(local.length > 0 ? local : initialSpots);
+      setSpotsLoading(false);
     }
     load();
     return () => {
@@ -232,7 +238,7 @@ export default function Home() {
             <div className="flex justify-between items-center gap-2 border-b border-slate-800 pb-2">
               <div className="flex items-center justify-between gap-1.5 w-full">
                 <span className="text-xs whitespace-nowrap text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2 py-1 rounded-md">
-                  {t.placesCount(filteredSpots.length)}
+                  {spotsLoading ? "…" : t.placesCount(filteredSpots.length)}
                 </span>
                 <button
                   type="button"
@@ -250,7 +256,21 @@ export default function Home() {
                 </button>
               </div>
             </div>
-            {filteredSpots.length === 0 ? (
+            {spotsLoading ? (
+              <div className="flex flex-col gap-1" aria-busy="true">
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    aria-hidden="true"
+                    className="min-h-60 rounded-2xl border border-slate-800 bg-slate-800/40 animate-pulse flex flex-col justify-end p-3 gap-2"
+                  >
+                    <div className="h-4 w-2/3 rounded bg-slate-700" />
+                    <div className="h-3 w-1/3 rounded bg-slate-700/70" />
+                    <div className="h-3 w-1/2 rounded bg-slate-800" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredSpots.length === 0 ? (
               <p className="text-center text-slate-500 py-12 text-sm">{t.noResults}</p>
             ) : (
               <div className="flex flex-col gap-1">

@@ -74,9 +74,11 @@ export default function FilterSection({
           </span>
         </div>
 
+        {/* Утсан дээр бичвэр нуугддаг тул дэлгэц уншигчид нэрийг ariaLabel-ээр өгнө. */}
         <Dropdown
           align="right"
           active={selectedTags.length > 0}
+          ariaLabel={selectedTags.length > 0 ? `${t.filters} (${selectedTags.length})` : t.filters}
           label={
             <>
               <span aria-hidden="true">🏷️</span>
@@ -117,6 +119,7 @@ export default function FilterSection({
         <Dropdown
           align="right"
           active={ready}
+          ariaLabel={distanceLabel}
           label={
             <>
               <span aria-hidden="true">📍</span>

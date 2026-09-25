@@ -57,9 +57,10 @@ export async function insertAttendee(
 
 export async function deleteAttendee(id: number): Promise<boolean> {
   if (!supabaseAuthed) return false;
-  const { error } = await supabaseAuthed.from("event_attendees").delete().eq("id", id);
-  if (error) {
-    console.error("Supabase delete attendee:", error.message);
+  // RLS хаасан устгал алдаагүй 0 мөр буцаадаг — устсан мөрийг буцааж авч шалгана.
+  const { data, error } = await supabaseAuthed.from("event_attendees").delete().eq("id", id).select("id");
+  if (error || !data?.length) {
+    console.error("Supabase delete attendee:", error?.message ?? "no rows deleted");
     return false;
   }
   return true;
@@ -128,9 +129,10 @@ export async function updateEvent(event: StudyEvent): Promise<StudyEvent | null>
 // Бүртгэл, групп чатын холбоос нь хамт устгагдана (on delete cascade).
 export async function deleteEvent(id: number): Promise<boolean> {
   if (!supabaseAuthed) return false;
-  const { error } = await supabaseAuthed.from("events").delete().eq("id", id);
-  if (error) {
-    console.error("Supabase delete event:", error.message);
+  // RLS хаасан устгал алдаагүй 0 мөр буцаадаг — устсан мөрийг буцааж авч шалгана.
+  const { data, error } = await supabaseAuthed.from("events").delete().eq("id", id).select("id");
+  if (error || !data?.length) {
+    console.error("Supabase delete event:", error?.message ?? "no rows deleted");
     return false;
   }
   return true;
