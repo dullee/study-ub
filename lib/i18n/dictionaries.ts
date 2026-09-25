@@ -100,6 +100,8 @@ const mn = {
 
   // Газрын карт
   noRating: "Үнэлгээгүй",
+  popular: "Эрэлттэй",
+  popularDetail: (count: number, days: number) => `Сүүлийн ${days} хоногт ${count} сэтгэгдэл`,
   showOnMap: "Карт дээр харах",
   openInGoogleMaps: "Google Maps дээр нээх",
   openDetails: (name: string) => `${name} — дэлгэрэнгүй ба сэтгэгдэл`,
@@ -386,6 +388,8 @@ const en: Dictionary = {
     `Closed · opens ${tomorrow ? "tomorrow " : ""}at ${time} (${duration})`,
 
   noRating: "No ratings",
+  popular: "Popular",
+  popularDetail: (count, days) => `${count} reviews in the last ${days} days`,
   showOnMap: "Show on map",
   openInGoogleMaps: "Open in Google Maps",
   openDetails: (name) => `${name} — details and reviews`,

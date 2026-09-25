@@ -118,7 +118,7 @@ export async function fetchReviewScores(): Promise<ReviewScores[] | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from("reviews")
-    .select("id, spot_id, rating, wifi_mbps, quiet_rating, outlet_rating");
+    .select("id, spot_id, rating, wifi_mbps, quiet_rating, outlet_rating, created_at");
   if (error) {
     console.error("Supabase review scores:", error.message);
     return null;

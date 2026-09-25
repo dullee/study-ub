@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { sortByActiveTags } from "@/lib/spotSort";
+import { recentReviewCounts } from "@/lib/popular";
+import { useNow } from "@/lib/openHours";
 import { distanceKm, useUserLocation } from "@/lib/geo";
 import { useWideLayout } from "@/lib/useWideLayout";
 import { useI18n } from "@/components/LanguageProvider";
@@ -62,6 +64,12 @@ export default function Home() {
   }, []);
 
   // Газар нэмэгчийн утга + сэтгэгдлүүдээс нэгтгэсэн оноо — карт, эрэмбэлэлтэд.
+  // Сүүлийн долоо хоногийн сэтгэгдлийн тоо — "🔥 Эрэлттэй" тэмдэгт. Сервер дээр now нь null.
+  const now = useNow();
+  const recentCounts = useMemo(
+    () => (now === null ? {} : recentReviewCounts(reviewScores ?? [], now)),
+    [reviewScores, now]
+  );
   const summaries = useMemo(
     () => summarizeSpots(spots, reviewScores ?? []),
     [spots, reviewScores]
@@ -283,6 +291,7 @@ export default function Home() {
                     summary={summaries[spot.id]}
                     ratingsLoading={reviewScores === null}
                     distanceKm={distances?.[spot.id]}
+                    recentReviews={recentCounts[spot.id]}
                   />
                 ))}
               </div>

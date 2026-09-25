@@ -4,7 +4,10 @@ import { Locale } from "@/lib/i18n/dictionaries";
 // Газрын оноог газар нэмэгчийн утга (нэг санал) + сэтгэгдлүүдээс нэгтгэнэ.
 // Wi-Fi: медиан — нэг хэт хурдан/удаан тест дүнг гажуудуулахгүй. Чимээгүй, розетка: дундаж.
 
-export type ReviewScores = Pick<Review, "id" | "spot_id" | "rating" | "wifi_mbps" | "quiet_rating" | "outlet_rating">;
+export type ReviewScores = Pick<
+  Review,
+  "id" | "spot_id" | "rating" | "wifi_mbps" | "quiet_rating" | "outlet_rating" | "created_at"
+>;
 export type Score = { value: number; count: number };
 
 export interface SpotSummary {

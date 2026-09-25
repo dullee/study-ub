@@ -6,6 +6,7 @@ import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 import { formatWifi, levelLabel, SpotSummary } from "@/lib/scores";
 import { formatDistance } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
+import PopularBadge from "@/components/PopularBadge";
 
 interface SpotCardProps {
   spot: StudySpot;
@@ -17,6 +18,8 @@ interface SpotCardProps {
   ratingsLoading: boolean;
   // Хэрэглэгчээс хүрэх зай (км). Байршил мэдэгдэхгүй бол undefined.
   distanceKm?: number;
+  // Сүүлийн долоо хоногийн сэтгэгдлийн тоо — хангалттай бол "🔥 Эрэлттэй".
+  recentReviews?: number;
 }
 
 const MAX_TAGS = 3;
@@ -35,6 +38,7 @@ export default function SpotCard({
   summary,
   ratingsLoading,
   distanceKm,
+  recentReviews,
 }: SpotCardProps) {
   const { t, locale } = useI18n();
   const now = useNow();
@@ -59,13 +63,14 @@ export default function SpotCard({
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/10" />
 
       <div className="relative z-10 pointer-events-none flex justify-between items-start gap-2 p-2 text-[11px] font-semibold">
-        {distanceKm !== undefined ? (
-          <span className="bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 text-indigo-300">
-            🚶 {formatDistance(distanceKm, t)}
-          </span>
-        ) : (
-          <span />
-        )}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <PopularBadge recentCount={recentReviews} />
+          {distanceKm !== undefined ? (
+            <span className="bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 text-indigo-300">
+              🚶 {formatDistance(distanceKm, t)}
+            </span>
+          ) : null}
+        </div>
         <span
           className={`bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 ${
             status ? STATUS_TONE[status.tone] : "text-indigo-300"

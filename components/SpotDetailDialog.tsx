@@ -19,6 +19,8 @@ import { reviewsForSpot } from "@/lib/localStore";
 import Stars from "@/components/Stars";
 import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 import { formatOutlets, formatQuiet, formatWifi, summarizeSpot } from "@/lib/scores";
+import { recentReviewCounts } from "@/lib/popular";
+import PopularBadge from "@/components/PopularBadge";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
 import { useI18n } from "@/components/LanguageProvider";
 
@@ -151,6 +153,7 @@ export default function SpotDetailDialog({
 
   // Газар нэмэгчийн утга + сэтгэгдлүүдийн утгаас нэгтгэсэн оноо.
   const summary = summarizeSpot(spot, reviews);
+  const recentCount = now === null ? undefined : recentReviewCounts(reviews, now)[spot.id];
   const facts: { icon: string; label: string; value?: string; note?: string }[] = [
     { icon: "📍", label: t.factLocation, value: spot.location },
     { icon: "⏰", label: t.factHours, value: status ? status.schedule : spot.hours },
@@ -219,11 +222,14 @@ export default function SpotDetailDialog({
           <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/0 via-slate-950/70 to-slate-900" />
           <div className="px-5 sm:px-6 pt-32 sm:pt-44 pb-6 space-y-4">
             <div>
-              {category ? (
-                <span className="inline-block mb-2 text-xs font-semibold bg-slate-900/80 backdrop-blur text-indigo-300 border border-slate-700 px-2.5 py-1 rounded-lg">
-                  {category.icon} {category.label[locale]}
-                </span>
-              ) : null}
+              <div className="flex flex-wrap items-center gap-2 mb-2 empty:hidden">
+                {category ? (
+                  <span className="inline-block text-xs font-semibold bg-slate-900/80 backdrop-blur text-indigo-300 border border-slate-700 px-2.5 py-1 rounded-lg">
+                    {category.icon} {category.label[locale]}
+                  </span>
+                ) : null}
+                <PopularBadge recentCount={recentCount} className="text-xs px-2.5 py-1 rounded-lg" />
+              </div>
               <h2 id="spot-dialog-title" className="text-2xl sm:text-3xl font-bold text-white drop-shadow-md">
                 {spot.name}
               </h2>
