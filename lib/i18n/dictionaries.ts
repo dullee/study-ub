@@ -130,6 +130,11 @@ const mn = {
 
   // Сэтгэгдэл
   reviewSaveFailed: "Сэтгэгдэл хадгалагдсангүй. Дахин оролдоно уу.",
+  alreadyReviewed: "Та энэ газарт сэтгэгдэл үлдээсэн байна — дээрээс нь засаарай.",
+  yourReview: "Таны сэтгэгдэл",
+  updateReview: "Сэтгэгдлээ шинэчлэх",
+  joinFull: "Уучлаарай, энэ эвент дүүрчихсэн байна.",
+  joinEnded: "Энэ эвент дууссан тул бүртгүүлэх боломжгүй.",
   closeReviews: "Сэтгэгдлийг хаах",
   signInToReview: "Сэтгэгдэл бичихийн тулд нэвтэрнэ үү.",
   ratingLabel: "Үнэлгээ",
@@ -409,6 +414,11 @@ const en: Dictionary = {
   scrollToTop: "Back to top",
 
   reviewSaveFailed: "Couldn't save your review. Please try again.",
+  alreadyReviewed: "You've already reviewed this place — edit your review above.",
+  yourReview: "Your review",
+  updateReview: "Update your review",
+  joinFull: "Sorry, this event just filled up.",
+  joinEnded: "This event has ended, so you can't join.",
   closeReviews: "Close reviews",
   signInToReview: "Sign in to write a review.",
   ratingLabel: "Rating",

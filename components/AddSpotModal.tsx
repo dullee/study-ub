@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { LIMITS } from "@/lib/limits";
 import {
   ACCESSIBILITY,
   AMENITIES,
@@ -183,7 +184,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             <label className="block text-slate-400 mb-1">{t.mapsLink}</label>
             <input
               type="url"
-              value={formData.maps_url}
+              value={formData.maps_url} maxLength={LIMITS.url}
               onChange={(e) => handleMapsLinkChange(e.target.value)}
               placeholder="https://maps.app.goo.gl/..."
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
@@ -205,7 +206,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             <input
               type="text"
               required
-              value={formData.name}
+              value={formData.name} maxLength={LIMITS.spotName}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder={t.spotNamePlaceholder}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
@@ -233,8 +234,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             <label className="block text-slate-400 mb-1">{t.shortDescription}</label>
             <textarea
               rows={3}
-              maxLength={500}
-              value={formData.description}
+              value={formData.description} maxLength={LIMITS.spotDescription}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={t.descriptionPlaceholder}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 resize-none"
@@ -246,7 +246,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               <input
                 type="text"
                 required
-                value={formData.location}
+                value={formData.location} maxLength={LIMITS.spotLocation}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder={t.locationPlaceholder}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
@@ -256,7 +256,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               <label className="block text-slate-400 mb-1">{t.openingHours}</label>
               <input
                 type="text"
-                value={formData.hours}
+                value={formData.hours} maxLength={LIMITS.spotHours}
                 onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
                 placeholder={t.hoursPlaceholder}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
@@ -307,7 +307,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               <label className="block text-slate-400 mb-1">{t.imageUrl}</label>
               <input
                 type="url"
-                value={formData.image}
+                value={formData.image} maxLength={LIMITS.url}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                 placeholder="https://images.unsplash.com/..."
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"

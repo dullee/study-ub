@@ -174,8 +174,13 @@ export default function SpotDetailDialog({
     },
   ].filter((fact) => fact.value);
 
+  // Шинэ сэтгэгдлийг эхэнд нэмнэ; засварласныг байранд нь солино.
   const handleReviewAdded = (review: Review) => {
-    setReviews((prev) => [review, ...prev]);
+    setReviews((prev) =>
+      prev.some((item) => item.id === review.id)
+        ? prev.map((item) => (item.id === review.id ? review : item))
+        : [review, ...prev]
+    );
     onReviewAdded?.(review);
   };
 

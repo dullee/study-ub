@@ -3,13 +3,14 @@
 import { FormEvent, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { displayName, Review, StudySpot } from "@/types";
-import { insertReview } from "@/lib/supabase/spots";
+import { insertReview, updateReview } from "@/lib/supabase/spots";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { saveLocalReview } from "@/lib/localStore";
 import Stars from "@/components/Stars";
 import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
 import { useI18n } from "@/components/LanguageProvider";
+import { LIMITS } from "@/lib/limits";
 
 interface ReviewsDialogProps {
   spot: StudySpot;
@@ -53,48 +54,130 @@ export function ReviewItem({ review, clamp = false }: { review: Review; clamp?: 
 
 // Газрын цонхны дээр нээгддэг тусдаа цонх: сэтгэгдэл бичих, бүх сэтгэгдлийг харах.
 // Esc-ийг SpotDetailDialog барина — эхлээд энэ цонх, дараа нь газрын цонх хаагдана.
-export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, onClose }: ReviewsDialogProps) {
+type SignedInUser = NonNullable<ReturnType<typeof useUser>["user"]>;
+
+// Хэрэглэгч газар бүрт нэг сэтгэгдэл: байвал түүгээр бөглөж, "шинэчлэх" горимд ажиллана.
+// key={existing?.id} — сэтгэгдэл ачаалагдсаны дараа формыг дахин эхлүүлнэ.
+function ReviewForm({
+  spot,
+  user,
+  existing,
+  onSaved,
+}: {
+  spot: StudySpot;
+  user: SignedInUser;
+  existing: Review | undefined;
+  onSaved: (review: Review) => void;
+}) {
   const { t } = useI18n();
-  const [comment, setComment] = useState("");
-  const [scores, setScores] = useState<ScoreValues>({});
-  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState(existing?.comment ?? "");
+  const [scores, setScores] = useState<ScoreValues>({
+    wifi_mbps: existing?.wifi_mbps ?? undefined,
+    quiet_rating: existing?.quiet_rating ?? undefined,
+    outlet_rating: existing?.outlet_rating ?? undefined,
+  });
+  const [rating, setRating] = useState(existing?.rating ?? 5);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const { user, isLoaded } = useUser();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     setSaving(true);
     setError("");
-    const draft = {
-      spot_id: spot.id,
-      comment,
+    const fields = {
+      comment: comment.trim(),
       rating,
       wifi_mbps: scores.wifi_mbps ?? null,
       quiet_rating: scores.quiet_rating ?? null,
       outlet_rating: scores.outlet_rating ?? null,
-      user_id: user.id,
-      author_name: displayName(user),
     };
-    let saved: Review | null;
-    if (isSupabaseConfigured) {
-      saved = await insertReview(draft);
-      if (!saved) {
-        setError(t.reviewSaveFailed);
-        setSaving(false);
-        return;
-      }
+    let saved: Review | "already_reviewed" | null;
+    if (existing) {
+      const updated: Review = { ...existing, ...fields };
+      saved = isSupabaseConfigured ? await updateReview(updated) : updated;
+      if (saved && !isSupabaseConfigured) saveLocalReview(saved);
     } else {
-      saved = { ...draft, id: Date.now(), created_at: new Date().toISOString() };
-      saveLocalReview(saved);
+      const draft = { ...fields, spot_id: spot.id, user_id: user.id, author_name: displayName(user) };
+      if (isSupabaseConfigured) {
+        saved = await insertReview(draft);
+      } else {
+        saved = { ...draft, id: Date.now(), created_at: new Date().toISOString() };
+        saveLocalReview(saved);
+      }
     }
-    onReviewAdded(saved);
-    setComment("");
-    setScores({});
-    setRating(5);
     setSaving(false);
+    if (saved === null || saved === "already_reviewed") {
+      setError(saved === "already_reviewed" ? t.alreadyReviewed : t.reviewSaveFailed);
+      return;
+    }
+    onSaved(saved);
+    if (!existing) {
+      setComment("");
+      setScores({});
+      setRating(5);
+    }
   };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3 text-xs bg-slate-800/30 border border-slate-800 rounded-xl p-4">
+      {existing ? <p className="text-sm font-semibold text-slate-200">{t.yourReview}</p> : null}
+      <div className="flex items-center gap-1" role="radiogroup" aria-label={t.ratingLabel}>
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            key={value}
+            type="button"
+            role="radio"
+            aria-checked={rating === value}
+            aria-label={t.stars(value)}
+            onClick={() => setRating(value)}
+            className={`text-2xl leading-none ${
+              value <= rating ? "text-amber-400" : "text-slate-600 hover:text-slate-400"
+            }`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <details className="bg-slate-900/40 border border-slate-800 rounded-lg">
+        <summary className="cursor-pointer select-none px-3 py-2 text-slate-300">{t.rateScoresOptional}</summary>
+        <div className="px-3 pb-3">
+          <ScoreFields value={scores} onChange={setScores} />
+        </div>
+      </details>
+      <div>
+        <textarea
+          required
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          rows={3}
+          maxLength={LIMITS.reviewComment}
+          placeholder={t.reviewPlaceholder}
+          aria-label={t.writeReview}
+          className={inputClass}
+        />
+        {comment.length > LIMITS.reviewComment * 0.8 ? (
+          <p className="text-right text-[11px] text-slate-500">
+            {comment.length}/{LIMITS.reviewComment}
+          </p>
+        ) : null}
+      </div>
+      <button
+        type="submit"
+        disabled={saving || comment.trim() === ""}
+        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl"
+      >
+        {saving ? t.sending : existing ? t.updateReview : t.postReviewAs(displayName(user))}
+      </button>
+      {error ? <p className="text-rose-400">{error}</p> : null}
+    </form>
+  );
+}
+
+export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, onClose }: ReviewsDialogProps) {
+  const { t } = useI18n();
+  const { user, isLoaded } = useUser();
+  // Жагсаалт шинэ нь эхэнд — хуучин давхар сэтгэгдэл байвал хамгийн сүүлийнхийг засна.
+  const myReview = user ? reviews.find((review) => review.user_id === user.id) : undefined;
 
   return (
     <div
@@ -136,50 +219,9 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
             </SignInButton>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-3 text-xs bg-slate-800/30 border border-slate-800 rounded-xl p-4">
-            <div className="flex items-center gap-1" role="radiogroup" aria-label={t.ratingLabel}>
-              {[1, 2, 3, 4, 5].map((value) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={rating === value}
-                  aria-label={t.stars(value)}
-                  onClick={() => setRating(value)}
-                  className={`text-2xl leading-none ${
-                    value <= rating ? "text-amber-400" : "text-slate-600 hover:text-slate-400"
-                  }`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-            <details className="bg-slate-900/40 border border-slate-800 rounded-lg">
-              <summary className="cursor-pointer select-none px-3 py-2 text-slate-300">
-                {t.rateScoresOptional}
-              </summary>
-              <div className="px-3 pb-3">
-                <ScoreFields value={scores} onChange={setScores} />
-              </div>
-            </details>
-            <textarea
-              required
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-              placeholder={t.reviewPlaceholder}
-              aria-label={t.writeReview}
-              className={inputClass}
-            />
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl"
-            >
-              {saving ? t.sending : t.postReviewAs(displayName(user))}
-            </button>
-            {error ? <p className="text-rose-400">{error}</p> : null}
-          </form>
+          loading ? null : (
+            <ReviewForm key={myReview?.id ?? "new"} spot={spot} user={user} existing={myReview} onSaved={onReviewAdded} />
+          )
         )}
 
         <ul className="space-y-2" aria-busy={loading}>

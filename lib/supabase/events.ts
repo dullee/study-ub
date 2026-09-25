@@ -39,10 +39,13 @@ export async function fetchAttendees(): Promise<EventAttendee[] | null> {
   return data as EventAttendee[];
 }
 
+// Өгөгдлийн сан хүний тоо дүүрсэн, эвент дууссан үед татгалзана (20260924000012_limits.sql).
+export type JoinError = "event_full" | "event_ended" | "failed";
+
 export async function insertAttendee(
   attendee: Omit<EventAttendee, "id" | "created_at">
-): Promise<EventAttendee | null> {
-  if (!supabaseAuthed) return null;
+): Promise<EventAttendee | JoinError> {
+  if (!supabaseAuthed) return "failed";
   const { data, error } = await supabaseAuthed
     .from("event_attendees")
     .insert(attendee)
@@ -50,7 +53,9 @@ export async function insertAttendee(
     .single();
   if (error) {
     console.error("Supabase insert attendee:", error.message);
-    return null;
+    if (error.message.includes("event_full")) return "event_full";
+    if (error.message.includes("event_ended")) return "event_ended";
+    return "failed";
   }
   return data as EventAttendee;
 }

@@ -118,7 +118,7 @@ export async function fetchReviewScores(): Promise<ReviewScores[] | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from("reviews")
-    .select("spot_id, rating, wifi_mbps, quiet_rating, outlet_rating");
+    .select("id, spot_id, rating, wifi_mbps, quiet_rating, outlet_rating");
   if (error) {
     console.error("Supabase review scores:", error.message);
     return null;
@@ -126,9 +126,10 @@ export async function fetchReviewScores(): Promise<ReviewScores[] | null> {
   return data as ReviewScores[];
 }
 
+// Нэг хэрэглэгч нэг газарт нэг л сэтгэгдэл (өгөгдлийн сангийн trigger) — давхар бол "already_reviewed".
 export async function insertReview(
   review: Omit<Review, "id" | "created_at">
-): Promise<Review | null> {
+): Promise<Review | "already_reviewed" | null> {
   if (!supabaseAuthed) return null;
   const { data, error } = await supabaseAuthed
     .from("reviews")
@@ -137,12 +138,13 @@ export async function insertReview(
     .single();
   if (error) {
     console.error("Supabase insert review:", error.message);
-    return null;
+    return error.message.includes("already_reviewed") ? "already_reviewed" : null;
   }
   return data as Review;
 }
 
 // Доорх функцууд админд: RLS нь Clerk session token-ы metadata.role = "admin"-ийг шалгана.
+// (updateReview-ийг хэрэглэгч өөрийн сэтгэгдлийг засахад ч ашиглана — RLS: зөвхөн өөрийнх.)
 export async function fetchAllSpots(): Promise<StudySpot[] | null> {
   if (!supabaseAuthed) return null;
   const { data, error } = await supabaseAuthed.from("spots").select("*").order("id", { ascending: false });

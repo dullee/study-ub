@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { EventAttendee, googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
@@ -32,6 +33,8 @@ export default function EventDetailDialog({
 }: EventDetailDialogProps) {
   const { t, locale } = useI18n();
   const [busy, setBusy] = useState(false);
+  // Clerk ачаалагдаж дуусаагүй үед дарвал нэвтэрсэн хэрэглэгч ч "нэвтрээгүй" мэт болж юу ч болохгүй байсан.
+  const { isLoaded: authReady } = useAuth();
   const isFull = event.max_people !== null && attendees.length >= event.max_people;
   const hasCoords = event.lat !== null && event.lng !== null;
 
@@ -150,7 +153,7 @@ export default function EventDetailDialog({
           ) : (
             <button
               onClick={() => run(onJoin)}
-              disabled={busy || isFull}
+              disabled={busy || isFull || !authReady}
               className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:shadow-none disabled:bg-slate-700"
             >
               {isFull ? t.eventFull : t.imGoing}

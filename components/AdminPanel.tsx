@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LIMITS } from "@/lib/limits";
 import { ChangeEvent, FormEvent, ReactNode, useEffect, useState } from "react";
 import { UserButton, useAuth } from "@clerk/nextjs";
 import {
@@ -572,7 +573,7 @@ export default function AdminPanel() {
             <ScoreFields value={editingReview} onChange={(scores) => setEditingReview({ ...editingReview, ...scores })} />
             <label className="block space-y-1">
               <span className="block text-slate-400">{t.tabReviews}</span>
-              <textarea className={inputClass} rows={4} value={editingReview.comment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
+              <textarea className={inputClass} rows={4} value={editingReview.comment} maxLength={LIMITS.reviewComment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
             </label>
             <div className="flex flex-wrap gap-2">
               <button className={`${btn} bg-indigo-600 hover:bg-indigo-500 text-white`}>{t.save}</button>
@@ -784,13 +785,13 @@ function SpotEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-      <input className={inputClass} required placeholder={t.namePlaceholder} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-      <input className={inputClass} required placeholder={t.locationPlaceholderShort} value={draft.location} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
-      <input className={inputClass} placeholder={t.openingHours} value={draft.hours} onChange={(e) => setDraft({ ...draft, hours: e.target.value })} />
+      <input className={inputClass} required placeholder={t.namePlaceholder} value={draft.name} maxLength={LIMITS.spotName} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+      <input className={inputClass} required placeholder={t.locationPlaceholderShort} value={draft.location} maxLength={LIMITS.spotLocation} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
+      <input className={inputClass} placeholder={t.openingHours} value={draft.hours} maxLength={LIMITS.spotHours} onChange={(e) => setDraft({ ...draft, hours: e.target.value })} />
       <input className={inputClass} placeholder={t.tagsCommaPlaceholder} value={tagsText} onChange={(e) => setTagsText(e.target.value)} />
       <input className={inputClass} type="number" step="any" required value={draft.lat} onChange={(e) => setDraft({ ...draft, lat: Number(e.target.value) })} />
       <input className={inputClass} type="number" step="any" required value={draft.lng} onChange={(e) => setDraft({ ...draft, lng: Number(e.target.value) })} />
-      <input className={`${inputClass} sm:col-span-2`} type="url" placeholder={t.mapsLink} value={draft.maps_url ?? ""} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
+      <input className={`${inputClass} sm:col-span-2`} type="url" placeholder={t.mapsLink} value={draft.maps_url ?? ""} maxLength={LIMITS.url} onChange={(e) => setDraft({ ...draft, maps_url: e.target.value })} />
       <select
         className={`${inputClass} sm:col-span-2`}
         value={draft.category ?? ""}
@@ -806,9 +807,8 @@ function SpotEditForm({
       <textarea
         className={`${inputClass} sm:col-span-2 resize-none`}
         rows={3}
-        maxLength={500}
         placeholder={t.shortDescription}
-        value={draft.description ?? ""}
+        value={draft.description ?? ""} maxLength={LIMITS.spotDescription}
         onChange={(e) => setDraft({ ...draft, description: e.target.value })}
       />
       <div className="sm:col-span-2 space-y-2">
@@ -956,11 +956,11 @@ function EventEditForm({
     <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-slate-400">{t.eventTitle}</span>
-        <input className={inputClass} required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+        <input className={inputClass} required value={draft.title} maxLength={LIMITS.eventTitle} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
       </label>
       <label className="space-y-1">
         <span className="block text-slate-400">{t.placeName}</span>
-        <input className={inputClass} required value={draft.place_name} onChange={(e) => setDraft({ ...draft, place_name: e.target.value })} />
+        <input className={inputClass} required value={draft.place_name} maxLength={LIMITS.placeName} onChange={(e) => setDraft({ ...draft, place_name: e.target.value })} />
       </label>
       <label className="space-y-1">
         <span className="block text-slate-400">{t.dateTime}</span>
@@ -968,7 +968,7 @@ function EventEditForm({
       </label>
       <label className="space-y-1">
         <span className="block text-slate-400">{t.maxPeople}</span>
-        <input className={inputClass} type="number" min={1} placeholder={t.unlimited} value={draft.maxPeople} onChange={(e) => setDraft({ ...draft, maxPeople: e.target.value })} />
+        <input className={inputClass} type="number" min={1} placeholder={t.unlimited} value={draft.maxPeople} max={LIMITS.maxPeople} onChange={(e) => setDraft({ ...draft, maxPeople: e.target.value })} />
       </label>
       <label className="space-y-1">
         <span className="block text-slate-400">{t.chatLinkLabel}</span>
@@ -984,7 +984,7 @@ function EventEditForm({
       </label>
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-slate-400">{t.eventDetails}</span>
-        <textarea className={`${inputClass} resize-none`} rows={3} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+        <textarea className={`${inputClass} resize-none`} rows={3} value={draft.description} maxLength={LIMITS.eventDescription} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
       </label>
       {error ? <p className="sm:col-span-2 text-rose-400">{error}</p> : null}
       <div className="sm:col-span-2 flex flex-wrap gap-2">

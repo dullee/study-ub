@@ -17,6 +17,7 @@ import {
   fetchEvents,
   insertAttendee,
   insertEvent,
+  JoinError,
   saveChatLink,
 } from "@/lib/supabase/events";
 import {
@@ -59,7 +60,7 @@ export default function EventsPage() {
   const [now, setNow] = useState(() => Date.now());
   const { t } = useI18n();
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
-  const { user } = useUser();
+  const { user, isLoaded: authReady } = useUser();
   const { openSignIn } = useClerk();
   const [query, setQuery] = useState("");
   const [when, setWhen] = useState<When>("all");
@@ -167,17 +168,17 @@ export default function EventsPage() {
     }
   };
 
-  const addAttendee = async (eventId: number) => {
-    if (!user) return null;
+  const addAttendee = async (eventId: number): Promise<EventAttendee | JoinError> => {
+    if (!user) return "failed";
     const draft = { event_id: eventId, name: displayName(user), user_id: user.id };
-    let saved: EventAttendee | null = null;
+    let saved: EventAttendee | JoinError;
     if (usingRemote) {
       saved = await insertAttendee(draft);
     } else {
       saved = { ...draft, id: Date.now(), created_at: new Date().toISOString() };
       saveLocalAttendee(saved);
     }
-    if (!saved) return null;
+    if (typeof saved === "string") return saved;
     const attendee = saved;
     setAttendees((prev) => [...prev, attendee]);
     if (usingRemote) sendRsvpEmail(eventId);
@@ -213,14 +214,24 @@ export default function EventsPage() {
   };
 
   const handleJoin = async (event: StudyEvent) => {
+    if (!authReady) return;
     if (!user) {
       openSignIn();
       return;
     }
     if (myAttendance(event.id)) return;
     setNotice(null);
-    const attendee = await addAttendee(event.id);
-    if (!attendee) setNotice({ text: t.rsvpSaveFailed, error: true });
+    const result = await addAttendee(event.id);
+    if (typeof result !== "string") return;
+    setNotice({
+      text: result === "event_full" ? t.joinFull : result === "event_ended" ? t.joinEnded : t.rsvpSaveFailed,
+      error: true,
+    });
+    // Өөр хүн сүүлийн суудлыг авсан бол жинхэнэ тоог харуулна.
+    if (result === "event_full" && usingRemote) {
+      const fresh = await fetchAttendees();
+      if (fresh) setAttendees(fresh);
+    }
   };
 
   const handleLeave = async (event: StudyEvent) => {

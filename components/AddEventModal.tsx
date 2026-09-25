@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { LIMITS } from "@/lib/limits";
 import { useI18n } from "@/components/LanguageProvider";
 import { StudyEvent, StudySpot } from "@/types";
 import { normalizeChatUrl } from "@/lib/chatLinks";
@@ -105,7 +106,7 @@ export default function AddEventModal({
             <input
               type="text"
               required
-              value={formData.title}
+              value={formData.title} maxLength={LIMITS.eventTitle}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={t.eventTitlePlaceholder}
               className={inputClass}
@@ -136,7 +137,7 @@ export default function AddEventModal({
               <input
                 type="text"
                 required
-                value={formData.customPlace}
+                value={formData.customPlace} maxLength={LIMITS.placeName}
                 onChange={(e) => setFormData({ ...formData, customPlace: e.target.value })}
                 placeholder={t.placeNamePlaceholder}
                 className={inputClass}
@@ -160,7 +161,7 @@ export default function AddEventModal({
               <input
                 type="number"
                 min={1}
-                value={formData.maxPeople}
+                value={formData.maxPeople} max={LIMITS.maxPeople}
                 onChange={(e) => setFormData({ ...formData, maxPeople: e.target.value })}
                 placeholder={t.unlimited}
                 className={inputClass}
@@ -174,7 +175,7 @@ export default function AddEventModal({
             <label className="block text-slate-400 mb-1">{t.eventDetails}</label>
             <textarea
               rows={3}
-              value={formData.description}
+              value={formData.description} maxLength={LIMITS.eventDescription}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={t.eventDetailsPlaceholder}
               className={inputClass}

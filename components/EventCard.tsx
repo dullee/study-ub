@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { EventAttendee, googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
@@ -28,6 +29,8 @@ export default function EventCard({
   onOpen,
 }: EventCardProps) {
   const [busy, setBusy] = useState(false);
+  // Clerk ачаалагдаж дуусаагүй үед дарвал нэвтэрсэн хэрэглэгч ч "нэвтрээгүй" мэт болж юу ч болохгүй байсан.
+  const { isLoaded: authReady } = useAuth();
 
   const { t, locale } = useI18n();
   const isFull = event.max_people !== null && attendees.length >= event.max_people;
@@ -121,7 +124,7 @@ export default function EventCard({
         ) : (
           <button
             onClick={handleJoin}
-            disabled={busy || isFull}
+            disabled={busy || isFull || !authReady}
             className="relative z-10 w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:shadow-none disabled:bg-slate-700"
           >
             {isFull ? t.eventFull : t.imGoing}

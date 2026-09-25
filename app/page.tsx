@@ -58,7 +58,7 @@ export default function Home() {
   }, []);
 
   const handleReviewAdded = useCallback((review: Review) => {
-    setReviewScores((prev) => [...(prev ?? []), review]);
+    setReviewScores((prev) => [...(prev ?? []).filter((item) => item.id !== review.id), review]);
   }, []);
 
   // Газар нэмэгчийн утга + сэтгэгдлүүдээс нэгтгэсэн оноо — карт, эрэмбэлэлтэд.
