@@ -8,6 +8,7 @@ import {
   PLACEHOLDER_IMAGE,
   SPOT_CATEGORIES,
   SpotCategory,
+  SpotMedia,
   StudySpot,
   normalizeTags,
 } from "@/types";
@@ -15,6 +16,7 @@ import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import { isShortMapsLink, MapsLinkInfo, parseMapsLink } from "@/lib/maps";
 import OptionPicker from "@/components/OptionPicker";
+import MediaPicker from "@/components/MediaPicker";
 import { useI18n } from "@/components/LanguageProvider";
 
 // "hint"-ийн бичвэрийг харуулахдаа сонгосон хэлээр авна; бусдыг үүсэх үед нь.
@@ -39,6 +41,7 @@ const emptyForm = {
   maps_url: "",
   amenities: [] as string[],
   accessibility: [] as string[],
+  media: [] as SpotMedia[],
   scores: {} as ScoreValues,
   category: "" as SpotCategory | "",
   description: "",
@@ -48,6 +51,8 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
   const { t, locale } = useI18n();
   const [formData, setFormData] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  // Нэмэлт зураг, бичлэг хуулж дуустал илгээхгүй.
+  const [mediaUploading, setMediaUploading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
@@ -161,6 +166,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       maps_url: formData.maps_url.trim() || undefined,
       amenities: formData.amenities,
       accessibility: formData.accessibility,
+      media: formData.media,
       wifi_mbps: formData.scores.wifi_mbps ?? undefined,
       quiet_rating: formData.scores.quiet_rating ?? undefined,
       outlet_rating: formData.scores.outlet_rating ?? undefined,
@@ -317,6 +323,14 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               />
             </div>
           )}
+          <div>
+            <label className="block text-slate-400 mb-1">{t.mediaLabel}</label>
+            <MediaPicker
+              value={formData.media}
+              onChange={(media) => setFormData((prev) => ({ ...prev, media }))}
+              onUploadingChange={setMediaUploading}
+            />
+          </div>
           <fieldset className="space-y-3 bg-slate-800/30 border border-slate-800 rounded-xl p-3">
             <legend className="px-1 text-slate-400">{t.environmentRatings}</legend>
             <ScoreFields
@@ -353,10 +367,10 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
           {error ? <p className="text-rose-400">{error}</p> : null}
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || mediaUploading}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 mt-2"
           >
-            {saving ? (imageFile ? t.uploadingImage : t.saving) : t.submitSpot}
+            {mediaUploading ? t.mediaUploading : saving ? (imageFile ? t.uploadingImage : t.saving) : t.submitSpot}
           </button>
         </form>
       </div>

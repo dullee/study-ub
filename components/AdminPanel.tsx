@@ -31,6 +31,9 @@ import { formatEventTime } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import OptionPicker from "@/components/OptionPicker";
+import MediaPicker from "@/components/MediaPicker";
+import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
+import { createPortal } from "react-dom";
 import { useI18n } from "@/components/LanguageProvider";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useConfirm } from "@/components/ConfirmDialog";
@@ -809,6 +812,11 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
   const { t } = useI18n();
   const [shown, setShown] = useState(false);
   const photo = hasPhoto(spot.image);
+  // Нэмэлт зураг, бичлэгийг хянах: товч дарахад жагсаалт, жижиг зураг дарахад бүтэн дэлгэцээр (бичлэг тоглоно).
+  const media = spot.media ?? [];
+  const videoCount = media.filter((item) => item.type === "video").length;
+  const [mediaShown, setMediaShown] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 md:gap-4">
@@ -840,9 +848,37 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
               {t.noPhoto}
             </span>
           )}
+          {media.length > 0 ? (
+            <button
+              type="button"
+              aria-expanded={mediaShown}
+              onClick={() => setMediaShown((value) => !value)}
+              className={`whitespace-nowrap px-2.5 py-1 rounded-full border font-semibold transition-colors ${
+                mediaShown
+                  ? "bg-violet-500 border-violet-400 text-white"
+                  : "bg-violet-500/10 border-violet-500/50 text-violet-300 hover:bg-violet-500/20"
+              }`}
+            >
+              🎞 {t.mediaSummary(media.length - videoCount, videoCount)}
+            </button>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2 md:justify-end">{actions}</div>
       </div>
+      {mediaShown && media.length > 0 ? <MediaStrip items={media} onOpen={setViewerIndex} /> : null}
+      {/* body-д зурна: татгалзсан карт opacity-тэй тул харагчийг бүдгэрүүлж, бусад картын ард оруулахгүй. */}
+      {viewerIndex !== null
+        ? createPortal(
+            <MediaViewer
+              items={media}
+              index={viewerIndex}
+              onIndexChange={setViewerIndex}
+              onClose={() => setViewerIndex(null)}
+              closeOnEscape
+            />,
+            document.body
+          )
+        : null}
       {photo && shown ? (
         <a href={spot.image} target="_blank" rel="noopener noreferrer" className="block">
           <img
@@ -875,6 +911,7 @@ function SpotEditForm({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
   const [saving, setSaving] = useState(false);
+  const [mediaUploading, setMediaUploading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -1023,9 +1060,18 @@ function SpotEditForm({
         ) : null}
       </div>
 
+      <div className="sm:col-span-2 space-y-2">
+        <label className="block text-slate-400">{t.mediaLabel}</label>
+        <MediaPicker
+          value={draft.media ?? []}
+          onChange={(media) => setDraft((prev) => ({ ...prev, media }))}
+          onUploadingChange={setMediaUploading}
+        />
+      </div>
+
       {error ? <p className="sm:col-span-2 text-rose-400">{error}</p> : null}
       <div className="sm:col-span-2 flex gap-2">
-        <button disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
+        <button disabled={saving || mediaUploading} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
           {saving ? (imageFile ? t.uploadingImage : t.saving) : t.save}
         </button>
         <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-lg bg-slate-700">

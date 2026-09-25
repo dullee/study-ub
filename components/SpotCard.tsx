@@ -21,6 +21,8 @@ interface SpotCardProps {
   distanceKm?: number;
   // Сүүлийн долоо хоногийн сэтгэгдлийн тоо — хангалттай бол "🔥 Эрэлттэй".
   recentReviews?: number;
+  // Хулганаар заах / гараар сонгоход газрын зураг дээр тодруулна; null — болих.
+  onHover?: (spot: StudySpot | null) => void;
 }
 
 const MAX_TAGS = 3;
@@ -40,6 +42,7 @@ export default function SpotCard({
   ratingsLoading,
   distanceKm,
   recentReviews,
+  onHover,
 }: SpotCardProps) {
   const { t, locale } = useI18n();
   const now = useNow();
@@ -54,7 +57,19 @@ export default function SpotCard({
   const hiddenTags = spot.tags.length - MAX_TAGS;
 
   return (
-    <article className="relative isolate flex min-h-60 flex-col bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden hover:border-slate-500 transition-all group shadow-lg cursor-pointer has-focus-visible:ring-2 has-focus-visible:ring-indigo-500">
+    <article
+      // Зөвхөн хулгана (мэдрэгч дэлгэцэнд hover байхгүй) болон гарын focus.
+      onPointerEnter={(e) => {
+        if (e.pointerType === "mouse") onHover?.(spot);
+      }}
+      onPointerLeave={(e) => {
+        if (e.pointerType === "mouse") onHover?.(null);
+      }}
+      onFocus={() => onHover?.(spot)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onHover?.(null);
+      }}
+      className="relative isolate flex min-h-60 flex-col bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden hover:border-slate-500 transition-all group shadow-lg cursor-pointer has-focus-visible:ring-2 has-focus-visible:ring-indigo-500">
       {/* Зураг картын бүх талбайд; доош нь бараан болж бичвэр уншигдана. */}
       <img
         src={spot.image || PLACEHOLDER_IMAGE}

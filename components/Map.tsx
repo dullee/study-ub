@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { Circle, CircleMarker, MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { Circle, CircleMarker, MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { googleMapsUrl, StudySpot } from "@/types";
@@ -13,6 +13,8 @@ interface MapProps {
   // Сонгосон зайнаас гадуурх газрууд — бүдгэрүүлж, бусдын ард харуулна.
   dimmedIds: Set<number>;
   focusCoords: [number, number] | null;
+  // Жагсаалтад хулганаар заасан газар — газрын зураг тэр рүү очиж, тэмдгийг тодруулна.
+  highlightedId: number | null;
   onOpenDetails: (spot: StudySpot) => void;
   // Хэрэглэгчийн байршил ба зайн шүүлтүүр (км) — тэмдэг, радиусын тойрог зурна.
   userCoords: LatLng | null;
@@ -29,6 +31,16 @@ function MapController({ focusCoords }: { focusCoords: [number, number] | null }
       map.flyTo(focusCoords, 16, { duration: 1.5 });
     }
   }, [focusCoords, map]);
+  return null;
+}
+
+// Картад хулганаар заахад газрын зураг тэр газар руу зөөлөн очно (ойртуулсан хэвээр бол ойртуулалтыг хадгална).
+function HighlightController({ spot }: { spot: StudySpot | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!spot) return;
+    map.flyTo([spot.lat, spot.lng], Math.max(map.getZoom(), 15), { duration: 0.6 });
+  }, [spot, map]);
   return null;
 }
 
@@ -69,6 +81,7 @@ export default function Map({
   spots,
   dimmedIds,
   focusCoords,
+  highlightedId,
   onOpenDetails,
   userCoords,
   radiusKm,
@@ -78,6 +91,15 @@ export default function Map({
   const { t } = useI18n();
   const customIcon = useMemo(() => L.icon(ICON_OPTIONS), []);
   const dimmedIcon = useMemo(() => L.icon({ ...ICON_OPTIONS, className: "grayscale opacity-50" }), []);
+  // Тодруулсан тэмдэг: том, бусдын өмнө.
+  const highlightIcon = useMemo(
+    () => L.icon({ ...ICON_OPTIONS, iconSize: [36, 59], iconAnchor: [18, 59], className: "drop-shadow-lg" }),
+    []
+  );
+  const highlightedSpot = useMemo(
+    () => spots.find((spot) => spot.id === highlightedId) ?? null,
+    [spots, highlightedId]
+  );
 
   return (
     <div
@@ -118,6 +140,7 @@ export default function Map({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <MapController focusCoords={focusCoords} />
+        <HighlightController spot={highlightedSpot} />
         <UserLocationController userCoords={userCoords} radiusKm={radiusKm} />
         {userCoords && radiusKm ? (
           <Circle
@@ -140,13 +163,19 @@ export default function Map({
         ) : null}
         {spots.map((spot) => {
           const dimmed = dimmedIds.has(spot.id);
+          const highlighted = spot.id === highlightedId;
           return (
             <Marker
               key={spot.id}
               position={[spot.lat, spot.lng]}
-              icon={dimmed ? dimmedIcon : customIcon}
-              zIndexOffset={dimmed ? -1000 : 0}
+              icon={highlighted ? highlightIcon : dimmed ? dimmedIcon : customIcon}
+              zIndexOffset={highlighted ? 2000 : dimmed ? -1000 : 0}
             >
+              {highlighted ? (
+                <Tooltip permanent direction="top" offset={[0, -58]} className="font-sans font-semibold">
+                  {spot.name}
+                </Tooltip>
+              ) : null}
               <Popup>
                 <div className="font-sans text-xs">
                   <b className="text-indigo-600 text-sm">{spot.name}</b>

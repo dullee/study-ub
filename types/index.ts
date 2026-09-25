@@ -27,6 +27,8 @@ export interface StudySpot {
   created_at?: string;
   description?: string;
   accessibility?: string[];
+  // Нэмэлт зураг, бичлэг (нүүр зургаас гадна) — газрын цонхны цомогт.
+  media?: SpotMedia[];
 }
 
 // Хоёр хэлээр бичсэн нэр. Бүрэлдэхүүн хэсэгт `label[locale]`-ээр харуулна.
@@ -91,6 +93,8 @@ export function googleMapsUrl(spot: Pick<StudySpot, "maps_url" | "lat" | "lng">)
   if (custom) return custom;
   return `https://www.google.com/maps?q=${spot.lat},${spot.lng}`;
 }
+
+export type SpotMedia = { url: string; type: "image" | "video" };
 
 export interface Review {
   id: number;

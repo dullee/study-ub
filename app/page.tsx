@@ -234,6 +234,22 @@ export default function Home() {
     };
   }, [mapFullscreen, detailSpot]);
 
+  // Картад хулганаар заахад богино хүлээлтийн дараа газрын зураг тэр газарт очно —
+  // жагсаалтаар хулгана гүйлгэхэд газрын зураг хаа сайгүй нисэхгүй.
+  const [hoveredSpotId, setHoveredSpotId] = useState<number | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleHover = useCallback((spot: StudySpot | null) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    if (!spot) {
+      setHoveredSpotId(null);
+      return;
+    }
+    hoverTimer.current = setTimeout(() => setHoveredSpotId(spot.id), 250);
+  }, []);
+  useEffect(() => () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  }, []);
+
   const handleFocus = (lat: number, lng: number) => {
     setFocusCoords([lat, lng]);
     mapWrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -272,6 +288,7 @@ export default function Home() {
               spots={matchingSpots}
               dimmedIds={outOfRangeIds}
               focusCoords={focusCoords}
+              highlightedId={hoveredSpotId}
               onOpenDetails={setDetailSpot}
               userCoords={userCoords}
               radiusKm={maxDistanceKm}
@@ -319,6 +336,7 @@ export default function Home() {
                     ratingsLoading={reviewScores === null}
                     distanceKm={distances?.[spot.id]}
                     recentReviews={recentCounts[spot.id]}
+                    onHover={handleHover}
                   />
                 ))}
               </div>

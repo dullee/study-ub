@@ -21,6 +21,7 @@ type SpotRow = {
   category: StudySpot["category"] | null;
   description: string | null;
   accessibility: string[] | null;
+  media: StudySpot["media"] | null;
   user_id: string | null;
   created_at: string | null;
 };
@@ -45,6 +46,7 @@ function mapSpot(row: SpotRow): StudySpot {
     category: row.category ?? undefined,
     description: row.description ?? undefined,
     accessibility: row.accessibility ?? [],
+    media: Array.isArray(row.media) ? row.media : [],
     user_id: row.user_id ?? null,
     created_at: row.created_at ?? undefined,
   };
@@ -69,6 +71,7 @@ function spotPayload(spot: Omit<StudySpot, "id">) {
     category: spot.category ?? null,
     description: spot.description?.trim() || null,
     accessibility: spot.accessibility ?? [],
+    media: spot.media ?? [],
   };
 }
 

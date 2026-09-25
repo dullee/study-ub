@@ -22,6 +22,7 @@ import { formatOutlets, formatQuiet, formatWifi, summarizeSpot } from "@/lib/sco
 import { recentReviewCounts } from "@/lib/popular";
 import PopularBadge from "@/components/PopularBadge";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
+import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
 
 interface SpotDetailDialogProps {
@@ -42,6 +43,12 @@ export default function SpotDetailDialog({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewsOpen, setReviewsOpen] = useState(false);
+  // Цомог: жинхэнэ нүүр зураг (ерөнхий зураг биш) эхэнд, дараа нь нэмэлт зураг, бичлэг.
+  const gallery = [
+    ...(spot.image && spot.image !== PLACEHOLDER_IMAGE ? [{ url: spot.image, type: "image" as const }] : []),
+    ...(spot.media ?? []),
+  ];
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   // Доош/дээш үсрэх товч: гүйлгэх боломжтой үед л харагдана; доод хэсэгт хүрвэл дээш заана.
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -95,7 +102,8 @@ export default function SpotDetailDialog({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (reviewsOpen) setReviewsOpen(false);
+      if (viewerIndex !== null) setViewerIndex(null);
+      else if (reviewsOpen) setReviewsOpen(false);
       else onClose();
     };
     const previousOverflow = document.body.style.overflow;
@@ -105,7 +113,7 @@ export default function SpotDetailDialog({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [onClose, reviewsOpen]);
+  }, [onClose, reviewsOpen, viewerIndex]);
 
   const average =
     reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
@@ -280,6 +288,15 @@ export default function SpotDetailDialog({
 
         {/* Гүйлгэх боломжтой үед доор зай үлдээнэ — үсрэх товч сүүлийн товчнуудыг халхлахгүй. */}
         <div className={`px-5 sm:px-6 pt-1 space-y-6 ${scroll.scrollable ? "pb-24" : "pb-5 sm:pb-6"}`}>
+          {gallery.length > 1 || (spot.media?.length ?? 0) > 0 ? (
+            <section className="space-y-2">
+              <h3 className="text-xs font-semibold text-slate-400">
+                {t.mediaHeading} <span className="text-slate-500">({gallery.length})</span>
+              </h3>
+              <MediaStrip items={gallery} onOpen={setViewerIndex} />
+            </section>
+          ) : null}
+
           {featureGroups.length > 0 || accessibility.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
               {featureGroups.map((group) => (
@@ -367,6 +384,14 @@ export default function SpotDetailDialog({
         ) : null}
       </div>
 
+      {viewerIndex !== null ? (
+        <MediaViewer
+          items={gallery}
+          index={viewerIndex}
+          onIndexChange={setViewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
+      ) : null}
       {reviewsOpen ? (
         <ReviewsDialog
           spot={spot}
