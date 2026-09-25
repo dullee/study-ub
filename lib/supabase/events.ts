@@ -6,9 +6,24 @@ export async function fetchEvents(): Promise<StudyEvent[] | null> {
   const { data, error } = await supabase
     .from("events")
     .select("*")
+    .eq("status", "approved")
     .order("starts_at", { ascending: true });
   if (error) {
     console.error("Supabase events:", error.message);
+    return null;
+  }
+  return data as StudyEvent[];
+}
+
+// Админ: бүх статус. RLS is_admin()-аар нээгдэнэ.
+export async function fetchAllEvents(): Promise<StudyEvent[] | null> {
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
+    .from("events")
+    .select("*")
+    .order("starts_at", { ascending: false });
+  if (error) {
+    console.error("Supabase all events:", error.message);
     return null;
   }
   return data as StudyEvent[];
@@ -18,7 +33,11 @@ export async function insertEvent(
   event: Omit<StudyEvent, "id" | "created_at">
 ): Promise<StudyEvent | null> {
   if (!supabaseAuthed) return null;
-  const { data, error } = await supabaseAuthed.from("events").insert(event).select("*").single();
+  const { data, error } = await supabaseAuthed
+    .from("events")
+    .insert({ ...event, status: event.status ?? "pending" })
+    .select("*")
+    .single();
   if (error) {
     console.error("Supabase insert event:", error.message);
     return null;
@@ -120,6 +139,7 @@ export async function updateEvent(event: StudyEvent): Promise<StudyEvent | null>
       place_name: event.place_name,
       starts_at: event.starts_at,
       max_people: event.max_people,
+      status: event.status ?? "approved",
     })
     .eq("id", event.id)
     .select("*")

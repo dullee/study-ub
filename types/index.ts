@@ -134,6 +134,7 @@ export interface StudyEvent {
   max_people: number | null;
   created_at: string;
   user_id: string | null;
+  status?: SpotStatus;
 }
 
 export interface EventAttendee {
