@@ -20,12 +20,17 @@ import {
 import {
   deleteChatLink,
   deleteEvent,
-  fetchAttendees,
+  deleteEventPhone,
+  fetchAllEventPhones,
   fetchAllEvents,
+  fetchAttendees,
   fetchChatLink,
+  fetchEventPhone,
   saveChatLink,
+  saveEventPhone,
   updateEvent,
 } from "@/lib/supabase/events";
+import { normalizePhone, telHref } from "@/lib/phone";
 import { normalizeChatUrl } from "@/lib/chatLinks";
 import { formatEventTime } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
@@ -50,12 +55,15 @@ import {
 import {
   loadLocalAttendees,
   loadLocalChatLink,
+  loadLocalEventPhone,
+  loadLocalEventPhones,
   loadLocalEvents,
   loadLocalReviews,
   loadLocalSpots,
   removeLocalEvent,
   removeLocalReview,
   saveLocalChatLink,
+  saveLocalEventPhone,
   saveLocalReview,
   saveLocalSpots,
   updateLocalEvent,
@@ -91,6 +99,8 @@ export default function AdminPanel() {
   const [events, setEvents] = useState<StudyEvent[]>([]);
   const [attendees, setAttendees] = useState<EventAttendee[]>([]);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  // Зохион байгуулагчдын утас: event_id → дугаар (админ бүгдийг харна).
+  const [phones, setPhones] = useState<Record<number, string>>({});
   const [eventError, setEventError] = useState("");
   // Газар, сэтгэгдлийн өөрчлөлт хадгалагдаагүй бол.
   const [actionError, setActionError] = useState("");
@@ -104,17 +114,19 @@ export default function AdminPanel() {
     let cancelled = false;
     async function load() {
       if (isSupabaseConfigured) {
-        const [spotRows, reviewRows, eventRows, attendeeRows] = await Promise.all([
+        const [spotRows, reviewRows, eventRows, attendeeRows, phoneRows] = await Promise.all([
           fetchAllSpots(),
           fetchAllReviews(),
           fetchAllEvents(),
           fetchAttendees(),
+          fetchAllEventPhones(),
         ]);
         if (!cancelled && spotRows && reviewRows) {
           setSpots(spotRows);
           setReviews(reviewRows);
           setEvents(eventRows ?? []);
           setAttendees(attendeeRows ?? []);
+          setPhones(phoneRows ?? {});
           setRemote(true);
           return;
         }
@@ -124,6 +136,7 @@ export default function AdminPanel() {
         setReviews(loadLocalReviews());
         setEvents(loadLocalEvents());
         setAttendees(loadLocalAttendees());
+        setPhones(loadLocalEventPhones());
       }
     }
     load();
@@ -263,18 +276,31 @@ export default function AdminPanel() {
     setReviews(reviews.filter((item) => item.id !== id));
   };
 
-  const saveEvent = async (updated: StudyEvent, chatUrl: string | null, chatChanged: boolean) => {
+  const saveEvent = async (updated: StudyEvent, extras: EventExtras) => {
+    const { chatUrl, chatChanged, phone, phoneChanged } = extras;
     if (remote) {
       const saved = await updateEvent(updated);
       if (!saved) return false;
       if (chatChanged && !(chatUrl ? await saveChatLink(updated.id, chatUrl) : await deleteChatLink(updated.id))) {
         return false;
       }
+      if (phoneChanged && !(phone ? await saveEventPhone(updated.id, phone) : await deleteEventPhone(updated.id))) {
+        return false;
+      }
       setEvents((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
     } else {
       updateLocalEvent(updated);
       if (chatChanged) saveLocalChatLink(updated.id, chatUrl);
+      if (phoneChanged) saveLocalEventPhone(updated.id, phone);
       setEvents((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
+    }
+    if (phoneChanged) {
+      setPhones((prev) => {
+        const next = { ...prev };
+        if (phone) next[updated.id] = phone;
+        else delete next[updated.id];
+        return next;
+      });
     }
     setEditingEventId(null);
     return true;
@@ -543,6 +569,14 @@ export default function AdminPanel() {
                           <p className="text-xs text-slate-400">
                             📍 {event.place_name} · {t.host} {event.host_name}
                           </p>
+                          {phones[event.id] ? (
+                            <p className="text-xs text-slate-400">
+                              📞{" "}
+                              <a href={telHref(phones[event.id])} className="text-emerald-300 hover:text-emerald-200">
+                                {phones[event.id]}
+                              </a>
+                            </p>
+                          ) : null}
                           {event.description ? (
                             <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
                           ) : null}
@@ -690,6 +724,14 @@ export default function AdminPanel() {
                         <p className="text-xs text-slate-400">
                           📍 {event.place_name} · {t.host} {event.host_name}
                         </p>
+                        {phones[event.id] ? (
+                          <p className="text-xs text-slate-400">
+                            📞{" "}
+                            <a href={telHref(phones[event.id])} className="text-emerald-300 hover:text-emerald-200">
+                              {phones[event.id]}
+                            </a>
+                          </p>
+                        ) : null}
                         <p className="text-xs text-slate-400">
                           {t.attending} {going}
                           {event.max_people !== null ? ` / ${event.max_people}` : ""}
@@ -1089,7 +1131,15 @@ function toLocalInput(iso: string) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-// Админы эвент засах маягт: үндсэн мэдээлэл ба групп чатын холбоос.
+// Эвентийн тусад нь хадгалагддаг хувийн мэдээлэл (зөвхөн өөрчлөгдсөн бол хадгална).
+type EventExtras = {
+  chatUrl: string | null;
+  chatChanged: boolean;
+  phone: string | null;
+  phoneChanged: boolean;
+};
+
+// Админы эвент засах маягт: үндсэн мэдээлэл, групп чатын холбоос, зохион байгуулагчийн утас.
 function EventEditForm({
   event,
   remote,
@@ -1098,7 +1148,7 @@ function EventEditForm({
 }: {
   event: StudyEvent;
   remote: boolean;
-  onSave: (event: StudyEvent, chatUrl: string | null, chatChanged: boolean) => Promise<boolean>;
+  onSave: (event: StudyEvent, extras: EventExtras) => Promise<boolean>;
   onCancel: () => void;
 }) {
   const { t } = useI18n();
@@ -1112,16 +1162,23 @@ function EventEditForm({
   // undefined — ачаалж байна; холбоосыг ачаалсны дараа л засварлана.
   const [originalChat, setOriginalChat] = useState<string | null | undefined>(undefined);
   const [chatUrl, setChatUrl] = useState("");
+  const [originalPhone, setOriginalPhone] = useState<string | null | undefined>(undefined);
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const value = remote ? await fetchChatLink(event.id) : loadLocalChatLink(event.id);
+      const [value, phoneValue] = await Promise.all([
+        remote ? fetchChatLink(event.id) : loadLocalChatLink(event.id),
+        remote ? fetchEventPhone(event.id) : loadLocalEventPhone(event.id),
+      ]);
       if (cancelled) return;
       setOriginalChat(value ?? null);
       setChatUrl(value ?? "");
+      setOriginalPhone(phoneValue ?? null);
+      setPhone(phoneValue ?? "");
     })();
     return () => {
       cancelled = true;
@@ -1135,6 +1192,11 @@ function EventEditForm({
       setError(t.chatLinkInvalid);
       return;
     }
+    const normalizedPhone = phone.trim() ? normalizePhone(phone) : null;
+    if (phone.trim() && !normalizedPhone) {
+      setError(t.phoneInvalid);
+      return;
+    }
     setSaving(true);
     setError("");
     const ok = await onSave(
@@ -1146,8 +1208,12 @@ function EventEditForm({
         max_people: draft.maxPeople ? Number(draft.maxPeople) : null,
         description: draft.description.trim(),
       },
-      normalized,
-      originalChat !== undefined && normalized !== originalChat
+      {
+        chatUrl: normalized,
+        chatChanged: originalChat !== undefined && normalized !== originalChat,
+        phone: normalizedPhone,
+        phoneChanged: originalPhone !== undefined && normalizedPhone !== originalPhone,
+      }
     );
     if (!ok) {
       setError(t.saveFailed);
@@ -1183,6 +1249,19 @@ function EventEditForm({
           disabled={originalChat === undefined}
           value={chatUrl}
           onChange={(e) => setChatUrl(e.target.value)}
+        />
+      </label>
+      <label className="space-y-1">
+        <span className="block text-slate-400">{t.phoneLabel}</span>
+        <input
+          className={inputClass}
+          type="tel"
+          inputMode="tel"
+          maxLength={20}
+          placeholder={originalPhone === undefined ? t.loading : t.phonePlaceholder}
+          disabled={originalPhone === undefined}
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
         />
       </label>
       <label className="space-y-1 sm:col-span-2">

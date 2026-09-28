@@ -144,6 +144,17 @@ export async function fetchEventPhone(eventId: number): Promise<string | null | 
   return (data as { phone: string } | null)?.phone ?? null;
 }
 
+// Админд: бүх эвентийн утас нэг дор (RLS — админ бүгдийг уншина). event_id → утас.
+export async function fetchAllEventPhones(): Promise<Record<number, string> | null> {
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed.from("event_contacts").select("event_id, phone");
+  if (error) {
+    console.error("Supabase all event phones:", error.message);
+    return null;
+  }
+  return Object.fromEntries((data as { event_id: number; phone: string }[]).map((row) => [row.event_id, row.phone]));
+}
+
 export async function saveEventPhone(eventId: number, phone: string): Promise<boolean> {
   if (!supabaseAuthed) return false;
   const { error } = await supabaseAuthed

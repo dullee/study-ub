@@ -115,6 +115,10 @@ export function loadLocalEventPhone(eventId: number): string | null {
   return readJson<Record<string, string>>(PHONES_KEY, {})[String(eventId)] ?? null;
 }
 
+export function loadLocalEventPhones(): Record<number, string> {
+  return readJson<Record<string, string>>(PHONES_KEY, {});
+}
+
 export function saveLocalEventPhone(eventId: number, phone: string | null) {
   const phones = readJson<Record<string, string>>(PHONES_KEY, {});
   if (phone) phones[String(eventId)] = phone;
