@@ -19,6 +19,7 @@ import {
   insertEvent,
   JoinError,
   saveChatLink,
+  saveEventPhone,
 } from "@/lib/supabase/events";
 import {
   loadLocalAttendees,
@@ -28,6 +29,7 @@ import {
   saveLocalAttendee,
   saveLocalChatLink,
   saveLocalEvent,
+  saveLocalEventPhone,
 } from "@/lib/localStore";
 
 // Эхэлснээс хойш 3 цаг хүртэл идэвхтэй гэж үзнэ.
@@ -221,7 +223,7 @@ export default function EventsPage() {
     else openSignIn();
   };
 
-  const handleAddEvent = async (draft: EventDraft, chatUrl: string | null) => {
+  const handleAddEvent = async (draft: EventDraft, chatUrl: string | null, phone: string | null) => {
     if (!user) return false;
     const full = { ...draft, host_name: displayName(user), user_id: user.id, status: "pending" as const };
     let saved: StudyEvent | null = null;
@@ -236,6 +238,11 @@ export default function EventsPage() {
     if (chatUrl) {
       if (usingRemote) await saveChatLink(saved.id, chatUrl);
       else saveLocalChatLink(saved.id, chatUrl);
+    }
+    // Утас хадгалагдаагүй ч эвент үүссэн хэвээр — зохион байгуулагч эвентийн цонхноос дахин нэмж болно.
+    if (phone) {
+      if (usingRemote) await saveEventPhone(saved.id, phone);
+      else saveLocalEventPhone(saved.id, phone);
     }
     setNotice({ text: t.eventSubmitted });
     return true;

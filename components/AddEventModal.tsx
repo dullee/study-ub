@@ -5,6 +5,7 @@ import { LIMITS } from "@/lib/limits";
 import { useI18n } from "@/components/LanguageProvider";
 import { StudyEvent, StudySpot } from "@/types";
 import { normalizeChatUrl } from "@/lib/chatLinks";
+import { normalizePhone } from "@/lib/phone";
 
 export type EventDraft = Omit<StudyEvent, "id" | "created_at" | "host_name" | "user_id">;
 
@@ -13,8 +14,9 @@ interface AddEventModalProps {
   spots: StudySpot[];
   hostName: string;
   onClose: () => void;
-  // chatUrl — групп чатын холбоос (заавал биш), эвент үүссэний дараа тусад нь хадгалагдана.
-  onAddEvent: (event: EventDraft, chatUrl: string | null) => Promise<boolean>;
+  // chatUrl, phone — групп чатын холбоос, утас (заавал биш); эвент үүссэний дараа тусад нь хадгалагдана
+  // (зөвхөн бүртгүүлсэн хүмүүс харна).
+  onAddEvent: (event: EventDraft, chatUrl: string | null, phone: string | null) => Promise<boolean>;
 }
 
 const OTHER_PLACE = "other";
@@ -38,6 +40,7 @@ const emptyForm = {
   maxPeople: "",
   description: "",
   chatUrl: "",
+  phone: "",
 };
 
 export default function AddEventModal({
@@ -70,6 +73,11 @@ export default function AddEventModal({
       setError(t.chatLinkInvalid);
       return;
     }
+    const phone = formData.phone.trim() ? normalizePhone(formData.phone) : null;
+    if (formData.phone.trim() && !phone) {
+      setError(t.phoneInvalid);
+      return;
+    }
     setSaving(true);
     setError("");
     const ok = await onAddEvent({
@@ -81,7 +89,7 @@ export default function AddEventModal({
       lng: spot?.lng ?? null,
       starts_at: new Date(formData.startsAt).toISOString(),
       max_people: formData.maxPeople ? Number(formData.maxPeople) : null,
-    }, chatUrl);
+    }, chatUrl, phone);
     setSaving(false);
     if (!ok) {
       setError(t.eventSaveFailed);
@@ -192,6 +200,23 @@ export default function AddEventModal({
               className={inputClass}
             />
             <p className="mt-1 text-slate-500">{t.chatLinkHint}</p>
+          </div>
+          <div>
+            <label className="block text-slate-400 mb-1" htmlFor="event-phone">
+              {t.phoneLabel}
+            </label>
+            <input
+              id="event-phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              maxLength={20}
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder={t.phonePlaceholder}
+              className={inputClass}
+            />
+            <p className="mt-1 text-slate-500">{t.phoneHint}</p>
           </div>
           {error ? <p className="text-rose-400">{error}</p> : null}
           <button

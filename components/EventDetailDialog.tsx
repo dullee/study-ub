@@ -6,6 +6,7 @@ import { EventAttendee, googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
 import { useI18n } from "@/components/LanguageProvider";
 import EventChatLink from "@/components/EventChatLink";
+import EventPhone from "@/components/EventPhone";
 
 interface EventDetailDialogProps {
   event: StudyEvent;
@@ -161,6 +162,7 @@ export default function EventDetailDialog({
           )}
 
           <EventChatLink event={event} isMember={isGoing || isHost} isHost={isHost} usingRemote={usingRemote} />
+          <EventPhone event={event} isMember={isGoing || isHost} isHost={isHost} usingRemote={usingRemote} />
         </div>
       </div>
     </div>

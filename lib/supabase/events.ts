@@ -128,6 +128,44 @@ export async function deleteChatLink(eventId: number): Promise<boolean> {
   return true;
 }
 
+// Зохион байгуулагчийн утас. RLS нь групп чатын холбоостой адил: ирэх хүмүүс уншина, зохион байгуулагч өөрчилнө.
+// undefined — уншиж чадсангүй, null — дугаар байхгүй.
+export async function fetchEventPhone(eventId: number): Promise<string | null | undefined> {
+  if (!supabaseAuthed) return undefined;
+  const { data, error } = await supabaseAuthed
+    .from("event_contacts")
+    .select("phone")
+    .eq("event_id", eventId)
+    .maybeSingle();
+  if (error) {
+    console.error("Supabase event phone:", error.message);
+    return undefined;
+  }
+  return (data as { phone: string } | null)?.phone ?? null;
+}
+
+export async function saveEventPhone(eventId: number, phone: string): Promise<boolean> {
+  if (!supabaseAuthed) return false;
+  const { error } = await supabaseAuthed
+    .from("event_contacts")
+    .upsert({ event_id: eventId, phone, updated_at: new Date().toISOString() });
+  if (error) {
+    console.error("Supabase save event phone:", error.message);
+    return false;
+  }
+  return true;
+}
+
+export async function deleteEventPhone(eventId: number): Promise<boolean> {
+  if (!supabaseAuthed) return false;
+  const { error } = await supabaseAuthed.from("event_contacts").delete().eq("event_id", eventId);
+  if (error) {
+    console.error("Supabase delete event phone:", error.message);
+    return false;
+  }
+  return true;
+}
+
 // Доорх хоёр нь админд: RLS нь Clerk session token-ы metadata.role = "admin"-ийг шалгана.
 export async function updateEvent(event: StudyEvent): Promise<StudyEvent | null> {
   if (!supabaseAuthed) return null;

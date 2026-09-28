@@ -109,6 +109,19 @@ export function saveLocalChatLink(eventId: number, url: string | null) {
   localStorage.setItem(CHAT_LINKS_KEY, JSON.stringify(links));
 }
 
+const PHONES_KEY = "studyspots_ub_event_phones";
+
+export function loadLocalEventPhone(eventId: number): string | null {
+  return readJson<Record<string, string>>(PHONES_KEY, {})[String(eventId)] ?? null;
+}
+
+export function saveLocalEventPhone(eventId: number, phone: string | null) {
+  const phones = readJson<Record<string, string>>(PHONES_KEY, {});
+  if (phone) phones[String(eventId)] = phone;
+  else delete phones[String(eventId)];
+  localStorage.setItem(PHONES_KEY, JSON.stringify(phones));
+}
+
 export function updateLocalEvent(event: StudyEvent) {
   localStorage.setItem(
     EVENTS_KEY,
@@ -123,4 +136,5 @@ export function removeLocalEvent(id: number) {
     JSON.stringify(loadLocalAttendees().filter((attendee) => attendee.event_id !== id))
   );
   saveLocalChatLink(id, null);
+  saveLocalEventPhone(id, null);
 }
