@@ -9,6 +9,7 @@ import { formatDistance } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
 import PopularBadge from "@/components/PopularBadge";
 import BusynessBadge from "@/components/BusynessBadge";
+import HeartIcon from "@/components/HeartIcon";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { BusynessSummary } from "@/lib/busyness";
 
@@ -25,6 +26,9 @@ interface SpotCardProps {
   recentReviews?: number;
   // Сүүлийн 90 минутын "Би энд байна" мэдээллээс тооцсон одоогийн ачаалал.
   busyness?: BusynessSummary;
+  // Хадгалсан эсэх, зүрхэн товч.
+  favorite?: boolean;
+  onToggleFavorite?: (spotId: number) => void;
   // Хулганаар заах / гараар сонгоход газрын зураг дээр тодруулна; null — болих.
   onHover?: (spot: StudySpot | null) => void;
 }
@@ -46,6 +50,8 @@ export default function SpotCard({
   distanceKm,
   recentReviews,
   busyness,
+  favorite = false,
+  onToggleFavorite,
   onHover,
 }: SpotCardProps) {
   const { t, locale } = useI18n();
@@ -153,6 +159,18 @@ export default function SpotCard({
             ) : null}
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">
+            {onToggleFavorite ? (
+              <button
+                type="button"
+                onClick={() => onToggleFavorite(spot.id)}
+                aria-pressed={favorite}
+                aria-label={favorite ? t.unsaveSpot(spot.name) : t.saveSpot(spot.name)}
+                title={favorite ? t.unsave : t.save}
+                className={iconButtonClass}
+              >
+                <HeartIcon filled={favorite} />
+              </button>
+            ) : null}
             <a
               href={googleMapsUrl(spot)}
               target="_blank"

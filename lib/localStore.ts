@@ -189,3 +189,17 @@ export function loadLocalReports(): SpotReport[] {
 export function saveLocalReports(reports: SpotReport[]) {
   localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
 }
+
+// Хадгалсан газрууд — нэвтрээгүй үед (нэвтрэхэд бүртгэл рүү шилжинэ, lib/useFavorites.ts).
+const FAVORITES_KEY = "studyspots_ub_favorites";
+
+export function loadLocalFavorites(): number[] {
+  const saved = readJson<unknown>(FAVORITES_KEY, []);
+  return Array.isArray(saved) ? saved.filter((id): id is number => typeof id === "number") : [];
+}
+
+export function saveLocalFavorites(ids: number[]) {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
+  } catch {}
+}

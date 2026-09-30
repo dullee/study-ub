@@ -235,6 +235,14 @@ export default function FilterSection({
             >
               🪑 {t.notBusyNow}
             </button>
+            <button
+              type="button"
+              aria-pressed={filters.savedOnly}
+              onClick={() => set({ savedOnly: !filters.savedOnly })}
+              className={chipClass(filters.savedOnly)}
+            >
+              ❤️ {t.savedOnly}
+            </button>
           </Section>
 
           <Section title={t.spotType}>
@@ -393,6 +401,11 @@ export default function FilterSection({
           {filters.notBusyNow ? (
             <button type="button" onClick={() => set({ notBusyNow: false })} aria-label={t.removeFilter(t.notBusyNow)} className={removableChipClass}>
               🪑 {t.notBusyNow} ✕
+            </button>
+          ) : null}
+          {filters.savedOnly ? (
+            <button type="button" onClick={() => set({ savedOnly: false })} aria-label={t.removeFilter(t.savedOnly)} className={removableChipClass}>
+              ❤️ {t.savedOnly} ✕
             </button>
           ) : null}
           {SPOT_CATEGORIES.filter((c) => filters.categories.includes(c.key)).map((c) => (

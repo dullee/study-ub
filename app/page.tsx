@@ -18,6 +18,7 @@ import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalCheckins, loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { applyCheckinChange, fetchRecentCheckins, subscribeCheckins } from "@/lib/supabase/checkins";
 import { SpotCheckin, summarizeAllBusyness } from "@/lib/busyness";
+import { useFavorites } from "@/lib/useFavorites";
 import { sortByActiveTags } from "@/lib/spotSort";
 import { recentReviewCounts } from "@/lib/popular";
 import { openStatus, useNow } from "@/lib/openHours";
@@ -155,6 +156,7 @@ export default function Home() {
 
   const { t } = useI18n();
   const { location, locate, clear: clearLocation } = useUserLocation();
+  const { favorites, toggleFavorite } = useFavorites(t.favoriteFailed);
   const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(null);
   const userCoords = location.status === "ready" ? location.coords : null;
 
@@ -184,8 +186,9 @@ export default function Home() {
       isOpen: now === null ? null : (spot) => openStatus(spot, now, t)?.open ?? null,
       distances,
       busyness,
+      favorites,
     }),
-    [summaries, recentCounts, now, t, distances, busyness]
+    [summaries, recentCounts, now, t, distances, busyness, favorites]
   );
 
   const anyFilterActive =
@@ -410,6 +413,8 @@ export default function Home() {
                     distanceKm={distances?.[spot.id]}
                     recentReviews={recentCounts[spot.id]}
                     busyness={busyness[spot.id]}
+                    favorite={favorites.has(spot.id)}
+                    onToggleFavorite={toggleFavorite}
                     onHover={handleHover}
                   />
                 ))}
@@ -430,6 +435,8 @@ export default function Home() {
           onShowOnMap={handleFocus}
           onReviewAdded={handleReviewAdded}
           onCheckin={handleCheckin}
+          favorite={favorites.has(detailSpot.id)}
+          onToggleFavorite={() => toggleFavorite(detailSpot.id)}
         />
       ) : null}
     </div>

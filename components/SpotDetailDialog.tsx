@@ -25,6 +25,7 @@ import BusynessPanel from "@/components/BusynessPanel";
 import { SpotCheckin } from "@/lib/busyness";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
 import ReportDialog from "@/components/ReportDialog";
+import HeartIcon from "@/components/HeartIcon";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
@@ -35,6 +36,8 @@ interface SpotDetailDialogProps {
   onShowOnMap: (lat: number, lng: number) => void;
   onReviewAdded?: (review: Review) => void;
   onCheckin?: (checkin: SpotCheckin) => void;
+  favorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export default function SpotDetailDialog({
@@ -43,6 +46,8 @@ export default function SpotDetailDialog({
   onShowOnMap,
   onReviewAdded,
   onCheckin,
+  favorite = false,
+  onToggleFavorite,
 }: SpotDetailDialogProps) {
   const { t, locale } = useI18n();
   const now = useNow();
@@ -217,7 +222,19 @@ export default function SpotDetailDialog({
         ref={scrollRef}
         className="relative bg-slate-900 sm:border border-slate-800 w-full max-w-4xl rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92vh] overflow-y-auto"
       >
-        <div className="sticky top-0 z-10 h-0 flex justify-end">
+        <div className="sticky top-0 z-10 h-0 flex justify-end gap-2">
+          {onToggleFavorite ? (
+            <button
+              type="button"
+              onClick={onToggleFavorite}
+              aria-pressed={favorite}
+              aria-label={favorite ? t.unsaveSpot(spot.name) : t.saveSpot(spot.name)}
+              title={favorite ? t.unsave : t.save}
+              className="mt-3 h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-slate-900/80 backdrop-blur text-slate-200 hover:text-white border border-slate-700"
+            >
+              <HeartIcon filled={favorite} className="h-5 w-5" />
+            </button>
+          ) : null}
           <button
             onClick={onClose}
             type="button"

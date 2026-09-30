@@ -23,6 +23,7 @@ const ctx = (overrides: Partial<FilterContext> = {}): FilterContext => ({
   isOpen: null,
   distances: null,
   busyness: {},
+  favorites: new Set(),
   ...overrides,
 });
 
@@ -83,5 +84,18 @@ describe("other filters", () => {
   it("openNow is skipped when the time isn't known yet (server render)", () => {
     expect(matchesFilters(spot(1), filters({ openNow: true }), ctx({ isOpen: null }))).toBe(true);
     expect(matchesFilters(spot(1), filters({ openNow: true }), ctx({ isOpen: () => false }))).toBe(false);
+  });
+});
+
+describe("savedOnly filter", () => {
+  it("keeps only the user's saved places", () => {
+    const context = ctx({ favorites: new Set([2, 4]) });
+    const kept = [1, 2, 3, 4].filter((id) => matchesFilters(spot(id), filters({ savedOnly: true }), context));
+    expect(kept).toEqual([2, 4]);
+    expect(activeFilterCount(filters({ savedOnly: true }))).toBe(1);
+  });
+
+  it("shows nothing when nothing is saved", () => {
+    expect(matchesFilters(spot(1), filters({ savedOnly: true }), ctx())).toBe(false);
   });
 });

@@ -18,6 +18,7 @@ export interface SpotFilters {
   openNow: boolean;
   popularOnly: boolean;
   notBusyNow: boolean;
+  savedOnly: boolean;
   categories: string[];
   amenities: string[];
   accessibility: string[];
@@ -29,6 +30,7 @@ export const DEFAULT_FILTERS: SpotFilters = {
   openNow: false,
   popularOnly: false,
   notBusyNow: false,
+  savedOnly: false,
   categories: [],
   amenities: [],
   accessibility: [],
@@ -42,6 +44,7 @@ export function activeFilterCount(filters: SpotFilters) {
     (filters.openNow ? 1 : 0) +
     (filters.popularOnly ? 1 : 0) +
     (filters.notBusyNow ? 1 : 0) +
+    (filters.savedOnly ? 1 : 0) +
     filters.categories.length +
     filters.amenities.length +
     filters.accessibility.length
@@ -60,6 +63,8 @@ export interface FilterContext {
   distances: Record<number, number> | null;
   // Одоогийн ачаалал (сүүлийн 90 минут); мэдээлэлгүй газар байхгүй.
   busyness: Record<number, BusynessSummary>;
+  // Хэрэглэгчийн хадгалсан газрууд.
+  favorites: Set<number>;
 }
 
 // Сонгосон бүлэг дотор аль нэг нь таарвал (жишээ нь кафе ЭСВЭЛ номын сан); үйлчилгээ, хүртээмж — бүгд таарах ёстой.
@@ -70,6 +75,7 @@ export function matchesFilters(spot: StudySpot, filters: SpotFilters, ctx: Filte
   }
   if (filters.openNow && ctx.isOpen && ctx.isOpen(spot) !== true) return false;
   if (filters.popularOnly && !isPopular(ctx.recentCounts[spot.id])) return false;
+  if (filters.savedOnly && !ctx.favorites.has(spot.id)) return false;
   // Мэдээлэлгүй газрыг "сул" гэж баталж чадахгүй — оруулахгүй.
   if (filters.notBusyNow) {
     const level = ctx.busyness[spot.id]?.level;
