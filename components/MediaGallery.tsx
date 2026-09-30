@@ -5,6 +5,7 @@ import { SpotMedia } from "@/types";
 import { videoPoster } from "@/lib/cloudinary";
 import { isFacebookPostPermalink, isShortSocialLink, parseSocialLink, PLATFORM_INFO, SocialPlatform } from "@/lib/socialMedia";
 import { useI18n } from "@/components/LanguageProvider";
+import SmartImage from "@/components/SmartImage";
 
 // Жижиг зураг: зураг, бичлэгийн эхний кадр, эсвэл сошиал холбоосын зураг (YouTube) / платформын өнгөт хавтан.
 export function MediaThumb({ item }: { item: SpotMedia }) {
@@ -17,7 +18,7 @@ export function MediaThumb({ item }: { item: SpotMedia }) {
     return (
       <span className={`relative flex h-full w-full items-center justify-center ${info?.tile ?? "bg-slate-800"}`}>
         {embed?.thumbnail ? (
-          <img src={embed.thumbnail} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <SmartImage src={embed.thumbnail} alt="" fill sizes="160px" className="object-cover" />
         ) : (
           <span aria-hidden="true" className="text-2xl text-white font-bold">
             {info?.icon ?? "🔗"}
@@ -33,7 +34,7 @@ export function MediaThumb({ item }: { item: SpotMedia }) {
   return (
     <>
       {poster ? (
-        <img src={poster} alt="" loading="lazy" className="h-full w-full object-cover" />
+        <SmartImage src={poster} alt="" fill sizes="160px" className="object-cover" />
       ) : (
         <video src={item.url} preload="metadata" muted className="h-full w-full object-cover" />
       )}
@@ -135,7 +136,16 @@ export function MediaViewer({
             className="max-h-[85dvh] max-w-[92vw] rounded-lg"
           />
         ) : (
-          <img key={item.url} src={item.url} alt="" className="max-h-[85dvh] max-w-[92vw] object-contain rounded-lg" />
+          <SmartImage
+            key={item.url}
+            src={item.url}
+            alt=""
+            width={1600}
+            height={1200}
+            sizes="92vw"
+            loading="eager"
+            className="h-auto w-auto max-h-[85dvh] max-w-[92vw] object-contain rounded-lg"
+          />
         )}
       </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import SmartImage from "@/components/SmartImage";
 import { PLACEHOLDER_IMAGE, spotCategory, StudySpot } from "@/types";
 import { useI18n } from "@/components/LanguageProvider";
 
@@ -72,9 +73,11 @@ export default function MySubmissionsDialog({ spots, onClose }: MySubmissionsDia
                   rejected ? "opacity-70" : ""
                 }`}
               >
-                <img
+                <SmartImage
                   src={spot.image || PLACEHOLDER_IMAGE}
                   alt=""
+                  width={56}
+                  height={56}
                   className="h-14 w-14 shrink-0 rounded-lg object-cover border border-slate-700"
                 />
                 <div className="min-w-0 flex-1">

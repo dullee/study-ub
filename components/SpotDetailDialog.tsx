@@ -26,6 +26,7 @@ import { SpotCheckin } from "@/lib/busyness";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
 import ReportDialog from "@/components/ReportDialog";
 import HeartIcon from "@/components/HeartIcon";
+import SmartImage from "@/components/SmartImage";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
@@ -247,10 +248,14 @@ export default function SpotDetailDialog({
 
         {/* Зураг дээд хэсгийн ард (шошгын бүлгүүд хүртэл): нэр, тайлбар, төлөв, мэдээллийн хайрцгууд дээр нь. */}
         <div className="relative isolate">
-          <img
+          <SmartImage
             src={spot.image || PLACEHOLDER_IMAGE}
             alt={spot.name}
-            className="absolute inset-0 -z-10 h-full w-full object-cover"
+            fill
+            sizes="(min-width: 896px) 896px, 100vw"
+            loading="eager"
+            fetchPriority="high"
+            className="-z-10 object-cover"
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-b from-slate-950/0 via-slate-950/70 to-slate-900" />
           <div className="px-5 sm:px-6 pt-32 sm:pt-44 pb-6 space-y-4">

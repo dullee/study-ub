@@ -17,6 +17,7 @@ import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/clou
 import { isShortMapsLink, MapsLinkInfo, parseMapsLink } from "@/lib/maps";
 import OptionPicker from "@/components/OptionPicker";
 import MediaPicker from "@/components/MediaPicker";
+import SmartImage from "@/components/SmartImage";
 import { useI18n } from "@/components/LanguageProvider";
 
 // "hint"-ийн бичвэрийг харуулахдаа сонгосон хэлээр авна; бусдыг үүсэх үед нь.
@@ -350,7 +351,13 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:text-xs file:font-semibold"
               />
               {preview ? (
-                <img src={preview} alt={t.imagePreview} className="mt-2 h-32 w-full object-cover rounded-lg border border-slate-700" />
+                <SmartImage
+                  src={preview}
+                  alt={t.imagePreview}
+                  width={800}
+                  height={256}
+                  className="mt-2 h-32 w-full object-cover rounded-lg border border-slate-700"
+                />
               ) : null}
             </div>
           ) : (

@@ -10,6 +10,7 @@ import { useI18n } from "@/components/LanguageProvider";
 import PopularBadge from "@/components/PopularBadge";
 import BusynessBadge from "@/components/BusynessBadge";
 import HeartIcon from "@/components/HeartIcon";
+import SmartImage from "@/components/SmartImage";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { BusynessSummary } from "@/lib/busyness";
 
@@ -83,10 +84,12 @@ export default function SpotCard({
       }}
       className="relative isolate flex min-h-60 flex-col bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden hover:border-slate-500 transition-all group shadow-lg cursor-pointer has-focus-visible:ring-2 has-focus-visible:ring-indigo-500">
       {/* Зураг картын бүх талбайд; доош нь бараан болж бичвэр уншигдана. */}
-      <img
+      <SmartImage
         src={spot.image || PLACEHOLDER_IMAGE}
         alt=""
-        className="absolute inset-0 -z-10 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+        fill
+        sizes="(min-width: 1024px) 320px, 100vw"
+        className="-z-10 object-cover group-hover:scale-105 transition-transform duration-300"
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/10" />
 

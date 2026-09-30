@@ -37,6 +37,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, uploadImage } from "@/lib/cloudinary";
 import OptionPicker from "@/components/OptionPicker";
 import MediaPicker from "@/components/MediaPicker";
+import SmartImage from "@/components/SmartImage";
 import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
 import { createPortal } from "react-dom";
 import { useI18n } from "@/components/LanguageProvider";
@@ -1241,9 +1242,12 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
         : null}
       {photo && shown ? (
         <a href={spot.image} target="_blank" rel="noopener noreferrer" className="block">
-          <img
+          <SmartImage
             src={spot.image}
             alt={spot.name}
+            width={1024}
+            height={576}
+            sizes="(min-width: 512px) 512px, 100vw"
             className="max-h-72 w-full max-w-lg object-cover rounded-xl border border-slate-700"
           />
         </a>
@@ -1398,7 +1402,14 @@ function SpotEditForm({
       <div className="sm:col-span-2 space-y-2">
         <label className="block text-slate-400">{t.photo}</label>
         {shownImage ? (
-          <img src={shownImage} alt={draft.name} className="max-h-48 w-full max-w-md object-cover rounded-lg border border-slate-700" />
+          <SmartImage
+            src={shownImage}
+            alt={draft.name}
+            width={896}
+            height={504}
+            sizes="(min-width: 448px) 448px, 100vw"
+            className="max-h-48 w-full max-w-md object-cover rounded-lg border border-slate-700"
+          />
         ) : (
           <span className="inline-block px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">
             {t.noPhoto}
