@@ -5,6 +5,7 @@ import { useState } from "react";
 import { EventAttendee, googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
 import { useI18n } from "@/components/LanguageProvider";
+import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 
 interface EventCardProps {
   event: StudyEvent;
@@ -76,9 +77,10 @@ export default function EventCard({
               href={googleMapsUrl({ lat: event.lat as number, lng: event.lng as number })}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 text-indigo-300 hover:text-indigo-200 ml-1"
+              className="relative z-10 inline-flex items-center gap-1 text-indigo-300 hover:text-indigo-200 ml-1"
             >
-              Google Maps ↗
+              <GoogleMapsIcon className="h-3.5 w-3.5" />
+              Google Maps
             </a>
           ) : null}
         </p>

@@ -9,6 +9,7 @@ import { formatDistance } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
 import PopularBadge from "@/components/PopularBadge";
 import BusynessBadge from "@/components/BusynessBadge";
+import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { BusynessSummary } from "@/lib/busyness";
 
 interface SpotCardProps {
@@ -157,7 +158,7 @@ export default function SpotCard({
               title={t.openInGoogleMaps}
               className={iconButtonClass}
             >
-              ↗
+              <GoogleMapsIcon className="h-4 w-4" />
             </a>
           </div>
         </div>

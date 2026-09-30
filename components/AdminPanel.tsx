@@ -44,6 +44,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useConfirm } from "@/components/ConfirmDialog";
 import ScoreFields from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
+import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { toast } from "sonner";
 import { reportTopic, SpotReport } from "@/lib/reports";
 import { deleteReport, fetchReports, setReportStatus, subscribeNewReports } from "@/lib/supabase/reports";
@@ -1130,8 +1131,6 @@ function UnsavedChangesDialog({
   );
 }
 
-// Газрын нягт карт нэг мөрөнд: зүүн талд нэр, мэдээлэл; голд Google Maps, зураг харах; баруун талд товчнууд.
-// Утсан дээр дээрээс доош. Зураг товч дарсны дараа л ачаалагдаж, мөрийн доор бүтэн өргөнөөр гарна.
 // Мэдэгдлийн карт: газар, сэдвүүд, тайлбар, илгээгч; доор нь үйлдлүүд (children).
 function ReportCard({ report, spotName, children }: { report: SpotReport; spotName: string; children: ReactNode }) {
   const { t, locale } = useI18n();
@@ -1165,6 +1164,8 @@ function ReportCard({ report, spotName, children }: { report: SpotReport; spotNa
   );
 }
 
+// Газрын нягт карт нэг мөрөнд: зүүн талд нэр, мэдээлэл; голд Google Maps, зураг харах; баруун талд товчнууд.
+// Утсан дээр дээрээс доош. Зураг товч дарсны дараа л ачаалагдаж, мөрийн доор бүтэн өргөнөөр гарна.
 function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactNode; children: ReactNode }) {
   const { t } = useI18n();
   const [shown, setShown] = useState(false);
@@ -1184,9 +1185,10 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
             href={googleMapsUrl(spot)}
             target="_blank"
             rel="noopener noreferrer"
-            className="whitespace-nowrap px-2.5 py-1 rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500"
           >
-            📍 Google Maps ↗
+            <GoogleMapsIcon className="h-3.5 w-3.5" />
+            Google Maps
           </a>
           {photo ? (
             <button

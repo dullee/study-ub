@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { EventAttendee, googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
 import { useI18n } from "@/components/LanguageProvider";
+import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import EventChatLink from "@/components/EventChatLink";
 import EventPhone from "@/components/EventPhone";
 
@@ -105,9 +106,10 @@ export default function EventDetailDialog({
                   href={googleMapsUrl({ lat: event.lat as number, lng: event.lng as number })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-indigo-300 hover:text-indigo-200 ml-2 text-xs"
+                  className="inline-flex items-center gap-1 align-middle text-indigo-300 hover:text-indigo-200 ml-2 text-xs"
                 >
-                  Google Maps ↗
+                  <GoogleMapsIcon className="h-3.5 w-3.5" />
+                  Google Maps
                 </a>
               ) : null}
             </p>

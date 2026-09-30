@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 import { googleMapsUrl, StudySpot } from "@/types";
 import { LatLng } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
+import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { BusynessLevel, busynessInfo, BusynessSummary } from "@/lib/busyness";
 
 interface MapProps {
@@ -243,7 +244,13 @@ export default function Map({
                       <br />
                     </>
                   ) : null}
-                  <a href={googleMapsUrl(spot)} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={googleMapsUrl(spot)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 align-middle"
+                  >
+                    <GoogleMapsIcon className="h-3.5 w-3.5" />
                     Google Maps
                   </a>
                   {" · "}

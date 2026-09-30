@@ -25,6 +25,7 @@ import BusynessPanel from "@/components/BusynessPanel";
 import { SpotCheckin } from "@/lib/busyness";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
 import ReportDialog from "@/components/ReportDialog";
+import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
 
@@ -371,9 +372,10 @@ export default function SpotDetailDialog({
               href={googleMapsUrl(spot)}
               target="_blank"
               rel="noopener noreferrer"
-              className="py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl text-center transition-all"
+              className="py-2.5 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-sm font-semibold rounded-xl text-center transition-all"
             >
-              Google Maps ↗
+              <GoogleMapsIcon className="h-4 w-4" />
+              Google Maps
             </a>
           </div>
           <div className="text-center">
