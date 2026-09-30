@@ -53,6 +53,15 @@ export async function GET(request: NextRequest) {
   const claimedRows = (claimed ?? []) as EventAttendee[];
   if (claimedRows.length === 0) return NextResponse.json({ sent: 0 });
 
+  // Групп чат, утас (байвал) — имэйлд оруулна. Admin client RLS-ийг алгасна.
+  const eventIds = [...new Set(claimedRows.map((attendee) => attendee.event_id))];
+  const [{ data: chats }, { data: contacts }] = await Promise.all([
+    supabaseAdmin.from("event_chat_links").select("event_id, url").in("event_id", eventIds),
+    supabaseAdmin.from("event_contacts").select("event_id, phone").in("event_id", eventIds),
+  ]);
+  const chatByEvent = new Map((chats ?? []).map((row) => [row.event_id as number, row.url as string]));
+  const phoneByEvent = new Map((contacts ?? []).map((row) => [row.event_id as number, row.phone as string]));
+
   const clerk = await clerkClient();
   const { data: users } = await clerk.users.getUserList({
     userId: [...new Set(claimedRows.map((attendee) => attendee.user_id as string))],
@@ -70,7 +79,13 @@ export async function GET(request: NextRequest) {
     const event = eventsById.get(attendee.event_id) as StudyEvent;
     if (!to) continue;
     try {
-      await sendEmail(to, reminderEmail(event, attendee.name, eventsUrl));
+      await sendEmail(
+        to,
+        reminderEmail(event, attendee.name, eventsUrl, {
+          chatUrl: chatByEvent.get(event.id),
+          phone: phoneByEvent.get(event.id),
+        })
+      );
       sent++;
     } catch (error) {
       console.error("SMTP reminder:", error instanceof Error ? error.message : error);

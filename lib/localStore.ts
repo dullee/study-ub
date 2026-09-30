@@ -1,6 +1,7 @@
 import { initialSpots } from "@/data/initialSpots";
 import { EventAttendee, Review, StudyEvent, StudySpot, normalizeTags } from "@/types";
 import { SpotCheckin } from "@/lib/busyness";
+import { SpotReport } from "@/lib/reports";
 
 // v2: data/initialSpots.ts 18 бодит газар — хуучин demo cache-ийг алгасна.
 const SPOTS_KEY = "studyspots_ub_v2";
@@ -176,4 +177,15 @@ export function saveLocalCheckin(
   const rest = all.filter((item) => item.id !== checkin.id && item.created_at > cutoff);
   localStorage.setItem(CHECKINS_KEY, JSON.stringify([checkin, ...rest]));
   return checkin;
+}
+
+// "Мэдээлэл буруу" мэдэгдлүүд (Supabase тохируулаагүй үед).
+const REPORTS_KEY = "studyspots_ub_reports";
+
+export function loadLocalReports(): SpotReport[] {
+  return readJson<SpotReport[]>(REPORTS_KEY, []);
+}
+
+export function saveLocalReports(reports: SpotReport[]) {
+  localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
 }

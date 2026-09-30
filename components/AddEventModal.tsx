@@ -29,8 +29,12 @@ function toLocalInput(ms: number) {
   )}:${pad(date.getMinutes())}`;
 }
 
+// Буруу талбар улаан хүрээтэй: user-invalid — хөтчийн шалгалт (заавал, url, min), зөвхөн хэрэглэгч оролдсоны дараа;
+// aria-invalid — манай шалгалт (өнгөрсөн цаг, чатын холбоос, утас).
 const inputClass =
-  "w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500";
+  "w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500 aria-invalid:border-rose-500 aria-invalid:focus:border-rose-500";
+
+type BadField = "startsAt" | "chatUrl" | "phone";
 
 const emptyForm = {
   title: "",
@@ -54,6 +58,7 @@ export default function AddEventModal({
   const [formData, setFormData] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [badField, setBadField] = useState<BadField | null>(null);
   const [minStart] = useState(() => toLocalInput(Date.now()));
 
   if (!isOpen) return null;
@@ -66,20 +71,24 @@ export default function AddEventModal({
     const startsAt = new Date(formData.startsAt).getTime();
     if (startsAt < Date.now()) {
       setError(t.eventInPast);
+      setBadField("startsAt");
       return;
     }
     const chatUrl = formData.chatUrl.trim() ? normalizeChatUrl(formData.chatUrl) : null;
     if (formData.chatUrl.trim() && !chatUrl) {
       setError(t.chatLinkInvalid);
+      setBadField("chatUrl");
       return;
     }
     const phone = formData.phone.trim() ? normalizePhone(formData.phone) : null;
     if (formData.phone.trim() && !phone) {
       setError(t.phoneInvalid);
+      setBadField("phone");
       return;
     }
     setSaving(true);
     setError("");
+    setBadField(null);
     const ok = await onAddEvent({
       title: formData.title.trim(),
       description: formData.description.trim(),
@@ -160,7 +169,11 @@ export default function AddEventModal({
                 required
                 min={minStart}
                 value={formData.startsAt}
-                onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, startsAt: e.target.value });
+                  if (badField === "startsAt") setBadField(null);
+                }}
+                aria-invalid={badField === "startsAt"}
                 className={inputClass}
               />
             </div>
@@ -195,7 +208,11 @@ export default function AddEventModal({
               type="url"
               inputMode="url"
               value={formData.chatUrl}
-              onChange={(e) => setFormData({ ...formData, chatUrl: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, chatUrl: e.target.value });
+                if (badField === "chatUrl") setBadField(null);
+              }}
+              aria-invalid={badField === "chatUrl"}
               placeholder={t.chatLinkPlaceholder}
               className={inputClass}
             />
@@ -212,7 +229,11 @@ export default function AddEventModal({
               autoComplete="tel"
               maxLength={20}
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, phone: e.target.value });
+                if (badField === "phone") setBadField(null);
+              }}
+              aria-invalid={badField === "phone"}
               placeholder={t.phonePlaceholder}
               className={inputClass}
             />

@@ -1,7 +1,10 @@
 import { useCallback, useState } from "react";
 import { Dictionary } from "@/lib/i18n/dictionaries";
+import { distanceKm, LatLng } from "@/lib/distance";
 
-export type LatLng = { lat: number; lng: number };
+// Зайн тооцоо lib/distance.ts-д (сервер дээр ч ажиллана); энд хуучин импортуудын төлөө дахин экспортолно.
+export { distanceKm };
+export type { LatLng };
 
 // Алдааны бичвэрийг UI сонгосон хэлээр харуулна (geoDenied гэх мэт).
 export type GeoError = "geoDenied" | "geoUnavailable" | "geoTimeout" | "geoUnsupported";
@@ -11,17 +14,6 @@ export type UserLocationState =
   | { status: "locating" }
   | { status: "ready"; coords: LatLng; accuracy: number }
   | { status: "error"; error: GeoError };
-
-// Хоёр цэгийн хоорондох шулуун зай (км), haversine томьёо.
-export function distanceKm(a: LatLng, b: LatLng) {
-  const R = 6371;
-  const toRad = (deg: number) => (deg * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
 
 // 1 км-ээс бага бол метрээр (50 м алхамтай), түүнээс дээш бол км-ээр. Нэгжийг сонгосон хэлээр.
 export function formatDistance(km: number, t: Pick<Dictionary, "meters" | "kilometers">) {

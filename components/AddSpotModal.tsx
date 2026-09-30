@@ -57,10 +57,43 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
   const [mapsStatus, setMapsStatus] = useState<MapsStatus>(MAPS_HINT);
+  // OpenStreetMap-аас бөглөсөн цаг — талбар түүнтэй ижил байх үед доор нь "шалгаарай" гэж харуулна.
+  const [osmHours, setOsmHours] = useState<string | null>(null);
   // Хамгийн сүүлд оруулсан холбоосын хариуг л ашиглана.
   const latestLink = useRef("");
 
   if (!isOpen) return null;
+
+  // Координатаас хаяг олж "Байршил"-ийг бөглөнө — хэрэглэгч өөрөө бичсэн бол хөндөхгүй.
+  const fillLocation = async (info: MapsLinkInfo) => {
+    const link = latestLink.current;
+    try {
+      const res = await fetch(`/api/maps/reverse?lat=${info.lat}&lng=${info.lng}&lang=${locale}`);
+      if (!res.ok || latestLink.current !== link) return;
+      const { location } = (await res.json()) as { location: string };
+      setFormData((prev) => (prev.location.trim() ? prev : { ...prev, location }));
+    } catch {
+      // Хаяг олдохгүй бол хэрэглэгч гараар бичнэ.
+    }
+  };
+
+  // OpenStreetMap дээр ажлын цаг байвал "Цагийн хуваарь"-ийг бөглөнө — хэрэглэгч өөрөө бичсэн бол хөндөхгүй.
+  const fillHours = async (info: MapsLinkInfo) => {
+    if (formData.hours.trim()) return;
+    const link = latestLink.current;
+    const name = info.name || formData.name;
+    try {
+      const params = new URLSearchParams({ lat: String(info.lat), lng: String(info.lng), name, lang: locale });
+      const res = await fetch(`/api/maps/hours?${params}`);
+      if (!res.ok || latestLink.current !== link) return;
+      const { hours } = (await res.json()) as { hours: string };
+      // Хүлээх хооронд хэрэглэгч бичсэн бол хөндөхгүй.
+      setFormData((prev) => (prev.hours.trim() ? prev : { ...prev, hours }));
+      setOsmHours(hours);
+    } catch {
+      // Олдохгүй бол хэрэглэгч гараар бичнэ.
+    }
+  };
 
   const applyMapsInfo = (info: MapsLinkInfo) => {
     setFormData((prev) => ({
@@ -70,6 +103,8 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       name: prev.name || info.name || "",
     }));
     setMapsStatus({ kind: "ok", text: t.mapsCoordsFound(info.lat, info.lng) });
+    fillLocation(info);
+    fillHours(info);
   };
 
   const handleMapsLinkChange = async (value: string) => {
@@ -111,6 +146,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
     resetImage();
     setError("");
     setMapsStatus(MAPS_HINT);
+    setOsmHours(null);
     onClose();
   };
 
@@ -162,7 +198,8 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
       lng: parseFloat(formData.lng),
       image: image || PLACEHOLDER_IMAGE,
       tags,
-      is_24h: tags.includes("24 цаг") || /24/.test(formData.hours),
+      // "08:00 - 24:00" 24 цаг биш — lib/openHours.ts-тэй ижил шалгалт.
+      is_24h: tags.includes("24 цаг") || /24\s*(\/\s*7|цаг)/i.test(formData.hours),
       maps_url: formData.maps_url.trim() || undefined,
       amenities: formData.amenities,
       accessibility: formData.accessibility,
@@ -197,7 +234,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               value={formData.name} maxLength={LIMITS.spotName}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder={t.spotNamePlaceholder}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
             />
           </div>
           <div>
@@ -206,7 +243,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               required
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value as SpotCategory | "" })}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
             >
               <option value="" disabled>
                 {t.choose}
@@ -225,7 +262,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               value={formData.description} maxLength={LIMITS.spotDescription}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={t.descriptionPlaceholder}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 resize-none"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500 resize-none"
             />
           </div>
           <div>
@@ -235,7 +272,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               value={formData.maps_url} maxLength={LIMITS.url}
               onChange={(e) => handleMapsLinkChange(e.target.value)}
               placeholder="https://maps.app.goo.gl/..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
             />
             <p
               className={`mt-1 ${
@@ -258,7 +295,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 value={formData.location} maxLength={LIMITS.spotLocation}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder={t.locationPlaceholder}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
               />
             </div>
             <div>
@@ -268,8 +305,9 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 value={formData.hours} maxLength={LIMITS.spotHours}
                 onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
                 placeholder={t.hoursPlaceholder}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
               />
+              {osmHours && formData.hours === osmHours ? <p className="mt-1 text-amber-400/90">{t.hoursFromOsm}</p> : null}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -281,8 +319,10 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 required
                 value={formData.lat}
                 onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                min={-90}
+                max={90}
                 placeholder="47.9188"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
               />
             </div>
             <div>
@@ -293,8 +333,10 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 required
                 value={formData.lng}
                 onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                min={-180}
+                max={180}
                 placeholder="106.9176"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
               />
             </div>
           </div>
@@ -319,7 +361,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 value={formData.image} maxLength={LIMITS.url}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                 placeholder="https://images.unsplash.com/..."
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
               />
             </div>
           )}
@@ -345,7 +387,7 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
               placeholder={t.tagsPlaceholder}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
             />
           </div>
           <div>

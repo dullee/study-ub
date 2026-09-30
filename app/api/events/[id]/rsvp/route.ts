@@ -17,7 +17,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
   const supabase = createClient(url, anonKey, { accessToken: async () => token });
   const eventId = Number((await ctx.params).id);
 
-  const [{ data: event }, { data: attendee }] = await Promise.all([
+  // Групп чат, утас зөвхөн ирэх хүмүүст нээлттэй (RLS) — бүртгүүлсэн хэрэглэгчийн token-оор уншина.
+  const [{ data: event }, { data: attendee }, { data: chat }, { data: contact }] = await Promise.all([
     supabase.from("events").select("*").eq("id", eventId).maybeSingle(),
     supabase
       .from("event_attendees")
@@ -25,6 +26,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
       .eq("event_id", eventId)
       .eq("user_id", userId)
       .maybeSingle(),
+    supabase.from("event_chat_links").select("url").eq("event_id", eventId).maybeSingle(),
+    supabase.from("event_contacts").select("phone").eq("event_id", eventId).maybeSingle(),
   ]);
   if (!event || !attendee) return NextResponse.json({ error: "not-attending" }, { status: 404 });
 
@@ -42,7 +45,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
         event as StudyEvent,
         (attendee as EventAttendee).name,
         `${request.nextUrl.origin}/events`,
-        willRemind
+        willRemind,
+        { chatUrl: chat?.url, phone: contact?.phone }
       )
     );
   } catch (error) {

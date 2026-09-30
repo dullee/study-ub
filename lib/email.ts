@@ -2,6 +2,8 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
+import { chatPlatform, normalizeChatUrl } from "@/lib/chatLinks";
+import { telHref } from "@/lib/phone";
 
 const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
 const port = Number(SMTP_PORT || 465);
@@ -38,7 +40,10 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
-function eventDetails(event: StudyEvent, eventsUrl: string) {
+// Зөвхөн ирэх хүмүүст харагддаг мэдээлэл (event_chat_links, event_contacts) — зохион байгуулагч өгсөн бол имэйлд орно.
+export type EventContacts = { chatUrl?: string | null; phone?: string | null };
+
+function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventContacts) {
   // /events?event=12 — эвентийн хуудас нээгдэхэд тухайн эвентийн цонх шууд нээгдэнэ.
   const eventUrl = `${eventsUrl}?event=${event.id}`;
   const time = formatEventTime(event.starts_at, TIME_ZONE);
@@ -46,6 +51,11 @@ function eventDetails(event: StudyEvent, eventsUrl: string) {
     event.lat !== null && event.lng !== null
       ? googleMapsUrl({ lat: event.lat, lng: event.lng })
       : null;
+  // Өгөгдлийн сан https-ийг шалгадаг ч имэйлийн href-д орохоос өмнө дахин шалгана.
+  const chatUrl = contacts.chatUrl ? normalizeChatUrl(contacts.chatUrl) : null;
+  const chatName = chatUrl ? chatPlatform(chatUrl).name : null;
+  const chatLabel = chatName ? `${chatName} групп` : "Групп чат руу нэгдэх";
+  const phone = contacts.phone?.trim() || null;
   const row = (label: string, value: string) =>
     `<tr><td style="padding:4px 12px 4px 0;color:#64748b;white-space:nowrap">${label}</td><td style="padding:4px 0;color:#0f172a">${value}</td></tr>`;
 
@@ -58,6 +68,16 @@ function eventDetails(event: StudyEvent, eventsUrl: string) {
           (mapsUrl ? ` · <a href="${mapsUrl}" style="color:#4f46e5">Google Maps</a>` : "")
       )}
       ${row("Зохион байгуулагч", escapeHtml(event.host_name))}
+      ${
+        phone
+          ? row("Утас", `<a href="${escapeHtml(telHref(phone))}" style="color:#4f46e5">${escapeHtml(phone)}</a>`)
+          : ""
+      }
+      ${
+        chatUrl
+          ? row("Групп чат", `<a href="${escapeHtml(chatUrl)}" style="color:#4f46e5;font-weight:600">${escapeHtml(chatLabel)}</a>`)
+          : ""
+      }
     </table>
     ${
       event.description
@@ -70,6 +90,8 @@ function eventDetails(event: StudyEvent, eventsUrl: string) {
     `Хэзээ: ${time}`,
     `Хаана: ${event.place_name}${mapsUrl ? ` (${mapsUrl})` : ""}`,
     `Зохион байгуулагч: ${event.host_name}`,
+    ...(phone ? [`Утас: ${phone}`] : []),
+    ...(chatUrl ? [`Групп чат${chatName ? ` (${chatName})` : ""}: ${chatUrl}`] : []),
     event.description ? `\n${event.description}` : "",
     `\nЭвентийг харах: ${eventUrl}`,
   ].join("\n");
@@ -90,9 +112,10 @@ export function confirmationEmail(
   event: StudyEvent,
   name: string,
   eventsUrl: string,
-  willRemind: boolean
+  willRemind: boolean,
+  contacts: EventContacts = {}
 ) {
-  const details = eventDetails(event, eventsUrl);
+  const details = eventDetails(event, eventsUrl, contacts);
   const title = escapeHtml(event.title);
   const intro = `Та энэ эвентэд ирнэ гэж бүртгүүллээ.${
     willRemind ? " Эхлэхээс 1 цагийн өмнө сануулга илгээнэ." : ""
@@ -104,8 +127,8 @@ export function confirmationEmail(
   };
 }
 
-export function reminderEmail(event: StudyEvent, name: string, eventsUrl: string) {
-  const details = eventDetails(event, eventsUrl);
+export function reminderEmail(event: StudyEvent, name: string, eventsUrl: string, contacts: EventContacts = {}) {
+  const details = eventDetails(event, eventsUrl, contacts);
   const title = escapeHtml(event.title);
   return {
     subject: `1 цагийн дараа: ${event.title}`,

@@ -24,6 +24,7 @@ import PopularBadge from "@/components/PopularBadge";
 import BusynessPanel from "@/components/BusynessPanel";
 import { SpotCheckin } from "@/lib/busyness";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
+import ReportDialog from "@/components/ReportDialog";
 import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
 
@@ -47,6 +48,7 @@ export default function SpotDetailDialog({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   // Цомог: жинхэнэ нүүр зураг (ерөнхий зураг биш) эхэнд, дараа нь нэмэлт зураг, бичлэг.
   const gallery = [
     ...(spot.image && spot.image !== PLACEHOLDER_IMAGE ? [{ url: spot.image, type: "image" as const }] : []),
@@ -107,6 +109,7 @@ export default function SpotDetailDialog({
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (viewerIndex !== null) setViewerIndex(null);
+      else if (reportOpen) setReportOpen(false);
       else if (reviewsOpen) setReviewsOpen(false);
       else onClose();
     };
@@ -117,7 +120,7 @@ export default function SpotDetailDialog({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [onClose, reviewsOpen, viewerIndex]);
+  }, [onClose, reviewsOpen, reportOpen, viewerIndex]);
 
   const average =
     reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
@@ -373,6 +376,15 @@ export default function SpotDetailDialog({
               Google Maps ↗
             </a>
           </div>
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setReportOpen(true)}
+              className="text-xs text-slate-400 hover:text-amber-300 underline-offset-2 hover:underline"
+            >
+              {t.reportWrongInfo}
+            </button>
+          </div>
         </div>
 
         {scroll.scrollable ? (
@@ -398,6 +410,7 @@ export default function SpotDetailDialog({
           onClose={() => setViewerIndex(null)}
         />
       ) : null}
+      {reportOpen ? <ReportDialog spot={spot} onClose={() => setReportOpen(false)} /> : null}
       {reviewsOpen ? (
         <ReviewsDialog
           spot={spot}

@@ -44,6 +44,9 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useConfirm } from "@/components/ConfirmDialog";
 import ScoreFields from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
+import { toast } from "sonner";
+import { reportTopic, SpotReport } from "@/lib/reports";
+import { deleteReport, fetchReports, setReportStatus, subscribeNewReports } from "@/lib/supabase/reports";
 import {
   deleteReview,
   deleteSpot,
@@ -58,12 +61,14 @@ import {
   loadLocalEventPhone,
   loadLocalEventPhones,
   loadLocalEvents,
+  loadLocalReports,
   loadLocalReviews,
   loadLocalSpots,
   removeLocalEvent,
   removeLocalReview,
   saveLocalChatLink,
   saveLocalEventPhone,
+  saveLocalReports,
   saveLocalReview,
   saveLocalSpots,
   updateLocalEvent,
@@ -72,7 +77,7 @@ import {
 const inputClass =
   "w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500";
 
-type Tab = "pending" | "places" | "comments" | "events";
+type Tab = "pending" | "reports" | "places" | "comments" | "events";
 
 // Товчнуудын өнгө: зөвшөөрөх — ногоон, татгалзах — улаан, устгах — улаан хүрээтэй (бусдаас хол, баруун талд).
 const btn =
@@ -103,6 +108,8 @@ export default function AdminPanel() {
   const [editDirty, setEditDirty] = useState(false);
   // Зохион байгуулагчдын утас: event_id → дугаар (админ бүгдийг харна).
   const [phones, setPhones] = useState<Record<number, string>>({});
+  // "Мэдээлэл буруу" мэдэгдлүүд — нээлттэй нь табын шар тэмдэг, дээд талын мэдэгдлийн мөрөнд.
+  const [reports, setReports] = useState<SpotReport[]>([]);
   const [eventError, setEventError] = useState("");
   // Газар, сэтгэгдлийн өөрчлөлт хадгалагдаагүй бол.
   const [actionError, setActionError] = useState("");
@@ -116,12 +123,13 @@ export default function AdminPanel() {
     let cancelled = false;
     async function load() {
       if (isSupabaseConfigured) {
-        const [spotRows, reviewRows, eventRows, attendeeRows, phoneRows] = await Promise.all([
+        const [spotRows, reviewRows, eventRows, attendeeRows, phoneRows, reportRows] = await Promise.all([
           fetchAllSpots(),
           fetchAllReviews(),
           fetchAllEvents(),
           fetchAttendees(),
           fetchAllEventPhones(),
+          fetchReports(),
         ]);
         if (!cancelled && spotRows && reviewRows) {
           setSpots(spotRows);
@@ -129,6 +137,7 @@ export default function AdminPanel() {
           setEvents(eventRows ?? []);
           setAttendees(attendeeRows ?? []);
           setPhones(phoneRows ?? {});
+          setReports(reportRows ?? []);
           setRemote(true);
           return;
         }
@@ -139,6 +148,7 @@ export default function AdminPanel() {
         setEvents(loadLocalEvents());
         setAttendees(loadLocalAttendees());
         setPhones(loadLocalEventPhones());
+        setReports(loadLocalReports());
       }
     }
     load();
@@ -146,6 +156,59 @@ export default function AdminPanel() {
       cancelled = true;
     };
   }, [isLoaded]);
+
+  // Самбар нээлттэй байхад шинэ мэдэгдэл шууд ирж, дээд буланд мэдэгдэл гарна.
+  const spotsRef = useRef(spots);
+  useEffect(() => {
+    spotsRef.current = spots;
+  }, [spots]);
+  useEffect(() => {
+    if (!remote) return;
+    return subscribeNewReports((report) => {
+      setReports((prev) => (prev.some((item) => item.id === report.id) ? prev : [report, ...prev]));
+      const name = spotsRef.current.find((spot) => spot.id === report.spot_id)?.name ?? `#${report.spot_id}`;
+      toast.warning(t.newReportToast(name), {
+        description: report.message || undefined,
+        action: { label: t.reportsBannerView, onClick: () => setTab("reports") },
+      });
+    });
+  }, [remote, t]);
+
+  const updateReportStatus = async (report: SpotReport, status: SpotReport["status"]) => {
+    setActionError("");
+    let updated: SpotReport | null = {
+      ...report,
+      status,
+      resolved_at: status === "resolved" ? new Date().toISOString() : null,
+    };
+    if (remote) updated = await setReportStatus(report.id, status);
+    if (!updated) {
+      setActionError(t.saveFailed);
+      return;
+    }
+    const saved = updated;
+    const next = reports.map((item) => (item.id === report.id ? saved : item));
+    if (!remote) saveLocalReports(next);
+    setReports(next);
+  };
+
+  const removeReport = async (report: SpotReport) => {
+    const ok = await confirm({
+      title: t.deleteReportTitle,
+      message: t.confirmDeleteReport,
+      confirmLabel: t.delete,
+      cancelLabel: t.cancel,
+    });
+    if (!ok) return;
+    setActionError("");
+    if (remote && !(await deleteReport(report.id))) {
+      setActionError(t.deleteFailed);
+      return;
+    }
+    const next = reports.filter((item) => item.id !== report.id);
+    if (!remote) saveLocalReports(next);
+    setReports(next);
+  };
 
   // Өгөгдлийн санд хадгалагдсаны дараа л дэлгэцийг шинэчилнэ; амжилтгүй бол алдаа харуулж, хуучнаараа үлдээнэ.
   const persistSpots = async (next: StudySpot[], changed?: StudySpot, removedId?: number) => {
@@ -396,8 +459,11 @@ export default function AdminPanel() {
   const published = spots.filter((spot) => spot.status !== "pending" && spot.status !== "rejected");
   const rejected = spots.filter((spot) => spot.status === "rejected");
   const pendingCount = pending.length + pendingEvents.length;
+  const openReports = reports.filter((report) => report.status === "open");
+  const resolvedReports = reports.filter((report) => report.status === "resolved");
   const tabs = [
     ["pending", t.tabPending, pendingCount],
+    ["reports", t.tabReports, openReports.length],
     ["places", t.tabPlaces, published.length],
     ["comments", t.tabReviews, reviews.length],
     ["events", t.tabEvents, publishedEvents.length],
@@ -433,7 +499,7 @@ export default function AdminPanel() {
                 className={`min-w-5 px-1.5 rounded-full text-[10px] leading-5 ${
                   tab === id
                     ? "bg-white/20"
-                    : id === "pending" && count > 0
+                    : (id === "pending" || id === "reports") && count > 0
                       ? "bg-amber-500 text-slate-950"
                       : "bg-slate-700 text-slate-300"
                 }`}
@@ -443,6 +509,19 @@ export default function AdminPanel() {
             </button>
           ))}
         </nav>
+        {openReports.length > 0 && tab !== "reports" ? (
+          <button
+            type="button"
+            onClick={() => setTab("reports")}
+            className="w-full flex items-center justify-between gap-3 text-left text-sm text-amber-200 bg-amber-500/10 border border-amber-500/40 rounded-xl px-4 py-3 hover:bg-amber-500/15"
+          >
+            <span>
+              <span aria-hidden="true">⚠️ </span>
+              {t.reportsBanner(openReports.length)}
+            </span>
+            <span className="shrink-0 font-semibold">{t.reportsBannerView}</span>
+          </button>
+        ) : null}
         {actionError ? (
           <p role="alert" className="text-sm text-rose-300 bg-rose-950/60 border border-rose-800/50 rounded-xl px-4 py-3">
             {actionError}
@@ -646,6 +725,49 @@ export default function AdminPanel() {
                 ) : null}
               </div>
             )}
+          </section>
+        )}
+
+        {tab === "reports" && (
+          <section className="space-y-3">
+            {openReports.length === 0 ? (
+              <p className="text-sm text-slate-500">{t.noReports}</p>
+            ) : (
+              openReports.map((report) => (
+                <ReportCard key={report.id} report={report} spotName={spotName(report.spot_id)}>
+                  {spots.some((spot) => spot.id === report.spot_id) ? (
+                    <button onClick={() => setEditingSpotId(report.spot_id)} className={btnNeutral}>
+                      {t.editPlace}
+                    </button>
+                  ) : null}
+                  <button onClick={() => updateReportStatus(report, "resolved")} className={btnApprove}>
+                    ✅ {t.markResolved}
+                  </button>
+                  <button onClick={() => removeReport(report)} className={`${btnDelete} ml-auto`}>
+                    🗑 {t.delete}
+                  </button>
+                </ReportCard>
+              ))
+            )}
+            {resolvedReports.length > 0 ? (
+              <details className="group">
+                <summary className="cursor-pointer select-none text-xs font-semibold text-slate-400 hover:text-white py-2">
+                  {t.resolvedReports(resolvedReports.length)}
+                </summary>
+                <div className="space-y-3 pt-2 opacity-80">
+                  {resolvedReports.map((report) => (
+                    <ReportCard key={report.id} report={report} spotName={spotName(report.spot_id)}>
+                      <button onClick={() => updateReportStatus(report, "open")} className={btnNeutral}>
+                        ↩ {t.reopenReport}
+                      </button>
+                      <button onClick={() => removeReport(report)} className={`${btnDelete} ml-auto`}>
+                        🗑 {t.delete}
+                      </button>
+                    </ReportCard>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </section>
         )}
 
@@ -1010,6 +1132,39 @@ function UnsavedChangesDialog({
 
 // Газрын нягт карт нэг мөрөнд: зүүн талд нэр, мэдээлэл; голд Google Maps, зураг харах; баруун талд товчнууд.
 // Утсан дээр дээрээс доош. Зураг товч дарсны дараа л ачаалагдаж, мөрийн доор бүтэн өргөнөөр гарна.
+// Мэдэгдлийн карт: газар, сэдвүүд, тайлбар, илгээгч; доор нь үйлдлүүд (children).
+function ReportCard({ report, spotName, children }: { report: SpotReport; spotName: string; children: ReactNode }) {
+  const { t, locale } = useI18n();
+  const sent = new Date(report.created_at).toLocaleString("en-CA", { dateStyle: "short", timeStyle: "short" });
+  return (
+    <article className={`${cardClass} text-sm`}>
+      <div className="p-4 space-y-2">
+        <p className="text-xs text-indigo-300">
+          {spotName}
+          <span className="text-slate-400">
+            {" "}
+            · {report.author_name ?? t.guest} · {sent}
+          </span>
+        </p>
+        {report.topics.length > 0 ? (
+          <ul className="flex flex-wrap gap-1.5">
+            {report.topics.map((key) => {
+              const topic = reportTopic(key);
+              return (
+                <li key={key} className="text-xs bg-amber-500/15 border border-amber-500/40 text-amber-200 px-2 py-0.5 rounded-md">
+                  {topic ? `${topic.icon} ${topic.label[locale]}` : key}
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+        {report.message ? <p className="text-slate-200 whitespace-pre-line">{report.message}</p> : null}
+      </div>
+      <div className={actionBar}>{children}</div>
+    </article>
+  );
+}
+
 function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactNode; children: ReactNode }) {
   const { t } = useI18n();
   const [shown, setShown] = useState(false);
