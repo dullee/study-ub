@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import { EventAttendee, StudyEvent } from "@/types";
 import { confirmationEmail, mailer, REMINDER_BEFORE_MS, sendEmail } from "@/lib/email";
+import { getLocale } from "@/lib/i18n/server";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey =
@@ -46,7 +47,9 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
         (attendee as EventAttendee).name,
         `${request.nextUrl.origin}/events`,
         willRemind,
-        { chatUrl: chat?.url, phone: contact?.phone }
+        { chatUrl: chat?.url, phone: contact?.phone },
+        // Бүртгэлд хадгалсан хэл; хуучин бүртгэлд байхгүй бол одоогийн сайтын хэл (cookie).
+        (attendee as EventAttendee).locale ?? (await getLocale())
       )
     );
   } catch (error) {

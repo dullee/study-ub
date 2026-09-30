@@ -96,3 +96,54 @@ export function checkinProximity(spot: LatLng, coords: LatLng, accuracy: number)
     imprecise: accuracy > IMPRECISE_ACCURACY_METERS,
   };
 }
+
+// "Ихэвчлэн хэр дүүрэн" график — supabase/migrations/20260930000005_busyness_pattern.sql-тэй ижил тооцоолол.
+export const PATTERN_WEEKS = 8;
+// Нийт хэдэн мэдээлэл хуримтлагдсаны дараа график харуулах, нэг цагийн баганад хэдээс доошгүй мэдээлэл хэрэгтэй.
+export const MIN_PATTERN_REPORTS = 10;
+export const MIN_CELL_REPORTS = 2;
+
+// Гараг: 0 = Даваа … 6 = Ням.
+export const WEEKDAY_LABELS: Record<Locale, string[]> = {
+  mn: ["Да", "Мя", "Лх", "Пү", "Ба", "Бя", "Ня"],
+  en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+};
+
+export interface PatternCell {
+  weekday: number;
+  hour: number;
+  avg_level: number;
+  reports: number;
+}
+
+// Улаанбаатар UTC+8, 2017 оноос зуны цаг хэрэглэдэггүй.
+export function ubWeekdayHour(ms: number) {
+  const local = new Date(ms + 8 * 3_600_000);
+  return { weekday: (local.getUTCDay() + 6) % 7, hour: local.getUTCHours() };
+}
+
+export function busynessPattern(checkins: SpotCheckin[], now: number, weeks = PATTERN_WEEKS): PatternCell[] {
+  const since = now - weeks * 7 * 86_400_000;
+  const cells = new Map<string, { weekday: number; hour: number; sum: number; reports: number }>();
+  for (const checkin of checkins) {
+    const at = new Date(checkin.created_at).getTime();
+    if (at <= since || at > now) continue;
+    const { weekday, hour } = ubWeekdayHour(at);
+    const key = `${weekday}:${hour}`;
+    const cell = cells.get(key) ?? { weekday, hour, sum: 0, reports: 0 };
+    cell.sum += checkin.level;
+    cell.reports += 1;
+    cells.set(key, cell);
+  }
+  return [...cells.values()].map(({ weekday, hour, sum, reports }) => ({
+    weekday,
+    hour,
+    avg_level: Math.round((sum / reports) * 100) / 100,
+    reports,
+  }));
+}
+
+// Дундаж (1–5, бутархай) → хамгийн ойрын түвшин (шошго, тайлбарт).
+export function nearestLevel(avg: number): BusynessLevel {
+  return Math.min(5, Math.max(1, Math.round(avg))) as BusynessLevel;
+}

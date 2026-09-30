@@ -87,7 +87,6 @@ export default function SpotCard({
       <div className="relative z-10 pointer-events-none flex justify-between items-start gap-2 p-2 text-[11px] font-semibold">
         <div className="flex flex-wrap items-center gap-1.5">
           <PopularBadge recentCount={recentReviews} />
-          <BusynessBadge summary={busyness} now={now} />
           {distanceKm !== undefined ? (
             <span className="bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 text-indigo-300">
               🚶 {formatDistance(distanceKm, t)}
@@ -125,6 +124,8 @@ export default function SpotCard({
             ) : (
               <span className="text-slate-300">{t.noRating}</span>
             )}
+            {/* Одоогийн ачаалал — үнэлгээний мөрийн баруун талд. */}
+            <BusynessBadge summary={busyness} now={now} className="ml-auto shrink-0 text-[11px]" />
           </div>
         </div>
 

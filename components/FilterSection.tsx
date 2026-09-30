@@ -42,6 +42,7 @@ const SORT_LABEL = {
   reviews: "sortReviews",
   distance: "sortDistance",
   popular: "sortPopular",
+  leastBusy: "sortLeastBusy",
 } as const satisfies Record<SortKey, string>;
 
 const removableChipClass =
@@ -225,6 +226,15 @@ export default function FilterSection({
             >
               🔥 {t.popular}
             </button>
+            <button
+              type="button"
+              aria-pressed={filters.notBusyNow}
+              onClick={() => set({ notBusyNow: !filters.notBusyNow })}
+              className={chipClass(filters.notBusyNow)}
+              title={t.notBusyNowHint}
+            >
+              🪑 {t.notBusyNow}
+            </button>
           </Section>
 
           <Section title={t.spotType}>
@@ -378,6 +388,11 @@ export default function FilterSection({
           {filters.popularOnly ? (
             <button type="button" onClick={() => set({ popularOnly: false })} aria-label={t.removeFilter(t.popular)} className={removableChipClass}>
               🔥 {t.popular} ✕
+            </button>
+          ) : null}
+          {filters.notBusyNow ? (
+            <button type="button" onClick={() => set({ notBusyNow: false })} aria-label={t.removeFilter(t.notBusyNow)} className={removableChipClass}>
+              🪑 {t.notBusyNow} ✕
             </button>
           ) : null}
           {SPOT_CATEGORIES.filter((c) => filters.categories.includes(c.key)).map((c) => (

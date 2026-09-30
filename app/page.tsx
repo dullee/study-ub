@@ -183,8 +183,9 @@ export default function Home() {
       recentCounts,
       isOpen: now === null ? null : (spot) => openStatus(spot, now, t)?.open ?? null,
       distances,
+      busyness,
     }),
-    [summaries, recentCounts, now, t, distances]
+    [summaries, recentCounts, now, t, distances, busyness]
   );
 
   const anyFilterActive =

@@ -2,6 +2,7 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { googleMapsUrl, StudyEvent } from "@/types";
 import { formatEventTime } from "@/lib/format";
+import { Locale } from "@/lib/i18n/dictionaries";
 import { chatPlatform, normalizeChatUrl } from "@/lib/chatLinks";
 import { telHref } from "@/lib/phone";
 
@@ -40,13 +41,50 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
+// Имэйлийн бичвэр хэлээр. Хэрэглэгчийн хэлийг бүртгүүлэх үед event_attendees.locale-д хадгална.
+const EMAIL_TEXT = {
+  mn: {
+    when: "Хэзээ",
+    where: "Хаана",
+    host: "Зохион байгуулагч",
+    phone: "Утас",
+    groupChat: "Групп чат",
+    chatLabel: (app: string | null) => (app ? `${app} групп` : "Групп чат руу нэгдэх"),
+    viewEvent: "Эвентийг харах",
+    greeting: (name: string) => `Сайн байна уу, ${name}!`,
+    registered: "Та энэ эвентэд ирнэ гэж бүртгүүллээ.",
+    willRemind: "Эхлэхээс 1 цагийн өмнө сануулга илгээнэ.",
+    confirmSubject: (title: string) => `Бүртгэгдлээ: ${title}`,
+    reminderSubject: (title: string) => `1 цагийн дараа: ${title}`,
+    reminderHeading: (title: string) => `${title} удахгүй эхэлнэ`,
+    reminderIntro: "Таны бүртгүүлсэн эвент 1 цагийн дараа эхэлнэ.",
+  },
+  en: {
+    when: "When",
+    where: "Where",
+    host: "Host",
+    phone: "Phone",
+    groupChat: "Group chat",
+    chatLabel: (app: string | null) => (app ? `${app} group` : "Join the group chat"),
+    viewEvent: "View event",
+    greeting: (name: string) => `Hi ${name}!`,
+    registered: "You're signed up for this event.",
+    willRemind: "We'll send a reminder 1 hour before it starts.",
+    confirmSubject: (title: string) => `You're signed up: ${title}`,
+    reminderSubject: (title: string) => `Starting in 1 hour: ${title}`,
+    reminderHeading: (title: string) => `${title} starts soon`,
+    reminderIntro: "An event you signed up for starts in 1 hour.",
+  },
+} satisfies Record<Locale, unknown>;
+
 // Зөвхөн ирэх хүмүүст харагддаг мэдээлэл (event_chat_links, event_contacts) — зохион байгуулагч өгсөн бол имэйлд орно.
 export type EventContacts = { chatUrl?: string | null; phone?: string | null };
 
-function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventContacts) {
+function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventContacts, locale: Locale) {
+  const e = EMAIL_TEXT[locale];
   // /events?event=12 — эвентийн хуудас нээгдэхэд тухайн эвентийн цонх шууд нээгдэнэ.
   const eventUrl = `${eventsUrl}?event=${event.id}`;
-  const time = formatEventTime(event.starts_at, TIME_ZONE);
+  const time = formatEventTime(event.starts_at, TIME_ZONE, locale);
   const mapsUrl =
     event.lat !== null && event.lng !== null
       ? googleMapsUrl({ lat: event.lat, lng: event.lng })
@@ -54,28 +92,28 @@ function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventConta
   // Өгөгдлийн сан https-ийг шалгадаг ч имэйлийн href-д орохоос өмнө дахин шалгана.
   const chatUrl = contacts.chatUrl ? normalizeChatUrl(contacts.chatUrl) : null;
   const chatName = chatUrl ? chatPlatform(chatUrl).name : null;
-  const chatLabel = chatName ? `${chatName} групп` : "Групп чат руу нэгдэх";
+  const chatLabel = e.chatLabel(chatName);
   const phone = contacts.phone?.trim() || null;
   const row = (label: string, value: string) =>
     `<tr><td style="padding:4px 12px 4px 0;color:#64748b;white-space:nowrap">${label}</td><td style="padding:4px 0;color:#0f172a">${value}</td></tr>`;
 
   const html = `
     <table style="border-collapse:collapse;font-size:14px">
-      ${row("Хэзээ", escapeHtml(time))}
+      ${row(e.when, escapeHtml(time))}
       ${row(
-        "Хаана",
+        e.where,
         escapeHtml(event.place_name) +
           (mapsUrl ? ` · <a href="${mapsUrl}" style="color:#4f46e5">Google Maps</a>` : "")
       )}
-      ${row("Зохион байгуулагч", escapeHtml(event.host_name))}
+      ${row(e.host, escapeHtml(event.host_name))}
       ${
         phone
-          ? row("Утас", `<a href="${escapeHtml(telHref(phone))}" style="color:#4f46e5">${escapeHtml(phone)}</a>`)
+          ? row(e.phone, `<a href="${escapeHtml(telHref(phone))}" style="color:#4f46e5">${escapeHtml(phone)}</a>`)
           : ""
       }
       ${
         chatUrl
-          ? row("Групп чат", `<a href="${escapeHtml(chatUrl)}" style="color:#4f46e5;font-weight:600">${escapeHtml(chatLabel)}</a>`)
+          ? row(e.groupChat, `<a href="${escapeHtml(chatUrl)}" style="color:#4f46e5;font-weight:600">${escapeHtml(chatLabel)}</a>`)
           : ""
       }
     </table>
@@ -84,23 +122,23 @@ function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventConta
         ? `<p style="margin:16px 0 0;color:#334155;white-space:pre-line">${escapeHtml(event.description)}</p>`
         : ""
     }
-    <p style="margin:24px 0 0"><a href="${eventUrl}" style="background:#4f46e5;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600">Эвентийг харах</a></p>`;
+    <p style="margin:24px 0 0"><a href="${eventUrl}" style="background:#4f46e5;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600">${e.viewEvent}</a></p>`;
 
   const text = [
-    `Хэзээ: ${time}`,
-    `Хаана: ${event.place_name}${mapsUrl ? ` (${mapsUrl})` : ""}`,
-    `Зохион байгуулагч: ${event.host_name}`,
-    ...(phone ? [`Утас: ${phone}`] : []),
-    ...(chatUrl ? [`Групп чат${chatName ? ` (${chatName})` : ""}: ${chatUrl}`] : []),
+    `${e.when}: ${time}`,
+    `${e.where}: ${event.place_name}${mapsUrl ? ` (${mapsUrl})` : ""}`,
+    `${e.host}: ${event.host_name}`,
+    ...(phone ? [`${e.phone}: ${phone}`] : []),
+    ...(chatUrl ? [`${e.groupChat}${chatName ? ` (${chatName})` : ""}: ${chatUrl}`] : []),
     event.description ? `\n${event.description}` : "",
-    `\nЭвентийг харах: ${eventUrl}`,
+    `\n${e.viewEvent}: ${eventUrl}`,
   ].join("\n");
 
   return { html, text };
 }
 
-function layout(heading: string, intro: string, body: string) {
-  return `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+function layout(locale: Locale, heading: string, intro: string, body: string) {
+  return `<div lang="${locale}" style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px">
     <p style="margin:0 0 4px;color:#4f46e5;font-weight:700">StudySpots UB</p>
     <h1 style="margin:0 0 8px;font-size:20px;color:#0f172a">${heading}</h1>
     <p style="margin:0 0 16px;color:#334155">${intro}</p>
@@ -113,30 +151,36 @@ export function confirmationEmail(
   name: string,
   eventsUrl: string,
   willRemind: boolean,
-  contacts: EventContacts = {}
+  contacts: EventContacts = {},
+  locale: Locale = "mn"
 ) {
-  const details = eventDetails(event, eventsUrl, contacts);
-  const title = escapeHtml(event.title);
-  const intro = `Та энэ эвентэд ирнэ гэж бүртгүүллээ.${
-    willRemind ? " Эхлэхээс 1 цагийн өмнө сануулга илгээнэ." : ""
-  }`;
+  const e = EMAIL_TEXT[locale];
+  const details = eventDetails(event, eventsUrl, contacts, locale);
+  const intro = willRemind ? `${e.registered} ${e.willRemind}` : e.registered;
   return {
-    subject: `Бүртгэгдлээ: ${event.title}`,
-    html: layout(title, `Сайн байна уу, ${escapeHtml(name)}! ${intro}`, details.html),
-    text: `${event.title}\n\nСайн байна уу, ${name}! ${intro}\n\n${details.text}`,
+    subject: e.confirmSubject(event.title),
+    html: layout(locale, escapeHtml(event.title), `${e.greeting(escapeHtml(name))} ${intro}`, details.html),
+    text: `${event.title}\n\n${e.greeting(name)} ${intro}\n\n${details.text}`,
   };
 }
 
-export function reminderEmail(event: StudyEvent, name: string, eventsUrl: string, contacts: EventContacts = {}) {
-  const details = eventDetails(event, eventsUrl, contacts);
-  const title = escapeHtml(event.title);
+export function reminderEmail(
+  event: StudyEvent,
+  name: string,
+  eventsUrl: string,
+  contacts: EventContacts = {},
+  locale: Locale = "mn"
+) {
+  const e = EMAIL_TEXT[locale];
+  const details = eventDetails(event, eventsUrl, contacts, locale);
   return {
-    subject: `1 цагийн дараа: ${event.title}`,
+    subject: e.reminderSubject(event.title),
     html: layout(
-      `${title} удахгүй эхэлнэ`,
-      `Сайн байна уу, ${escapeHtml(name)}! Таны бүртгүүлсэн эвент 1 цагийн дараа эхэлнэ.`,
+      locale,
+      e.reminderHeading(escapeHtml(event.title)),
+      `${e.greeting(escapeHtml(name))} ${e.reminderIntro}`,
       details.html
     ),
-    text: `${event.title} удахгүй эхэлнэ\n\nСайн байна уу, ${name}! Таны бүртгүүлсэн эвент 1 цагийн дараа эхэлнэ.\n\n${details.text}`,
+    text: `${e.reminderHeading(event.title)}\n\n${e.greeting(name)} ${e.reminderIntro}\n\n${details.text}`,
   };
 }

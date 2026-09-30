@@ -27,6 +27,7 @@ import { formatDistance, useUserLocation } from "@/lib/geo";
 import { StudySpot } from "@/types";
 import { useI18n } from "@/components/LanguageProvider";
 import { BusynessMeter } from "@/components/BusynessBadge";
+import PopularTimes from "@/components/PopularTimes";
 
 // Газрын цонхонд: одоогийн ачаалал + "Би энд байна" товч → 1–5 шатлалаар үнэлэх.
 // Хэрэглэгч 30 минутын дотор дахин дарвал шинэ тэмдэглэл биш, өөрийнхөө сүүлийнхийг засна.
@@ -235,6 +236,10 @@ export default function BusynessPanel({
           )}
         </div>
       ) : null}
+
+      <div className="border-t border-slate-800 pt-3">
+        <PopularTimes spotId={spotId} />
+      </div>
     </section>
   );
 }

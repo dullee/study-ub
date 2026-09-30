@@ -4,7 +4,7 @@ const WEEKDAYS = ["Ням", "Дав", "Мяг", "Лха", "Пүр", "Баа", "�
 
 // Хөтчүүд mn-MN locale-ийг тогтвортой дэмждэггүй тул монголыг гараар форматлана; англи нь Intl-ээр.
 // timeZone өгөөгүй бол хөтчийн цагийн бүсээр; сервер (UTC) дээр "Asia/Ulaanbaatar" өгнө.
-// Имэйл (lib/email.ts) монгол хэвээр — locale өгөхгүй.
+// Имэйл (lib/email.ts) хүлээн авагчийн хэлээр — locale-ийг бүртгэлээс авна.
 export function formatEventTime(iso: string, timeZone?: string, locale: Locale = "mn") {
   if (locale === "en") {
     return new Intl.DateTimeFormat("en-US", {

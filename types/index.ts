@@ -150,6 +150,8 @@ export interface EventAttendee {
   created_at: string;
   user_id: string | null;
   reminder_sent_at?: string | null;
+  // Бүртгүүлэх үеийн сайтын хэл — имэйлийг тэр хэлээр (20260930000006_attendee_locale.sql).
+  locale?: "mn" | "en";
 }
 
 // Clerk хэрэглэгчийн харагдах нэр.

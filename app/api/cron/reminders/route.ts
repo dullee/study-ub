@@ -81,10 +81,13 @@ export async function GET(request: NextRequest) {
     try {
       await sendEmail(
         to,
-        reminderEmail(event, attendee.name, eventsUrl, {
-          chatUrl: chatByEvent.get(event.id),
-          phone: phoneByEvent.get(event.id),
-        })
+        reminderEmail(
+          event,
+          attendee.name,
+          eventsUrl,
+          { chatUrl: chatByEvent.get(event.id), phone: phoneByEvent.get(event.id) },
+          attendee.locale ?? "mn"
+        )
       );
       sent++;
     } catch (error) {

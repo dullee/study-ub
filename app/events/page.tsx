@@ -60,7 +60,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
   const { user, isLoaded: authReady } = useUser();
   const { openSignIn } = useClerk();
@@ -203,7 +203,8 @@ export default function EventsPage() {
 
   const addAttendee = async (eventId: number): Promise<EventAttendee | JoinError> => {
     if (!user) return "failed";
-    const draft = { event_id: eventId, name: displayName(user), user_id: user.id };
+    // Хэлийг хадгална — баталгаажуулах, сануулах имэйл тэр хэлээр ирнэ.
+    const draft = { event_id: eventId, name: displayName(user), user_id: user.id, locale };
     let saved: EventAttendee | JoinError;
     if (usingRemote) {
       saved = await insertAttendee(draft);

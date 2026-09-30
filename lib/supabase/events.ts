@@ -65,11 +65,14 @@ export async function insertAttendee(
   attendee: Omit<EventAttendee, "id" | "created_at">
 ): Promise<EventAttendee | JoinError> {
   if (!supabaseAuthed) return "failed";
-  const { data, error } = await supabaseAuthed
-    .from("event_attendees")
-    .insert(attendee)
-    .select("*")
-    .single();
+  const insert = (row: typeof attendee) => supabaseAuthed!.from("event_attendees").insert(row).select("*").single();
+  let { data, error } = await insert(attendee);
+  // locale багана (20260930000006) хараахан үүсээгүй бол бүртгэлийг хэлгүйгээр хийнэ — имэйл монголоор.
+  if (error?.code === "PGRST204" && error.message.includes("locale")) {
+    const { locale: _unused, ...withoutLocale } = attendee;
+    void _unused;
+    ({ data, error } = await insert(withoutLocale));
+  }
   if (error) {
     console.error("Supabase insert attendee:", error.message);
     if (error.message.includes("event_full")) return "event_full";

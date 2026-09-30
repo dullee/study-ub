@@ -1,5 +1,5 @@
 import { supabase, supabaseAuthed } from "@/lib/supabase/client";
-import { BusynessLevel, CHECKIN_WINDOW_MINUTES, SpotCheckin } from "@/lib/busyness";
+import { BusynessLevel, CHECKIN_WINDOW_MINUTES, PATTERN_WEEKS, PatternCell, SpotCheckin } from "@/lib/busyness";
 
 // spotId өгөөгүй бол бүх газрын сүүлийн 90 минутын тэмдэглэл (нүүр хуудасны карт, газрын зурагт).
 export async function fetchRecentCheckins(spotId?: number): Promise<SpotCheckin[] | null> {
@@ -85,4 +85,15 @@ export function subscribeCheckins(onChange: (change: CheckinChange) => void, spo
 export function applyCheckinChange(list: SpotCheckin[], change: CheckinChange): SpotCheckin[] {
   if (change.type === "delete") return list.filter((item) => item.id !== change.id);
   return [change.checkin, ...list.filter((item) => item.id !== change.checkin.id)];
+}
+
+// "Ихэвчлэн хэр дүүрэн" график: гараг, цаг тус бүрийн дундаж (өгөгдлийн сан нэгтгэнэ).
+export async function fetchBusynessPattern(spotId: number): Promise<PatternCell[] | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.rpc("spot_busyness_pattern", { p_spot_id: spotId, p_weeks: PATTERN_WEEKS });
+  if (error) {
+    console.error("Supabase busyness pattern:", error.message);
+    return null;
+  }
+  return (data as PatternCell[]).map((cell) => ({ ...cell, avg_level: Number(cell.avg_level) }));
 }

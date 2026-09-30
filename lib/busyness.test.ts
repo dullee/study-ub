@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   BusynessLevel,
+  busynessPattern,
   checkinProximity,
+  nearestLevel,
   recentOwnCheckin,
   SpotCheckin,
   summarizeAllBusyness,
   summarizeBusyness,
+  ubWeekdayHour,
 } from "@/lib/busyness";
 
 const NOW = Date.UTC(2026, 8, 30, 6, 0);
@@ -91,5 +94,49 @@ describe("checkinProximity", () => {
 
   it("reports the distance in kilometres", () => {
     expect(checkinProximity(spot, north(1000), 10).distanceKm).toBeCloseTo(1, 2);
+  });
+});
+
+describe("ubWeekdayHour", () => {
+  it("converts to Ulaanbaatar time (UTC+8), Monday = 0", () => {
+    // 2026-09-28 is a Monday. 23:30 UTC Sunday = 07:30 Monday in Ulaanbaatar.
+    expect(ubWeekdayHour(Date.UTC(2026, 8, 27, 23, 30))).toEqual({ weekday: 0, hour: 7 });
+    // 16:00 UTC Sunday = 00:00 Monday in Ulaanbaatar (the day boundary).
+    expect(ubWeekdayHour(Date.UTC(2026, 8, 27, 16, 0))).toEqual({ weekday: 0, hour: 0 });
+    expect(ubWeekdayHour(Date.UTC(2026, 8, 27, 15, 59))).toEqual({ weekday: 6, hour: 23 });
+  });
+});
+
+describe("busynessPattern", () => {
+  // NOW = Wednesday 2026-09-30 14:00 in Ulaanbaatar.
+  const at = (daysAgo: number, ubHour: number, level: BusynessLevel): SpotCheckin => ({
+    id: nextId++,
+    spot_id: 1,
+    user_id: "u",
+    level,
+    created_at: new Date(Date.UTC(2026, 8, 30 - daysAgo, ubHour - 8, 15)).toISOString(),
+  });
+
+  it("averages reports by weekday and hour", () => {
+    const cells = busynessPattern([at(7, 10, 2), at(14, 10, 4), at(14, 10, 3), at(0, 11, 5)], NOW);
+    expect(cells).toContainEqual({ weekday: 2, hour: 10, avg_level: 3, reports: 3 });
+    expect(cells).toContainEqual({ weekday: 2, hour: 11, avg_level: 5, reports: 1 });
+    expect(cells).toHaveLength(2);
+  });
+
+  it("only uses the last 8 weeks and never the future", () => {
+    expect(busynessPattern([at(57, 10, 3), at(-1, 10, 3)], NOW)).toEqual([]);
+    expect(busynessPattern([at(55, 10, 3)], NOW)).toHaveLength(1);
+  });
+
+  it("rounds the average to 2 decimals", () => {
+    const [cell] = busynessPattern([at(1, 9, 1), at(8, 9, 1), at(15, 9, 2)], NOW);
+    expect(cell.avg_level).toBe(1.33);
+  });
+
+  it("maps averages to the nearest level", () => {
+    expect(nearestLevel(1.33)).toBe(1);
+    expect(nearestLevel(2.5)).toBe(3);
+    expect(nearestLevel(4.8)).toBe(5);
   });
 });
