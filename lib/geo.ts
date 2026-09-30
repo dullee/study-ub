@@ -32,25 +32,54 @@ export function formatDistance(km: number, t: Pick<Dictionary, "meters" | "kilom
 
 const ERRORS: Record<number, GeoError> = { 1: "geoDenied", 2: "geoUnavailable", 3: "geoTimeout" };
 
+// Сүүлийн байршлыг 5 минут хадгална — хуудсаа дахин ачаалахад GPS хүлээхгүй.
+// Зөвхөн энэ хөтөчид үлдэнэ; хугацаа нь дууссаныг уншихдаа устгана.
+const LOCATION_CACHE_KEY = "studyspots_ub_location";
+const LOCATION_CACHE_MS = 5 * 60 * 1000;
+type CachedLocation = { coords: LatLng; accuracy: number; at: number };
+
+function readCachedLocation(): CachedLocation | null {
+  try {
+    const cached = JSON.parse(localStorage.getItem(LOCATION_CACHE_KEY) || "null") as CachedLocation | null;
+    if (cached && Date.now() - cached.at < LOCATION_CACHE_MS) return cached;
+    localStorage.removeItem(LOCATION_CACHE_KEY);
+  } catch {}
+  return null;
+}
+
+function writeCachedLocation(location: CachedLocation) {
+  try {
+    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(location));
+  } catch {}
+}
+
 // Хэрэглэгч товч дарсны дараа л байршил асууна — хуудас нээгдэхэд зөвшөөрөл нэхэхгүй.
+// 5 минутаас шинэ хадгалсан байршил байвал шууд түүнийг ашиглана; fresh: true бол заавал шинээр тодорхойлж,
+// хадгалсныг шинэчилнэ ("Миний байршил" товч, "Дахин шалгах").
 export function useUserLocation() {
   const [state, setState] = useState<UserLocationState>({ status: "idle" });
 
-  const locate = useCallback(() => {
+  const locate = useCallback((options?: { fresh?: boolean }) => {
+    if (!options?.fresh) {
+      const cached = readCachedLocation();
+      if (cached) {
+        setState({ status: "ready", coords: cached.coords, accuracy: cached.accuracy });
+        return;
+      }
+    }
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setState({ status: "error", error: "geoUnsupported" });
       return;
     }
     setState({ status: "locating" });
     navigator.geolocation.getCurrentPosition(
-      (position) =>
-        setState({
-          status: "ready",
-          coords: { lat: position.coords.latitude, lng: position.coords.longitude },
-          accuracy: position.coords.accuracy,
-        }),
+      (position) => {
+        const coords = { lat: position.coords.latitude, lng: position.coords.longitude };
+        writeCachedLocation({ coords, accuracy: position.coords.accuracy, at: Date.now() });
+        setState({ status: "ready", coords, accuracy: position.coords.accuracy });
+      },
       (error) => setState({ status: "error", error: ERRORS[error.code] ?? "geoUnavailable" }),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: options?.fresh ? 0 : 60000 }
     );
   }, []);
 

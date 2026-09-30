@@ -1,5 +1,6 @@
 import { initialSpots } from "@/data/initialSpots";
 import { EventAttendee, Review, StudyEvent, StudySpot, normalizeTags } from "@/types";
+import { SpotCheckin } from "@/lib/busyness";
 
 // v2: data/initialSpots.ts 18 бодит газар — хуучин demo cache-ийг алгасна.
 const SPOTS_KEY = "studyspots_ub_v2";
@@ -141,4 +142,38 @@ export function removeLocalEvent(id: number) {
   );
   saveLocalChatLink(id, null);
   saveLocalEventPhone(id, null);
+}
+
+// "Би энд байна" тэмдэглэлүүд (Supabase тохируулаагүй үед).
+const CHECKINS_KEY = "studyspots_ub_checkins";
+
+export function loadLocalCheckins(): SpotCheckin[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const all = JSON.parse(localStorage.getItem(CHECKINS_KEY) || "[]") as SpotCheckin[];
+    return all.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  } catch {
+    return [];
+  }
+}
+
+export function checkinsForSpot(spotId: number): SpotCheckin[] {
+  return loadLocalCheckins().filter((checkin) => checkin.spot_id === spotId);
+}
+
+// id, created_at байхгүй бол шинэ тэмдэглэл үүсгэнэ; байвал түүнийг солино.
+export function saveLocalCheckin(
+  draft: SpotCheckin | Omit<SpotCheckin, "id" | "created_at">
+): SpotCheckin {
+  const checkin: SpotCheckin =
+    "id" in draft ? draft : { ...draft, id: Date.now(), created_at: new Date().toISOString() };
+  let all: SpotCheckin[] = [];
+  try {
+    all = JSON.parse(localStorage.getItem(CHECKINS_KEY) || "[]") as SpotCheckin[];
+  } catch {}
+  // Нэг өдрөөс хуучныг хаяна — localStorage дүүрэхгүй.
+  const cutoff = new Date(Date.now() - 86_400_000).toISOString();
+  const rest = all.filter((item) => item.id !== checkin.id && item.created_at > cutoff);
+  localStorage.setItem(CHECKINS_KEY, JSON.stringify([checkin, ...rest]));
+  return checkin;
 }

@@ -141,6 +141,27 @@ const mn = {
   scrollToBottom: "Доош очих",
   scrollToTop: "Дээш буцах",
 
+  // Одоогийн ачаалал ("Би энд байна")
+  busynessHeading: "👥 Одоо хэр дүүрэн бэ?",
+  busynessNoData: "Сүүлийн 90 минутад мэдээлэл алга. Энд байгаа бол эхэлж мэдээлээрэй!",
+  busynessDetail: (count: number, minutes: number) =>
+    `${count} хүний мэдээлэл · ${minutes < 1 ? "дөнгөж сая" : `${minutes} мин өмнө`}`,
+  imHereButton: "📍 Би энд байна",
+  howBusyPrompt: "Одоо хэр дүүрэн байна?",
+  checkinThanks: "Баярлалаа! Таны мэдээлэл бусдад тусална.",
+  checkinUpdated: "Мэдээлэл шинэчлэгдлээ.",
+  checkinFailed: "Хадгалагдсангүй. Дахин оролдоно уу.",
+  checkinTooSoon: "Та саяхан мэдээлэл өгсөн байна. Хэсэг хүлээгээд дахин оролдоно уу.",
+  signInToCheckin: "Нэвтэрч байж мэдээлэл өгнө.",
+  yourCheckin: (label: string) => `Таны мэдээлэл: ${label} · өөрчлөх`,
+  checkinCancel: "Болих",
+  checkingLocation: "📍 Та энд байгаа эсэхийг шалгаж байна...",
+  tooFarToCheckin: (distance: string, radius: number) =>
+    `Та энэ газраас ${distance} зайтай байна. Зөвхөн ${radius} м дотор байхдаа мэдээлэл өгнө.`,
+  locationImprecise: (accuracy: string) =>
+    `Таны байршлын нарийвчлал ±${accuracy}. Утсаараа, GPS-ээ асаагаад дахин оролдоно уу.`,
+  checkAgain: "Дахин шалгах",
+
   // Сэтгэгдэл
   reviewSaveFailed: "Сэтгэгдэл хадгалагдсангүй. Дахин оролдоно уу.",
   alreadyReviewed: "Та энэ газарт сэтгэгдэл үлдээсэн байна — дээрээс нь засаарай.",
@@ -491,6 +512,27 @@ const en: Dictionary = {
   showOnMapButton: "Show on map 🎯",
   scrollToBottom: "Go to bottom",
   scrollToTop: "Back to top",
+
+  // Current busyness ("I'm here")
+  busynessHeading: "👥 How busy is it now?",
+  busynessNoData: "No reports in the last 90 minutes. If you're here, be the first!",
+  busynessDetail: (count, minutes) =>
+    `${count} ${count === 1 ? "report" : "reports"} · ${minutes < 1 ? "just now" : `${minutes} min ago`}`,
+  imHereButton: "📍 I'm here",
+  howBusyPrompt: "How busy is it right now?",
+  checkinThanks: "Thanks! Your report helps others.",
+  checkinUpdated: "Report updated.",
+  checkinFailed: "Couldn't save. Please try again.",
+  checkinTooSoon: "You reported here recently. Please wait a bit and try again.",
+  signInToCheckin: "Sign in to report.",
+  yourCheckin: (label) => `Your report: ${label} · change`,
+  checkinCancel: "Cancel",
+  checkingLocation: "📍 Checking that you're here...",
+  tooFarToCheckin: (distance, radius) =>
+    `You're ${distance} away from this place. You can only report within ${radius} m.`,
+  locationImprecise: (accuracy) =>
+    `Your location is only accurate to ±${accuracy}. Try again on your phone with GPS on.`,
+  checkAgain: "Check again",
 
   reviewSaveFailed: "Couldn't save your review. Please try again.",
   alreadyReviewed: "You've already reviewed this place — edit your review above.",

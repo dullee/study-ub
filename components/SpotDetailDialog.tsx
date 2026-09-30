@@ -21,6 +21,8 @@ import { openStatus, STATUS_TONE, useNow } from "@/lib/openHours";
 import { formatOutlets, formatQuiet, formatWifi, summarizeSpot } from "@/lib/scores";
 import { recentReviewCounts } from "@/lib/popular";
 import PopularBadge from "@/components/PopularBadge";
+import BusynessPanel from "@/components/BusynessPanel";
+import { SpotCheckin } from "@/lib/busyness";
 import ReviewsDialog, { ReviewItem } from "@/components/ReviewsDialog";
 import { MediaStrip, MediaViewer } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
@@ -30,6 +32,7 @@ interface SpotDetailDialogProps {
   onClose: () => void;
   onShowOnMap: (lat: number, lng: number) => void;
   onReviewAdded?: (review: Review) => void;
+  onCheckin?: (checkin: SpotCheckin) => void;
 }
 
 export default function SpotDetailDialog({
@@ -37,6 +40,7 @@ export default function SpotDetailDialog({
   onClose,
   onShowOnMap,
   onReviewAdded,
+  onCheckin,
 }: SpotDetailDialogProps) {
   const { t, locale } = useI18n();
   const now = useNow();
@@ -288,6 +292,8 @@ export default function SpotDetailDialog({
 
         {/* Гүйлгэх боломжтой үед доор зай үлдээнэ — үсрэх товч сүүлийн товчнуудыг халхлахгүй. */}
         <div className={`px-5 sm:px-6 pt-1 space-y-6 ${scroll.scrollable ? "pb-24" : "pb-5 sm:pb-6"}`}>
+          <BusynessPanel spot={spot} onCheckin={onCheckin} />
+
           {gallery.length > 1 || (spot.media?.length ?? 0) > 0 ? (
             <section className="space-y-2">
               <h3 className="text-xs font-semibold text-slate-400">

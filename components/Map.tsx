@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 import { googleMapsUrl, StudySpot } from "@/types";
 import { LatLng } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
+import { BusynessLevel, busynessInfo, BusynessSummary } from "@/lib/busyness";
 
 interface MapProps {
   spots: StudySpot[];
@@ -15,6 +16,9 @@ interface MapProps {
   focusCoords: [number, number] | null;
   // Жагсаалтад хулганаар заасан газар — газрын зураг тэр рүү очиж, тэмдгийг тодруулна.
   highlightedId: number | null;
+  // Одоогийн ачаалал — тэмдгийн дээр өнгөт цэг, popup-д мөр.
+  busyness: Record<number, BusynessSummary>;
+  now: number | null;
   onOpenDetails: (spot: StudySpot) => void;
   // Хэрэглэгчийн байршил ба зайн шүүлтүүр (км) — тэмдэг, радиусын тойрог зурна.
   userCoords: LatLng | null;
@@ -77,18 +81,40 @@ const ICON_OPTIONS: L.IconOptions = {
   iconAnchor: [12, 41],
 };
 
+type MarkerVariant = "normal" | "dimmed" | "highlight";
+
+// Ачааллын мэдээлэлтэй газрын тэмдэг: ижил зүү + баруун дээд буланд өнгөт цэг.
+// divIcon сүүдэр дэмжихгүй тул зүүнд CSS drop-shadow.
+function busyIcon(level: BusynessLevel, variant: MarkerVariant) {
+  const [w, h] = variant === "highlight" ? [36, 59] : [25, 41];
+  const dot = variant === "highlight" ? 15 : 12;
+  return L.divIcon({
+    html:
+      `<div style="position:relative;width:${w}px;height:${h}px">` +
+      `<img src="${ICON_OPTIONS.iconRetinaUrl}" alt="" style="width:100%;height:100%;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))" />` +
+      `<span style="position:absolute;top:-4px;right:-6px;width:${dot}px;height:${dot}px;border-radius:9999px;` +
+      `background:${busynessInfo(level).color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)"></span>` +
+      `</div>`,
+    className: variant === "dimmed" ? "grayscale opacity-50" : variant === "highlight" ? "drop-shadow-lg" : "busy-marker",
+    iconSize: [w, h],
+    iconAnchor: [Math.round(w / 2), h],
+  });
+}
+
 export default function Map({
   spots,
   dimmedIds,
   focusCoords,
   highlightedId,
+  busyness,
+  now,
   onOpenDetails,
   userCoords,
   radiusKm,
   fullscreen,
   onToggleFullscreen,
 }: MapProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const customIcon = useMemo(() => L.icon(ICON_OPTIONS), []);
   const dimmedIcon = useMemo(() => L.icon({ ...ICON_OPTIONS, className: "grayscale opacity-50" }), []);
   // Тодруулсан тэмдэг: том, бусдын өмнө.
@@ -96,6 +122,11 @@ export default function Map({
     () => L.icon({ ...ICON_OPTIONS, iconSize: [36, 59], iconAnchor: [18, 59], className: "drop-shadow-lg" }),
     []
   );
+  // 5 түвшин × 3 хувилбар — тэмдэг бүрт шинээр үүсгэхгүй.
+  const busyIcons = useMemo(() => {
+    const cache: Record<string, L.DivIcon> = {};
+    return (level: BusynessLevel, variant: MarkerVariant) => (cache[`${level}:${variant}`] ??= busyIcon(level, variant));
+  }, []);
   const highlightedSpot = useMemo(
     () => spots.find((spot) => spot.id === highlightedId) ?? null,
     [spots, highlightedId]
@@ -164,11 +195,22 @@ export default function Map({
         {spots.map((spot) => {
           const dimmed = dimmedIds.has(spot.id);
           const highlighted = spot.id === highlightedId;
+          const busy = busyness[spot.id];
+          const variant: MarkerVariant = highlighted ? "highlight" : dimmed ? "dimmed" : "normal";
+          const busyInfo = busy ? busynessInfo(busy.level) : null;
           return (
             <Marker
               key={spot.id}
               position={[spot.lat, spot.lng]}
-              icon={highlighted ? highlightIcon : dimmed ? dimmedIcon : customIcon}
+              icon={
+                busy
+                  ? busyIcons(busy.level, variant)
+                  : highlighted
+                    ? highlightIcon
+                    : dimmed
+                      ? dimmedIcon
+                      : customIcon
+              }
               zIndexOffset={highlighted ? 2000 : dimmed ? -1000 : 0}
             >
               {highlighted ? (
@@ -184,6 +226,17 @@ export default function Map({
                   <br />
                   ⏰ {spot.hours}
                   <br />
+                  {busy && busyInfo && now !== null ? (
+                    <>
+                      <span style={{ color: busyInfo.color }} className="font-semibold">
+                        ● {busyInfo.label[locale]}
+                      </span>{" "}
+                      <span className="text-slate-500">
+                        · {t.busynessDetail(busy.count, Math.max(0, Math.round((now - Date.parse(busy.latestAt)) / 60_000)))}
+                      </span>
+                      <br />
+                    </>
+                  ) : null}
                   {dimmed ? (
                     <>
                       <span className="text-slate-500">{t.outsideDistance}</span>

@@ -15,7 +15,9 @@ import { fetchReviewScores, fetchSpots, insertSpot } from "@/lib/supabase/spots"
 import { notifySubmissionsChanged } from "@/lib/useMySubmissions";
 import { toast } from "sonner";
 import { ReviewScores, summarizeSpots } from "@/lib/scores";
-import { loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
+import { loadLocalCheckins, loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
+import { applyCheckinChange, fetchRecentCheckins, subscribeCheckins } from "@/lib/supabase/checkins";
+import { SpotCheckin, summarizeAllBusyness } from "@/lib/busyness";
 import { sortByActiveTags } from "@/lib/spotSort";
 import { recentReviewCounts } from "@/lib/popular";
 import { openStatus, useNow } from "@/lib/openHours";
@@ -66,6 +68,28 @@ export default function Home() {
     };
   }, []);
 
+  // "Би энд байна" тэмдэглэлүүд (сүүлийн 90 минут) — карт, газрын зурагт одоогийн ачаалал.
+  // Бусдын шинэ мэдээлэл Realtime-аар шууд ирнэ. Эхний ачаалал дуусахаас өмнө ирсэн нь алга болохгүй.
+  const [checkins, setCheckins] = useState<SpotCheckin[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    const unsubscribe = subscribeCheckins((change) => setCheckins((prev) => applyCheckinChange(prev, change)));
+    async function loadCheckins() {
+      const remote = isSupabaseConfigured ? await fetchRecentCheckins() : null;
+      if (cancelled) return;
+      const loaded = remote ?? loadLocalCheckins();
+      setCheckins((prev) => [...prev.filter((item) => !loaded.some((l) => l.id === item.id)), ...loaded]);
+    }
+    loadCheckins();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+  const handleCheckin = useCallback((checkin: SpotCheckin) => {
+    setCheckins((prev) => [checkin, ...prev.filter((item) => item.id !== checkin.id)]);
+  }, []);
+
   const handleReviewAdded = useCallback((review: Review) => {
     setReviewScores((prev) => [...(prev ?? []).filter((item) => item.id !== review.id), review]);
   }, []);
@@ -77,6 +101,8 @@ export default function Home() {
     () => (now === null ? {} : recentReviewCounts(reviewScores ?? [], now)),
     [reviewScores, now]
   );
+  // Минут тутам дахин тооцно — 90 минутаас хуучирсан мэдээлэл өөрөө алга болно.
+  const busyness = useMemo(() => (now === null ? {} : summarizeAllBusyness(checkins, now)), [checkins, now]);
   const summaries = useMemo(
     () => summarizeSpots(spots, reviewScores ?? []),
     [spots, reviewScores]
@@ -266,7 +292,8 @@ export default function Home() {
           activeTags={activeTags}
           toggleTag={toggleTag}
           location={location}
-          onLocate={locate}
+          // "Миний байршил" үргэлж шинээр тодорхойлж, хадгалсан байршлыг шинэчилнэ ("Би энд байна" түүнийг ашиглана).
+          onLocate={() => locate({ fresh: true })}
           onClearLocation={handleClearLocation}
           maxDistanceKm={maxDistanceKm}
           setMaxDistanceKm={setMaxDistanceKm}
@@ -289,6 +316,8 @@ export default function Home() {
               dimmedIds={outOfRangeIds}
               focusCoords={focusCoords}
               highlightedId={hoveredSpotId}
+              busyness={busyness}
+              now={now}
               onOpenDetails={setDetailSpot}
               userCoords={userCoords}
               radiusKm={maxDistanceKm}
@@ -335,6 +364,7 @@ export default function Home() {
                     ratingsLoading={reviewScores === null}
                     distanceKm={distances?.[spot.id]}
                     recentReviews={recentCounts[spot.id]}
+                    busyness={busyness[spot.id]}
                     onHover={handleHover}
                   />
                 ))}
@@ -354,6 +384,7 @@ export default function Home() {
           onClose={closeDetails}
           onShowOnMap={handleFocus}
           onReviewAdded={handleReviewAdded}
+          onCheckin={handleCheckin}
         />
       ) : null}
     </div>

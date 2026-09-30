@@ -8,6 +8,8 @@ import { formatWifi, levelLabel, SpotSummary } from "@/lib/scores";
 import { formatDistance } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
 import PopularBadge from "@/components/PopularBadge";
+import BusynessBadge from "@/components/BusynessBadge";
+import { BusynessSummary } from "@/lib/busyness";
 
 interface SpotCardProps {
   spot: StudySpot;
@@ -20,6 +22,8 @@ interface SpotCardProps {
   distanceKm?: number;
   // Сүүлийн долоо хоногийн сэтгэгдлийн тоо — хангалттай бол "🔥 Эрэлттэй".
   recentReviews?: number;
+  // Сүүлийн 90 минутын "Би энд байна" мэдээллээс тооцсон одоогийн ачаалал.
+  busyness?: BusynessSummary;
   // Хулганаар заах / гараар сонгоход газрын зураг дээр тодруулна; null — болих.
   onHover?: (spot: StudySpot | null) => void;
 }
@@ -40,6 +44,7 @@ export default function SpotCard({
   ratingsLoading,
   distanceKm,
   recentReviews,
+  busyness,
   onHover,
 }: SpotCardProps) {
   const { t, locale } = useI18n();
@@ -79,6 +84,7 @@ export default function SpotCard({
       <div className="relative z-10 pointer-events-none flex justify-between items-start gap-2 p-2 text-[11px] font-semibold">
         <div className="flex flex-wrap items-center gap-1.5">
           <PopularBadge recentCount={recentReviews} />
+          <BusynessBadge summary={busyness} now={now} />
           {distanceKm !== undefined ? (
             <span className="bg-slate-900/85 backdrop-blur px-2 py-0.5 rounded-md border border-slate-700 text-indigo-300">
               🚶 {formatDistance(distanceKm, t)}
