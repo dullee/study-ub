@@ -62,6 +62,8 @@ export default function SpotCard({
 
   return (
     <article
+      // Утсан дээр гүйлгэхэд аль карт голд байгааг page.tsx эндээс таньна.
+      data-spot-id={spot.id}
       // Зөвхөн хулгана (мэдрэгч дэлгэцэнд hover байхгүй) болон гарын focus.
       onPointerEnter={(e) => {
         if (e.pointerType === "mouse") onHover?.(spot);

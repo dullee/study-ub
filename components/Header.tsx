@@ -39,7 +39,7 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
   return (
     <header
       ref={headerRef}
-      className="border-b border-slate-800 bg-slate-900/90 backdrop-blur relative lg:sticky lg:top-0 z-[1000]"
+      className="border-b border-slate-800 bg-slate-900 relative lg:sticky lg:top-0 z-[1000]"
     >
       <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">

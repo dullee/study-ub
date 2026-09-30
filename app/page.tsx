@@ -276,6 +276,49 @@ export default function Home() {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
   }, []);
 
+  // Утсан дээр hover байхгүй: газрын зургийн доорх харагдах хэсэгт хамгийн их харагдаж буй картыг (тэнцвэл голд ойрыг)
+  // "заасан" гэж үзэж, газрын зураг тэр газар руу очно. Хуудасны дээд хэсэгт идэвхгүй — нээхэд эхний карт руу ойртохгүй.
+  const cardListRef = useRef<HTMLDivElement>(null);
+  const focusedCardId = useRef<number | null>(null);
+  useEffect(() => {
+    if (mapFullscreen) return;
+    const mobile = window.matchMedia("(max-width: 1023.98px)");
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const list = cardListRef.current;
+      if (!mobile.matches || !list) return;
+      let bestId: number | null = null;
+      if (window.scrollY > 24) {
+        const top = mapWrapperRef.current?.getBoundingClientRect().bottom ?? 0;
+        const bottom = window.innerHeight;
+        const middle = (top + bottom) / 2;
+        let best = { visible: 0, distance: Infinity };
+        for (const card of list.querySelectorAll<HTMLElement>("[data-spot-id]")) {
+          const rect = card.getBoundingClientRect();
+          const visible = Math.min(rect.bottom, bottom) - Math.max(rect.top, top);
+          if (visible <= 0) continue;
+          const distance = Math.abs((rect.top + rect.bottom) / 2 - middle);
+          if (visible > best.visible + 1 || (visible >= best.visible - 1 && distance < best.distance)) {
+            best = { visible, distance };
+            bestId = Number(card.dataset.spotId);
+          }
+        }
+      }
+      if (bestId === focusedCardId.current) return;
+      focusedCardId.current = bestId;
+      handleHover(filteredSpots.find((spot) => spot.id === bestId) ?? null);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, [filteredSpots, handleHover, mapFullscreen]);
+
   const handleFocus = (lat: number, lng: number) => {
     setFocusCoords([lat, lng]);
     mapWrapperRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -301,14 +344,15 @@ export default function Home() {
           setFilters={setFilters}
           onClearAll={clearAllFilters}
         />
-        {/* Том дэлгэцэнд: зүүн талд картууд нэг баганаар, баруун талд header + шүүлтүүрийн доор наалдсан том газрын зураг. Утсан дээр: зураг дээр, жагсаалт доор. */}
+        {/* Том дэлгэцэнд: зүүн талд картууд нэг баганаар, баруун талд header + шүүлтүүрийн доор наалдсан том газрын зураг.
+            Утсан дээр: зураг шүүлтүүрийн доор наалдаж, картууд түүний доогуур гүйлгэгдэнэ (дэвсгэр өнгө нь доогуур гарах картыг халхална). */}
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_1fr] gap-3 lg:gap-0 items-start">
           <div
             ref={mapWrapperRef}
             className={
               mapFullscreen
                 ? "fixed inset-0 z-[1100] h-[100dvh] w-full"
-                : "order-1 lg:order-2 h-[42dvh] min-h-[240px] max-h-[380px] lg:max-h-none lg:min-h-0 lg:sticky lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
+                : "order-1 lg:order-2 sticky top-[calc(var(--filters-h,64px)-1px)] z-20 bg-slate-900 pb-2 h-[34dvh] min-h-[200px] max-h-[320px] lg:pb-0 lg:bg-transparent lg:max-h-none lg:min-h-0 lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
             }
           >
             <Map
@@ -327,7 +371,7 @@ export default function Home() {
           </div>
           <section aria-label={t.placesHeading} className="order-2 lg:order-1 space-y-2">
             {spotsLoading ? (
-              <div className="flex flex-col gap-1" aria-busy="true">
+              <div className="flex flex-col" aria-busy="true">
                 {[0, 1, 2].map((i) => (
                   <div
                     key={i}
@@ -354,7 +398,7 @@ export default function Home() {
                 ) : null}
               </div>
             ) : (
-              <div className="flex flex-col gap-1">
+              <div ref={cardListRef} className="flex flex-col">
                 {filteredSpots.map((spot) => (
                   <SpotCard
                     key={spot.id}
