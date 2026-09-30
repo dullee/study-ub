@@ -3,7 +3,7 @@
 import { ChangeEvent, useRef, useState } from "react";
 import { SpotMedia } from "@/types";
 import { isCloudinaryConfigured, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, uploadMedia } from "@/lib/cloudinary";
-import { isInstagramStory, isShortSocialLink, parseSocialLink } from "@/lib/socialMedia";
+import { isFacebookPostPermalink, isInstagramStory, isShortSocialLink, parseSocialLink } from "@/lib/socialMedia";
 import { MediaThumb } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
 
@@ -85,7 +85,8 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
     }
     // Утаснаас хуваалцсан богино холбоос (vt.tiktok.com, fb.watch, instagram.com/share/…) — сервер дээр жинхэнэ холбоос руу нь.
     const wasShort = isShortSocialLink(trimmed);
-    if (wasShort) {
+    // Facebook story.php пост — reel бол бичлэгийн хаягийг нь олохыг оролдоно; бүтэхгүй бол постоор нь нэмнэ.
+    if (wasShort || isFacebookPostPermalink(trimmed)) {
       setResolving(true);
       try {
         const res = await fetch(`/api/media/resolve?url=${encodeURIComponent(trimmed)}`, {

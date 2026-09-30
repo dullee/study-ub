@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractCanonicalUrl, isShortSocialLink, parseSocialLink } from "@/lib/socialMedia";
+import {
+  extractCanonicalUrl,
+  findFacebookVideoUrl,
+  isFacebookPostPermalink,
+  isShortSocialLink,
+  parseSocialLink,
+} from "@/lib/socialMedia";
 
 const MAX_REDIRECTS = 5;
 
@@ -16,13 +22,24 @@ const PREVIEW_BOT_UA = "facebookexternalhit/1.1 (+http://www.facebook.com/extern
 const MAX_HTML = 400_000;
 
 // Redirect-уудыг дагана; redirect алга бол хуудасны og:url / canonical-аас хайна.
+// Facebook-ийн story.php (пост) дээр ирвэл хуудаснаас reel/видеоны хаягийг хайж, олдвол түүнийг илүүд үзнэ.
 // url — олдсон жинхэнэ холбоос; unreachable — платформ руу холбогдож чадсангүй (дахин оролдох утгагүй).
 type FollowResult = { url: string | null; unreachable?: boolean };
 
+const isPostOnly = (href: string) => {
+  const parsed = parseSocialLink(href);
+  return parsed?.platform === "facebook" && parsed.shape === "post";
+};
+
 async function follow(link: string, userAgent: string): Promise<FollowResult> {
   let current = new URL(link.trim());
+  // Бичлэг олдохгүй бол буцаах пост хаяг.
+  let postFallback: string | null = null;
   for (let hop = 0; hop < MAX_REDIRECTS; hop++) {
-    if (parseSocialLink(current.href)) return { url: current.href };
+    if (parseSocialLink(current.href)) {
+      if (!isPostOnly(current.href)) return { url: current.href };
+      postFallback ??= current.href;
+    }
     let res: Response;
     try {
       res = await fetch(current, {
@@ -31,22 +48,27 @@ async function follow(link: string, userAgent: string): Promise<FollowResult> {
         headers: { "user-agent": userAgent, "accept-language": "en-US,en;q=0.9", accept: "text/html" },
       });
     } catch {
-      return { url: null, unreachable: hop === 0 };
+      return { url: postFallback, unreachable: hop === 0 && !postFallback };
     }
     const location = res.headers.get("location");
     if (!location) {
-      if (!res.ok || !(res.headers.get("content-type") ?? "").includes("html")) return { url: null };
+      if (!res.ok || !(res.headers.get("content-type") ?? "").includes("html")) return { url: postFallback };
       const html = (await res.text()).slice(0, MAX_HTML);
+      const video = findFacebookVideoUrl(html);
+      if (video) return { url: video };
       const canonical = extractCanonicalUrl(html);
-      if (!canonical) return { url: null };
+      if (!canonical) return { url: postFallback };
       try {
         const found = new URL(canonical, current);
         const ok = found.protocol === "https:" && isAllowedHost(found.hostname) && parseSocialLink(found.href);
-        return { url: ok ? found.href : null };
+        return { url: ok ? found.href : postFallback };
       } catch {
-        return { url: null };
+        return { url: postFallback };
       }
     }
+    // Redirect хаяг өөрөө reel/видеоны ID агуулж болно.
+    const hinted = findFacebookVideoUrl(location);
+    if (hinted) return { url: hinted };
     let next = new URL(location, current);
     // Нэвтрэх хуудас руу шилжүүлбэл жинхэнэ хаяг нь ?next= параметрт байна.
     const target = next.searchParams.get("next");
@@ -54,25 +76,26 @@ async function follow(link: string, userAgent: string): Promise<FollowResult> {
       try {
         next = new URL(target, next);
       } catch {
-        return { url: null };
+        return { url: postFallback };
       }
     }
-    if (next.protocol !== "https:" || !isAllowedHost(next.hostname)) return { url: null };
+    if (next.protocol !== "https:" || !isAllowedHost(next.hostname)) return { url: postFallback };
     current = next;
   }
-  return { url: parseSocialLink(current.href) ? current.href : null };
+  return { url: parseSocialLink(current.href) ? current.href : postFallback };
 }
 
-// vt.tiktok.com, fb.watch, facebook.com/share/…, instagram.com/share/… богино холбоос хөтчөөс CORS-оор хаагддаг тул
-// сервер дээр жинхэнэ холбоосыг олно: эхлээд хөтөч мэт, бүтэхгүй бол preview bot мэт.
 export async function GET(request: NextRequest) {
   const link = request.nextUrl.searchParams.get("url") ?? "";
-  if (!isShortSocialLink(link)) {
+  // Богино share холбоос эсвэл Facebook-ийн пост хаяг (story.php — reel бол бичлэгийг нь олно).
+  if (!isShortSocialLink(link) && !isFacebookPostPermalink(link)) {
     return NextResponse.json({ error: "not-a-short-link" }, { status: 400 });
   }
   const first = await follow(link, BROWSER_UA);
-  // Холбогдож чадаагүй бол bot-оор дахин оролдох утгагүй — хэрэглэгчийг хүлээлгэхгүй.
-  const url = first.url ?? (first.unreachable ? null : (await follow(link, PREVIEW_BOT_UA)).url);
+  // Бичлэг олдсон бол шууд; зөвхөн пост олдсон эсвэл юу ч олдоогүй бол bot-оор дахин (холбогдож чадсан бол).
+  let url = first.url && !isPostOnly(first.url) ? first.url : null;
+  if (!url && !first.unreachable) url = (await follow(link, PREVIEW_BOT_UA)).url;
+  url ??= first.url;
   if (url) return NextResponse.json({ url });
   return NextResponse.json({ error: "unresolved" }, { status: 422 });
 }

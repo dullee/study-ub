@@ -50,6 +50,39 @@ export function isInstagramStory(value: string) {
 
 const host = (url: URL) => url.hostname.toLowerCase().replace(/^(www|m|mobile)\./, "");
 
+function safeDecode(text: string) {
+  try {
+    return decodeURIComponent(text.replace(/\+/g, " "));
+  } catch {
+    return text;
+  }
+}
+
+// Facebook холбоос, хуудас дотор (параметр, share_url, JSON-ийн "\/" хүртэл) reel / видеоны ID байвал
+// түүний жинхэнэ хаягийг буцаана — reel-ийг пост биш бичлэгийн embed-ээр тоглуулахын тулд.
+export function findFacebookVideoUrl(text: string): string | null {
+  const decoded = safeDecode(safeDecode(text)).replace(/\\\//g, "/");
+  const reel = /facebook\.com\/reel\/(\d{6,})/.exec(decoded)?.[1];
+  if (reel) return `https://www.facebook.com/reel/${reel}/`;
+  const video = /facebook\.com\/(?:[\w.-]+\/)?videos\/(?:[\w.-]+\/)?(\d{6,})/.exec(decoded)?.[1];
+  if (video) return `https://www.facebook.com/watch/?v=${video}`;
+  return null;
+}
+
+// Facebook-ийн ерөнхий пост хаяг (story.php, permalink.php). Reel бол ийм хаягаас бичлэгийг нь олж болно.
+export function isFacebookPostPermalink(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return (
+      /(^|\.)facebook\.com$/i.test(url.hostname) &&
+      /^\/(story|permalink)\.php/.test(url.pathname) &&
+      !findFacebookVideoUrl(url.href)
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function parseSocialLink(value: string): SocialEmbed | null {
   let url: URL;
   try {
@@ -109,6 +142,9 @@ export function parseSocialLink(value: string): SocialEmbed | null {
   // эхлээд /api/media/resolve-оор жинхэнэ хаяг руу нь дагана (isShortSocialLink).
   if (h === "facebook.com" || h === "fb.com") {
     if (path.startsWith("/share/")) return null;
+    // Хаягийн аль нэг хэсэгт reel/видеоны ID байвал (ж: story.php…&share_url=…/reel/123) бичлэгээр нь.
+    const inner = findFacebookVideoUrl(url.href);
+    if (inner && !/^\/(reel|watch)\b|\/videos\//.test(path)) return parseSocialLink(inner);
     const isVideo = /\/videos\/|\/watch|\/reel\//.test(path) || url.searchParams.has("v");
     const isPost = /\/posts\/|\/permalink\.php|\/photo|\/story\.php/.test(path) || url.searchParams.has("story_fbid");
     if (!isVideo && !isPost) return null;

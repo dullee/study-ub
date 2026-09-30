@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { SpotMedia } from "@/types";
 import { videoPoster } from "@/lib/cloudinary";
-import { isShortSocialLink, parseSocialLink, PLATFORM_INFO, SocialPlatform } from "@/lib/socialMedia";
+import { isFacebookPostPermalink, isShortSocialLink, parseSocialLink, PLATFORM_INFO, SocialPlatform } from "@/lib/socialMedia";
 import { useI18n } from "@/components/LanguageProvider";
 
 // Жижиг зураг: зураг, бичлэгийн эхний кадр, эсвэл сошиал холбоосын зураг (YouTube) / платформын өнгөт хавтан.
@@ -176,7 +176,8 @@ function SocialEmbedFrame({ url, platform }: { url: string; platform?: SocialPla
   const { t } = useI18n();
   // Хуучнаар хадгалсан share холбоос (facebook.com/share/…, fb.watch гэх мэт) — сервер дээр жинхэнэ холбоос руу нь
   // хөрвүүлж тоглуулна. undefined — хөрвүүлж байна, null — чадсангүй.
-  const needsResolve = !parseSocialLink(url) && isShortSocialLink(url);
+  // Facebook story.php (пост) хаягийг ч — reel бол бичлэгээр нь тоглуулахын тулд — шалгуулна.
+  const needsResolve = (!parseSocialLink(url) && isShortSocialLink(url)) || isFacebookPostPermalink(url);
   const [resolved, setResolved] = useState<string | null | undefined>(needsResolve ? undefined : null);
   useEffect(() => {
     if (!needsResolve) return;
