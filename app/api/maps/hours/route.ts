@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { distanceKm } from "@/lib/distance";
 import { osmHoursToText } from "@/lib/osmHours";
+import { guardMapsRequest } from "@/lib/rateLimit";
 
 // Google Maps холбоосны координат (ба нэр)-оос OpenStreetMap дээрх ажлын цагийг хайна — газар нэмэх цонхны "Цагийн хуваарь".
 // Түлхүүр шаардахгүй. Хямдаас нь эхэлж гурван аргаар оролдоно:
@@ -103,6 +104,8 @@ async function overpassNearby(point: Point, name: string): Promise<Found | null>
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function GET(request: NextRequest) {
+  const blocked = await guardMapsRequest(request, { usesOpenStreetMap: true });
+  if (blocked) return blocked;
   const params = request.nextUrl.searchParams;
   const point = { lat: Number(params.get("lat")), lng: Number(params.get("lng")) };
   if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng) || Math.abs(point.lat) > 90 || Math.abs(point.lng) > 180) {

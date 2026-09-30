@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LIMITS } from "@/lib/limits";
+import { guardMapsRequest } from "@/lib/rateLimit";
 
 // Координатаас богино хаяг (гудамж, хороолол, дүүрэг) — газар нэмэх цонхны "Байршил"-ийг бөглөнө.
 // OpenStreetMap Nominatim: түлхүүр шаардахгүй, газрын зураг ч OSM. Бодлогын дагуу апп-аа User-Agent-аар танилцуулж,
@@ -19,6 +20,8 @@ function shortAddress(address: NominatimAddress): string {
 }
 
 export async function GET(request: NextRequest) {
+  const blocked = await guardMapsRequest(request, { usesOpenStreetMap: true });
+  if (blocked) return blocked;
   const params = request.nextUrl.searchParams;
   const lat = Number(params.get("lat"));
   const lng = Number(params.get("lng"));

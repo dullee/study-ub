@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isShortMapsLink, parseMapsLink } from "@/lib/maps";
+import { guardMapsRequest } from "@/lib/rateLimit";
 
 const MAX_REDIRECTS = 5;
 
@@ -15,6 +16,8 @@ function isGoogleHost(hostname: string) {
 
 // maps.app.goo.gl богино холбоос хөтчөөс CORS-оор хаагддаг тул сервер дээр redirect-ийг дагаж координат авна.
 export async function GET(request: NextRequest) {
+  const blocked = await guardMapsRequest(request, { usesOpenStreetMap: false });
+  if (blocked) return blocked;
   const link = request.nextUrl.searchParams.get("url") ?? "";
   if (!isShortMapsLink(link)) {
     return NextResponse.json({ error: "not-a-short-link" }, { status: 400 });
