@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { LIMITS } from "@/lib/limits";
-import { ChangeEvent, FormEvent, ReactNode, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { UserButton, useAuth } from "@clerk/nextjs";
 import {
   ACCESSIBILITY,
@@ -99,6 +99,8 @@ export default function AdminPanel() {
   const [events, setEvents] = useState<StudyEvent[]>([]);
   const [attendees, setAttendees] = useState<EventAttendee[]>([]);
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
+  // Нээлттэй засварын маягтад хадгалаагүй өөрчлөлт бий эсэх (AdminDialog гарахаас өмнө асууна).
+  const [editDirty, setEditDirty] = useState(false);
   // Зохион байгуулагчдын утас: event_id → дугаар (админ бүгдийг харна).
   const [phones, setPhones] = useState<Record<number, string>>({});
   const [eventError, setEventError] = useState("");
@@ -233,6 +235,7 @@ export default function AdminPanel() {
       setSpots(next);
       saveLocalSpots(next);
     }
+    setEditDirty(false);
     setEditingSpotId(null);
     return true;
   };
@@ -302,6 +305,7 @@ export default function AdminPanel() {
         return next;
       });
     }
+    setEditDirty(false);
     setEditingEventId(null);
     return true;
   };
@@ -370,6 +374,14 @@ export default function AdminPanel() {
   const returnEventToReview = async (event: StudyEvent) => {
     await persistEvent({ ...event, status: "pending" });
   };
+
+  // Сэтгэгдлийн засвар: хадгалагдсан хувилбараас өөрчлөгдсөн эсэх.
+  const originalReview = editingReview ? reviews.find((item) => item.id === editingReview.id) : undefined;
+  const reviewDirty =
+    Boolean(editingReview && originalReview) &&
+    (["rating", "comment", "wifi_mbps", "quiet_rating", "outlet_rating"] as const).some(
+      (key) => (editingReview?.[key] ?? null) !== (originalReview?.[key] ?? null)
+    );
 
   const spotName = (id: number) => spots.find((spot) => spot.id === id)?.name ?? `#${id}`;
   const editingSpot = editingSpotId === null ? null : spots.find((spot) => spot.id === editingSpotId) ?? null;
@@ -757,13 +769,35 @@ export default function AdminPanel() {
         )}
       </div>
       {editingSpot ? (
-        <AdminDialog title={t.editPlace} onClose={() => setEditingSpotId(null)}>
-          <SpotEditForm key={editingSpot.id} spot={editingSpot} onSave={saveSpot} onCancel={() => setEditingSpotId(null)} />
+        <AdminDialog
+          title={t.editPlace}
+          onClose={() => {
+            setEditDirty(false);
+            setEditingSpotId(null);
+          }}
+          dirty={editDirty}
+          formId="admin-spot-form"
+        >
+          {(requestClose) => (
+            <SpotEditForm
+              key={editingSpot.id}
+              spot={editingSpot}
+              onSave={saveSpot}
+              onCancel={requestClose}
+              onDirtyChange={setEditDirty}
+            />
+          )}
         </AdminDialog>
       ) : null}
       {editingReview ? (
-        <AdminDialog title={t.editReview} onClose={() => setEditingReview(null)}>
-          <form onSubmit={saveReview} className="space-y-3 text-xs">
+        <AdminDialog
+          title={t.editReview}
+          onClose={() => setEditingReview(null)}
+          dirty={reviewDirty}
+          formId="admin-review-form"
+        >
+          {(requestClose) => (
+          <form id="admin-review-form" onSubmit={saveReview} className="space-y-3 text-xs">
             <p className="text-indigo-300">
               {spotName(editingReview.spot_id)}
               <span className="text-slate-400"> · {editingReview.author_name ?? t.guest}</span>
@@ -779,20 +813,32 @@ export default function AdminPanel() {
             </label>
             <div className="flex flex-wrap gap-2">
               <button className={`${btn} bg-indigo-600 hover:bg-indigo-500 text-white`}>{t.save}</button>
-              <button type="button" onClick={() => setEditingReview(null)} className={btnNeutral}>{t.cancel}</button>
+              <button type="button" onClick={requestClose} className={btnNeutral}>{t.cancel}</button>
             </div>
           </form>
+          )}
         </AdminDialog>
       ) : null}
       {editingEvent ? (
-        <AdminDialog title={t.editEvent} onClose={() => setEditingEventId(null)}>
-          <EventEditForm
-            key={editingEvent.id}
-            event={editingEvent}
-            remote={remote}
-            onSave={saveEvent}
-            onCancel={() => setEditingEventId(null)}
-          />
+        <AdminDialog
+          title={t.editEvent}
+          onClose={() => {
+            setEditDirty(false);
+            setEditingEventId(null);
+          }}
+          dirty={editDirty}
+          formId="admin-event-form"
+        >
+          {(requestClose) => (
+            <EventEditForm
+              key={editingEvent.id}
+              event={editingEvent}
+              remote={remote}
+              onSave={saveEvent}
+              onCancel={requestClose}
+              onDirtyChange={setEditDirty}
+            />
+          )}
         </AdminDialog>
       ) : null}
       {confirmDialog}
@@ -801,11 +847,35 @@ export default function AdminPanel() {
 }
 
 // Засах маягтын цонх: гарчиг, ✕ нь дээрээ наалдана; Esc, гадна дарахад хаагдана. Утсан дээр бүтэн дэлгэц.
-function AdminDialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+// Засварын цонх. dirty үед (✕, гадна дарах, Esc, "Болих") гарахаас өмнө "Хадгалах уу?" гэж асууна:
+// Хадгалах — маягтыг (formId) ердийнхөөр илгээнэ (алдаа гарвал цонх хаагдахгүй), Хаях — хаана, Үргэлжлүүлэх — буцна.
+function AdminDialog({
+  title,
+  onClose,
+  dirty = false,
+  formId,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  dirty?: boolean;
+  formId?: string;
+  children: ReactNode | ((requestClose: () => void) => ReactNode);
+}) {
   const { t } = useI18n();
+  const [asking, setAsking] = useState(false);
+
+  const requestClose = useCallback(() => {
+    if (dirty) setAsking(true);
+    else onClose();
+  }, [dirty, onClose]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // Асуулт нээлттэй бол Esc нь зөвхөн асуултыг хаана (засвартаа буцна).
+      if (asking) setAsking(false);
+      else requestClose();
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -814,13 +884,27 @@ function AdminDialog({ title, onClose, children }: { title: string; onClose: () 
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [onClose]);
+  }, [asking, requestClose]);
+
+  // Хадгалаагүй үед хуудсыг шинэчлэх, хаах гэвэл хөтөч ч анхааруулна.
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  const saveAndClose = () => {
+    setAsking(false);
+    const form = formId ? (document.getElementById(formId) as HTMLFormElement | null) : null;
+    form?.requestSubmit();
+  };
 
   return (
     <div
       className="fixed inset-0 z-[1200] bg-slate-950/80 backdrop-blur-sm flex items-stretch sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) requestClose();
       }}
     >
       <div
@@ -832,17 +916,93 @@ function AdminDialog({ title, onClose, children }: { title: string; onClose: () 
         <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 mb-4 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-3">
           <h2 id="admin-dialog-title" className="font-bold text-white">
             {title}
+            {dirty ? (
+              <span className="ml-2 align-middle text-[10px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                {t.unsavedBadge}
+              </span>
+            ) : null}
           </h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label={t.close}
             className="h-9 w-9 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
           >
             ✕
           </button>
         </div>
-        {children}
+        {typeof children === "function" ? children(requestClose) : children}
+      </div>
+      {asking ? <UnsavedChangesDialog onSave={saveAndClose} onDiscard={onClose} onKeepEditing={() => setAsking(false)} /> : null}
+    </div>
+  );
+}
+
+function UnsavedChangesDialog({
+  onSave,
+  onDiscard,
+  onKeepEditing,
+}: {
+  onSave: () => void;
+  onDiscard: () => void;
+  onKeepEditing: () => void;
+}) {
+  const { t } = useI18n();
+  const keepRef = useRef<HTMLButtonElement>(null);
+  // Эхний focus "Үргэлжлүүлэх" дээр — Enter санамсаргүй дарахад юу ч алдагдахгүй.
+  useEffect(() => keepRef.current?.focus(), []);
+  return (
+    <div
+      className="fixed inset-0 z-[1300] bg-slate-950/70 flex items-center justify-center p-4"
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (e.target === e.currentTarget) onKeepEditing();
+      }}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="unsaved-title"
+        aria-describedby="unsaved-message"
+        className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 space-y-4"
+      >
+        <div className="flex gap-3">
+          <span aria-hidden="true" className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-lg bg-amber-500/15 text-amber-300">
+            ✎
+          </span>
+          <div className="space-y-1">
+            <h2 id="unsaved-title" className="font-semibold text-white">
+              {t.unsavedTitle}
+            </h2>
+            <p id="unsaved-message" className="text-sm text-slate-400">
+              {t.unsavedMessage}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={onDiscard}
+            className="mr-auto px-4 py-2 rounded-lg text-sm font-semibold text-rose-300 hover:text-white hover:bg-rose-600/80"
+          >
+            {t.discardChanges}
+          </button>
+          <button
+            ref={keepRef}
+            type="button"
+            onClick={onKeepEditing}
+            className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-semibold text-slate-100"
+          >
+            {t.keepEditing}
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm font-semibold text-white"
+          >
+            {t.save}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -857,6 +1017,7 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
   // Нэмэлт зураг, бичлэгийг хянах: товч дарахад жагсаалт, жижиг зураг дарахад бүтэн дэлгэцээр (бичлэг тоглоно).
   const media = spot.media ?? [];
   const videoCount = media.filter((item) => item.type === "video").length;
+  const linkCount = media.filter((item) => item.type === "social").length;
   const [mediaShown, setMediaShown] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   return (
@@ -901,7 +1062,7 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
                   : "bg-violet-500/10 border-violet-500/50 text-violet-300 hover:bg-violet-500/20"
               }`}
             >
-              🎞 {t.mediaSummary(media.length - videoCount, videoCount)}
+              🎞 {t.mediaSummary(media.length - videoCount - linkCount, videoCount, linkCount)}
             </button>
           ) : null}
         </div>
@@ -941,10 +1102,12 @@ function SpotEditForm({
   spot,
   onSave,
   onCancel,
+  onDirtyChange,
 }: {
   spot: StudySpot;
   onSave: (spot: StudySpot) => Promise<boolean>;
   onCancel: () => void;
+  onDirtyChange: (dirty: boolean) => void;
 }) {
   const { t, locale } = useI18n();
   const [draft, setDraft] = useState(spot);
@@ -955,6 +1118,11 @@ function SpotEditForm({
   const [saving, setSaving] = useState(false);
   const [mediaUploading, setMediaUploading] = useState(false);
   const [error, setError] = useState("");
+
+  const dirty =
+    imageFile !== null || tagsText !== spot.tags.join(", ") || JSON.stringify(draft) !== JSON.stringify(spot);
+  // useLayoutEffect: бичсэн даруйдаа Esc дарсан ч өөрчлөлт мэдэгдсэн байна.
+  useLayoutEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
 
   useEffect(() => {
     return () => {
@@ -1020,7 +1188,7 @@ function SpotEditForm({
   const shownImage = preview || (hasPhoto(draft.image) ? draft.image : "");
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+    <form id="admin-spot-form" onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
       <input className={inputClass} required placeholder={t.namePlaceholder} value={draft.name} maxLength={LIMITS.spotName} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
       <input className={inputClass} required placeholder={t.locationPlaceholderShort} value={draft.location} maxLength={LIMITS.spotLocation} onChange={(e) => setDraft({ ...draft, location: e.target.value })} />
       <input className={inputClass} placeholder={t.openingHours} value={draft.hours} maxLength={LIMITS.spotHours} onChange={(e) => setDraft({ ...draft, hours: e.target.value })} />
@@ -1140,25 +1308,31 @@ type EventExtras = {
 };
 
 // Админы эвент засах маягт: үндсэн мэдээлэл, групп чатын холбоос, зохион байгуулагчийн утас.
-function EventEditForm({
-  event,
-  remote,
-  onSave,
-  onCancel,
-}: {
-  event: StudyEvent;
-  remote: boolean;
-  onSave: (event: StudyEvent, extras: EventExtras) => Promise<boolean>;
-  onCancel: () => void;
-}) {
-  const { t } = useI18n();
-  const [draft, setDraft] = useState({
+function eventDraft(event: StudyEvent) {
+  return {
     title: event.title,
     place_name: event.place_name,
     startsAt: toLocalInput(event.starts_at),
     maxPeople: event.max_people === null ? "" : String(event.max_people),
     description: event.description,
-  });
+  };
+}
+
+function EventEditForm({
+  event,
+  remote,
+  onSave,
+  onCancel,
+  onDirtyChange,
+}: {
+  event: StudyEvent;
+  remote: boolean;
+  onSave: (event: StudyEvent, extras: EventExtras) => Promise<boolean>;
+  onCancel: () => void;
+  onDirtyChange: (dirty: boolean) => void;
+}) {
+  const { t } = useI18n();
+  const [draft, setDraft] = useState(() => eventDraft(event));
   // undefined — ачаалж байна; холбоосыг ачаалсны дараа л засварлана.
   const [originalChat, setOriginalChat] = useState<string | null | undefined>(undefined);
   const [chatUrl, setChatUrl] = useState("");
@@ -1166,6 +1340,13 @@ function EventEditForm({
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const dirty =
+    JSON.stringify(draft) !== JSON.stringify(eventDraft(event)) ||
+    (originalChat !== undefined && chatUrl.trim() !== (originalChat ?? "")) ||
+    (originalPhone !== undefined && phone.trim() !== (originalPhone ?? ""));
+  // useLayoutEffect: бичсэн даруйдаа Esc дарсан ч өөрчлөлт мэдэгдсэн байна.
+  useLayoutEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1222,7 +1403,7 @@ function EventEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+    <form id="admin-event-form" onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
       <label className="space-y-1 sm:col-span-2">
         <span className="block text-slate-400">{t.eventTitle}</span>
         <input className={inputClass} required value={draft.title} maxLength={LIMITS.eventTitle} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />

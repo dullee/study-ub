@@ -11,7 +11,6 @@ import PopularBadge from "@/components/PopularBadge";
 
 interface SpotCardProps {
   spot: StudySpot;
-  onFocus: (lat: number, lng: number) => void;
   onOpenDetails: (spot: StudySpot) => void;
   // Газар нэмэгч + сэтгэгдлүүдээс нэгтгэсэн оноо (lib/scores.ts).
   summary: SpotSummary | undefined;
@@ -36,7 +35,6 @@ const iconButtonClass =
 // (backdrop-blur шинэ stacking context үүсгэдэг тул товчны өөрийн z-index хангалтгүй.)
 export default function SpotCard({
   spot,
-  onFocus,
   onOpenDetails,
   summary,
   ratingsLoading,
@@ -145,15 +143,6 @@ export default function SpotCard({
             ) : null}
           </div>
           <div className="flex flex-col gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => onFocus(spot.lat, spot.lng)}
-              aria-label={t.showOnMapFor(spot.name)}
-              title={t.showOnMap}
-              className={iconButtonClass}
-            >
-              🎯
-            </button>
             <a
               href={googleMapsUrl(spot)}
               target="_blank"

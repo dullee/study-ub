@@ -1,39 +1,68 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SpotMedia } from "@/types";
 import { videoPoster } from "@/lib/cloudinary";
+import { isShortSocialLink, parseSocialLink, PLATFORM_INFO, SocialPlatform } from "@/lib/socialMedia";
 import { useI18n } from "@/components/LanguageProvider";
+
+// Жижиг зураг: зураг, бичлэгийн эхний кадр, эсвэл сошиал холбоосын зураг (YouTube) / платформын өнгөт хавтан.
+export function MediaThumb({ item }: { item: SpotMedia }) {
+  const { t } = useI18n();
+  if (item.type === "social") {
+    const embed = parseSocialLink(item.url);
+    // Хуучин/таньж чадаагүй холбоос (ж: Facebook /share/…) — хадгалсан платформын өнгө, нэрээр.
+    const platform = embed?.platform ?? item.platform;
+    const info = platform ? PLATFORM_INFO[platform] : null;
+    return (
+      <span className={`relative flex h-full w-full items-center justify-center ${info?.tile ?? "bg-slate-800"}`}>
+        {embed?.thumbnail ? (
+          <img src={embed.thumbnail} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          <span aria-hidden="true" className="text-2xl text-white font-bold">
+            {info?.icon ?? "🔗"}
+          </span>
+        )}
+        <span className="absolute bottom-1 left-1 text-[10px] font-semibold bg-slate-950/80 text-white px-1.5 rounded">
+          {info?.name ?? t.video}
+        </span>
+      </span>
+    );
+  }
+  const poster = item.type === "video" ? videoPoster(item.url) : item.url;
+  return (
+    <>
+      {poster ? (
+        <img src={poster} alt="" loading="lazy" className="h-full w-full object-cover" />
+      ) : (
+        <video src={item.url} preload="metadata" muted className="h-full w-full object-cover" />
+      )}
+      {item.type === "video" ? (
+        <span className="absolute inset-0 flex items-center justify-center bg-slate-950/30">
+          <span className="h-9 w-9 rounded-full bg-slate-950/70 text-white flex items-center justify-center text-sm">▶</span>
+        </span>
+      ) : null}
+    </>
+  );
+}
 
 // Газрын цонхны "Зураг, бичлэг" мөр: хэвтээ гүйлгэх жижиг зургууд; дарахад томоор нээнэ.
 export function MediaStrip({ items, onOpen }: { items: SpotMedia[]; onOpen: (index: number) => void }) {
   const { t } = useI18n();
   return (
     <ul className="flex gap-2 overflow-x-auto pb-1 snap-x">
-      {items.map((item, index) => {
-        const poster = item.type === "video" ? videoPoster(item.url) : item.url;
-        return (
-          <li key={`${item.url}-${index}`} className="shrink-0 snap-start">
-            <button
-              type="button"
-              onClick={() => onOpen(index)}
-              aria-label={t.viewMedia(index + 1, items.length)}
-              className="relative block h-24 w-32 sm:h-28 sm:w-40 rounded-xl overflow-hidden border border-slate-700 hover:border-indigo-400 bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-            >
-              {poster ? (
-                <img src={poster} alt="" loading="lazy" className="h-full w-full object-cover" />
-              ) : (
-                <video src={item.url} preload="metadata" muted className="h-full w-full object-cover" />
-              )}
-              {item.type === "video" ? (
-                <span className="absolute inset-0 flex items-center justify-center bg-slate-950/30">
-                  <span className="h-9 w-9 rounded-full bg-slate-950/70 text-white flex items-center justify-center text-sm">▶</span>
-                </span>
-              ) : null}
-            </button>
-          </li>
-        );
-      })}
+      {items.map((item, index) => (
+        <li key={`${item.url}-${index}`} className="shrink-0 snap-start">
+          <button
+            type="button"
+            onClick={() => onOpen(index)}
+            aria-label={t.viewMedia(index + 1, items.length)}
+            className="relative block h-24 w-32 sm:h-28 sm:w-40 rounded-xl overflow-hidden border border-slate-700 hover:border-indigo-400 bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            <MediaThumb item={item} />
+          </button>
+        </li>
+      ))}
     </ul>
   );
 }
@@ -93,7 +122,9 @@ export function MediaViewer({
       </button>
 
       <div className="max-h-[85dvh] max-w-[92vw] flex items-center justify-center">
-        {item.type === "video" ? (
+        {item.type === "social" ? (
+          <SocialEmbedFrame key={item.url} url={item.url} platform={item.platform} />
+        ) : item.type === "video" ? (
           <video
             key={item.url}
             src={item.url}
@@ -128,6 +159,81 @@ export function MediaViewer({
           </button>
         </>
       ) : null}
+    </div>
+  );
+}
+
+// Сошиал пост/бичлэгийг платформын албан ёсны embed-ээр. Хаалттай пост, хязгаарлалттай бичлэг embed-д гарахгүй
+// байж болох тул доор нь эх холбоосыг үргэлж өгнө.
+// Ачаалж байх үед (эсвэл платформ хаасан үед) тунгалаг хоосон зай биш, бараан дэвсгэр харагдана.
+const FRAME_SIZE = {
+  landscape: "w-[min(92vw,960px)] aspect-video bg-slate-900",
+  portrait: "w-[min(92vw,340px)] h-[min(78dvh,620px)] bg-slate-900",
+  post: "w-[min(92vw,540px)] h-[min(78dvh,720px)] bg-white",
+} as const;
+
+function SocialEmbedFrame({ url, platform }: { url: string; platform?: SocialPlatform }) {
+  const { t } = useI18n();
+  // Хуучнаар хадгалсан share холбоос (facebook.com/share/…, fb.watch гэх мэт) — сервер дээр жинхэнэ холбоос руу нь
+  // хөрвүүлж тоглуулна. undefined — хөрвүүлж байна, null — чадсангүй.
+  const needsResolve = !parseSocialLink(url) && isShortSocialLink(url);
+  const [resolved, setResolved] = useState<string | null | undefined>(needsResolve ? undefined : null);
+  useEffect(() => {
+    if (!needsResolve) return;
+    let cancelled = false;
+    fetch(`/api/media/resolve?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body) => {
+        if (!cancelled) setResolved(body?.url ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setResolved(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsResolve, url]);
+
+  if (resolved === undefined) {
+    return <div className="h-40 w-[min(92vw,340px)] rounded-lg bg-slate-900 animate-pulse" aria-busy="true" />;
+  }
+  const embed = parseSocialLink(resolved ?? url);
+  if (!embed) {
+    // Энд тоглуулж болохгүй холбоос (ж: хуучнаар хадгалсан share холбоос) — платформ дээр нь нээх товч.
+    const name = platform ? PLATFORM_INFO[platform].name : new URL(url).hostname.replace(/^www\./, "");
+    return (
+      <div className="max-w-sm text-center space-y-4 px-4">
+        <p className="text-sm text-slate-300">{t.embedUnavailable}</p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block text-sm font-semibold text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full"
+        >
+          {t.openOnPlatform(name)} ↗
+        </a>
+      </div>
+    );
+  }
+  const info = PLATFORM_INFO[embed.platform];
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <iframe
+        src={embed.embedUrl}
+        title={t.socialEmbedTitle(info.name)}
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write"
+        allowFullScreen
+        referrerPolicy="strict-origin-when-cross-origin"
+        className={`${FRAME_SIZE[embed.shape]} rounded-lg border-0`}
+      />
+      <a
+        href={embed.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-semibold text-slate-200 hover:text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full"
+      >
+        {t.openOnPlatform(info.name)} ↗
+      </a>
     </div>
   );
 }

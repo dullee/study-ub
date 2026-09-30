@@ -330,7 +330,6 @@ export default function Home() {
                   <SpotCard
                     key={spot.id}
                     spot={spot}
-                    onFocus={handleFocus}
                     onOpenDetails={setDetailSpot}
                     summary={summaries[spot.id]}
                     ratingsLoading={reviewScores === null}

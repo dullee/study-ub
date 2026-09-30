@@ -1,3 +1,4 @@
+import type { SocialPlatform } from "@/lib/socialMedia";
 // Зураггүй газарт харуулах ерөнхий зураг. Админ хуудас үүгээр "зураггүй" гэж танина.
 export const PLACEHOLDER_IMAGE =
   "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=600&auto=format&fit=crop";
@@ -94,7 +95,8 @@ export function googleMapsUrl(spot: Pick<StudySpot, "maps_url" | "lat" | "lng">)
   return `https://www.google.com/maps?q=${spot.lat},${spot.lng}`;
 }
 
-export type SpotMedia = { url: string; type: "image" | "video" };
+// "social" — YouTube, TikTok, Instagram, Facebook, X, Vimeo-ийн холбоос (lib/socialMedia.ts); embed-ээр тоглоно.
+export type SpotMedia = { url: string; type: "image" | "video" | "social"; platform?: SocialPlatform };
 
 export interface Review {
   id: number;

@@ -69,10 +69,14 @@ export function matchesFilters(spot: StudySpot, filters: SpotFilters, ctx: Filte
   return true;
 }
 
-// "recommended" бол өмнөх эрэмбэ (шошгын оноо, дараа нь зай) хэвээр — энд ирэхээс өмнө хийгдсэн.
+// "recommended": эрэлттэй газрууд эхэнд, дараа нь өмнөх эрэмбэ (шошгын оноо, зай — энд ирэхээс өмнө хийгдсэн).
 // Бусад нь тогтвортой эрэмбэ: тэнцвэл өмнөх дараалал хадгалагдана. Утгагүй газар хамгийн сүүлд.
 export function sortSpots(spots: StudySpot[], sort: SortKey, ctx: FilterContext) {
-  if (sort === "recommended") return spots;
+  if (sort === "recommended") {
+    // "🔥 Эрэлттэй" газрууд эхэнд; бүлэг бүрийн дотор өмнөх эрэмбэ (шошгын оноо, зай) хэвээр.
+    const popular = spots.filter((spot) => isPopular(ctx.recentCounts[spot.id]));
+    return popular.length === 0 ? spots : [...popular, ...spots.filter((spot) => !popular.includes(spot))];
+  }
   const key = (spot: StudySpot): number[] => {
     const summary = ctx.summaries[spot.id];
     const rating = summary?.rating?.value ?? -1;

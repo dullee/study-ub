@@ -1,8 +1,10 @@
 "use client";
 
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { SpotMedia } from "@/types";
-import { isCloudinaryConfigured, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, uploadMedia, videoPoster } from "@/lib/cloudinary";
+import { isCloudinaryConfigured, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, uploadMedia } from "@/lib/cloudinary";
+import { isInstagramStory, isShortSocialLink, parseSocialLink } from "@/lib/socialMedia";
+import { MediaThumb } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
 
 export const MAX_MEDIA = 30; // supabase/migrations/20260925000004_spot_media.sql-тэй тохирно.
@@ -17,12 +19,16 @@ interface MediaPickerProps {
 }
 
 // Нэмэлт зураг, бичлэг: олныг зэрэг сонгоход шууд Cloudinary руу хуулж, жижиг зургаар харуулна.
-// Cloudinary тохируулаагүй бол холбоосоор нэмнэ.
+// Холбоосоор ч нэмнэ: YouTube, TikTok, Instagram, Facebook, X, Vimeo пост/бичлэг эсвэл зураг, бичлэгийн шууд холбоос.
 export default function MediaPicker({ value, onChange, onUploadingChange }: MediaPickerProps) {
   const { t } = useI18n();
   const [uploading, setUploading] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [link, setLink] = useState("");
+  const [resolving, setResolving] = useState(false);
+  // Засаж буй холбоосын байрлал: null — шинээр нэмнэ.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const linkInputRef = useRef<HTMLInputElement>(null);
 
   const setBusy = (count: number) => {
     setUploading(count);
@@ -66,24 +72,81 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
     setBusy(0);
   };
 
-  const addLink = () => {
-    const trimmed = link.trim();
-    try {
-      const url = new URL(trimmed);
-      if (url.protocol !== "https:") throw new Error();
-      if (value.length >= MAX_MEDIA) {
-        setErrors([t.mediaLimit(MAX_MEDIA)]);
-        return;
-      }
-      onChange([...value, { url: url.href, type: VIDEO_EXT.test(url.pathname) ? "video" : "image" }]);
-      setLink("");
-      setErrors([]);
-    } catch {
-      setErrors([t.mediaUrlInvalid]);
+  const addLink = async () => {
+    let trimmed = link.trim();
+    if (!trimmed) return;
+    if (editingIndex === null && value.length >= MAX_MEDIA) {
+      setErrors([t.mediaLimit(MAX_MEDIA)]);
+      return;
     }
+    if (isInstagramStory(trimmed)) {
+      setErrors([t.mediaStoryUnsupported]);
+      return;
+    }
+    // Утаснаас хуваалцсан богино холбоос (vt.tiktok.com, fb.watch, instagram.com/share/…) — сервер дээр жинхэнэ холбоос руу нь.
+    const wasShort = isShortSocialLink(trimmed);
+    if (wasShort) {
+      setResolving(true);
+      try {
+        const res = await fetch(`/api/media/resolve?url=${encodeURIComponent(trimmed)}`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        const body = await res.json();
+        if (res.ok && body.url) trimmed = body.url;
+      } catch {
+        // Доорх шалгалт алдааг харуулна.
+      } finally {
+        setResolving(false);
+      }
+    }
+    const social = parseSocialLink(trimmed);
+    let item: SpotMedia | null = social ? { url: social.url, type: "social", platform: social.platform } : null;
+    if (!item) {
+      try {
+        const url = new URL(trimmed);
+        // Сошиал сүлжээний таньж чадаагүй холбоос (профайл, хайлт гэх мэт) зураг биш — буруу гэж үзнэ.
+        const socialHost = /(^|\.)(youtube\.com|youtu\.be|tiktok\.com|instagram\.com|facebook\.com|fb\.watch|x\.com|twitter\.com|vimeo\.com)$/i;
+        if (url.protocol === "https:" && !socialHost.test(url.hostname)) {
+          item = { url: url.href, type: VIDEO_EXT.test(url.pathname) ? "video" : "image" };
+        }
+      } catch {
+        item = null;
+      }
+    }
+    if (!item) {
+      setErrors([wasShort ? t.mediaShortLinkFailed : t.mediaUrlInvalid]);
+      return;
+    }
+    if (value.some((existing, index) => existing.url === item.url && index !== editingIndex)) {
+      setErrors([t.mediaDuplicate]);
+      return;
+    }
+    const saved = item;
+    onChange(editingIndex === null ? [...value, saved] : value.map((existing, index) => (index === editingIndex ? saved : existing)));
+    setEditingIndex(null);
+    setLink("");
+    setErrors([]);
   };
 
-  const remove = (index: number) => onChange(value.filter((_, i) => i !== index));
+  const remove = (index: number) => {
+    onChange(value.filter((_, i) => i !== index));
+    if (editingIndex !== null) cancelEdit();
+  };
+
+  // Холбоосоор нэмсэн зүйлийн холбоосыг солих (Cloudinary-д хуулсан файлыг биш).
+  const isLink = (item: SpotMedia) => item.type === "social" || !item.url.includes("res.cloudinary.com");
+  const startEdit = (index: number) => {
+    setEditingIndex(index);
+    setLink(value[index].url);
+    setErrors([]);
+    linkInputRef.current?.focus();
+    linkInputRef.current?.select();
+  };
+  const cancelEdit = () => {
+    setEditingIndex(null);
+    setLink("");
+    setErrors([]);
+  };
 
   return (
     <div className="space-y-2">
@@ -91,19 +154,19 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
         <ul className="grid grid-cols-4 sm:grid-cols-5 gap-2">
           {value.map((item, index) => (
             <li key={`${item.url}-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-slate-700 bg-slate-800">
-              {item.type === "video" ? (
-                videoPoster(item.url) ? (
-                  <img src={videoPoster(item.url)} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <video src={item.url} preload="metadata" muted className="h-full w-full object-cover" />
-                )
-              ) : (
-                <img src={item.url} alt="" className="h-full w-full object-cover" />
-              )}
-              {item.type === "video" ? (
-                <span className="absolute bottom-1 left-1 text-[10px] font-semibold bg-slate-950/80 text-white px-1.5 rounded">
-                  ▶ {t.video}
-                </span>
+              <MediaThumb item={item} />
+              {isLink(item) ? (
+                <button
+                  type="button"
+                  onClick={() => startEdit(index)}
+                  aria-label={t.editMediaLink}
+                  title={t.editMediaLink}
+                  className={`absolute top-1 left-1 h-6 w-6 rounded-full text-white text-xs ${
+                    editingIndex === index ? "bg-indigo-600" : "bg-slate-950/80 hover:bg-indigo-600"
+                  }`}
+                >
+                  ✏️
+                </button>
               ) : null}
               <button
                 type="button"
@@ -139,27 +202,38 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
             className="sr-only"
           />
         </label>
-      ) : (
-        <div className="flex gap-2">
-          <input
-            type="url"
-            inputMode="url"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addLink();
-              }
-            }}
-            placeholder={t.mediaUrlPlaceholder}
-            className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
-          />
-          <button type="button" onClick={addLink} className="shrink-0 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold">
-            {t.addLink}
+      ) : null}
+      <div className="flex gap-2">
+        <input
+          ref={linkInputRef}
+          type="url"
+          inputMode="url"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addLink();
+            }
+          }}
+          placeholder={t.mediaUrlPlaceholder}
+          aria-label={t.mediaLinkLabel}
+          className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+        />
+        <button
+          type="button"
+          onClick={addLink}
+          disabled={resolving || !link.trim()}
+          className="shrink-0 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold"
+        >
+          {resolving ? "…" : editingIndex !== null ? t.save : t.addLink}
+        </button>
+        {editingIndex !== null ? (
+          <button type="button" onClick={cancelEdit} className="shrink-0 px-3 rounded-lg bg-slate-700 text-slate-200 font-semibold">
+            {t.cancel}
           </button>
-        </div>
-      )}
+        ) : null}
+      </div>
       <p className="text-slate-500">{t.mediaHint}</p>
       {errors.map((message, index) => (
         <p key={index} className="text-rose-400">
