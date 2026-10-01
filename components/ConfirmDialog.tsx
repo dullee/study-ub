@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, TriangleAlert } from "lucide-react";
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
 type ConfirmOptions = {
@@ -12,8 +13,8 @@ type ConfirmOptions = {
 };
 
 const TONES = {
-  danger: { icon: "⚠", iconClass: "bg-rose-500/15 text-rose-400", buttonClass: "bg-rose-600 hover:bg-rose-500" },
-  approve: { icon: "✓", iconClass: "bg-emerald-500/15 text-emerald-400", buttonClass: "bg-emerald-600 hover:bg-emerald-500" },
+  danger: { icon: <TriangleAlert className="h-5 w-5" strokeWidth={2} />, iconClass: "bg-alert-soft text-danger", buttonClass: "bg-alert hover:bg-alert/90" },
+  approve: { icon: <Check className="h-5 w-5" strokeWidth={2.5} />, iconClass: "bg-ok-soft text-good", buttonClass: "bg-ok hover:bg-ok/90" },
 };
 
 type Pending = ConfirmOptions & { resolve: (confirmed: boolean) => void };
@@ -64,7 +65,7 @@ function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[1300] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[1300] bg-night/55 flex items-center justify-center p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
@@ -74,20 +75,20 @@ function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby="confirm-message"
-        className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 space-y-4"
+        className="w-full max-w-sm bg-sheet border border-line rounded-md shadow-dialog p-5 space-y-4"
       >
         <div className="flex gap-3">
           <span
             aria-hidden="true"
-            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-lg ${style.iconClass}`}
+            className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center ${style.iconClass}`}
           >
             {style.icon}
           </span>
           <div className="space-y-1">
-            <h2 id="confirm-title" className="font-semibold text-white">
+            <h2 id="confirm-title" className="font-semibold text-ink">
               {title}
             </h2>
-            <p id="confirm-message" className="text-sm text-slate-400">
+            <p id="confirm-message" className="text-sm text-ink-muted">
               {message}
             </p>
           </div>
@@ -97,14 +98,14 @@ function ConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-semibold text-slate-100"
+            className="px-4 py-2 rounded-md bg-panel hover:bg-line text-sm font-semibold text-ink"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold text-white ${style.buttonClass}`}
+            className={`px-4 py-2 rounded-md text-sm font-semibold text-white ${style.buttonClass}`}
           >
             {confirmLabel}
           </button>

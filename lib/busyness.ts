@@ -28,11 +28,11 @@ export const BUSYNESS_LEVELS: {
   color: string;
   label: Record<Locale, string>;
 }[] = [
-  { level: 1, icon: "🟢", tone: "text-emerald-300 border-emerald-500/40 bg-emerald-500/10", color: "#10b981", label: { mn: "Хоосон", en: "Empty" } },
-  { level: 2, icon: "🟢", tone: "text-lime-300 border-lime-500/40 bg-lime-500/10", color: "#84cc16", label: { mn: "Сул", en: "Quiet" } },
-  { level: 3, icon: "🟡", tone: "text-amber-300 border-amber-500/40 bg-amber-500/10", color: "#f59e0b", label: { mn: "Дунд", en: "Moderate" } },
-  { level: 4, icon: "🟠", tone: "text-orange-300 border-orange-500/40 bg-orange-500/10", color: "#f97316", label: { mn: "Их хүнтэй", en: "Busy" } },
-  { level: 5, icon: "🔴", tone: "text-rose-300 border-rose-500/40 bg-rose-500/10", color: "#f43f5e", label: { mn: "Суудал алга", en: "No seats" } },
+  { level: 1, icon: "🟢", tone: "text-white border-transparent bg-emerald-700", color: "#10b981", label: { mn: "Хоосон", en: "Empty" } },
+  { level: 2, icon: "🟢", tone: "text-night border-transparent bg-lime-400", color: "#84cc16", label: { mn: "Сул", en: "Quiet" } },
+  { level: 3, icon: "🟡", tone: "text-night border-transparent bg-amber-400", color: "#f59e0b", label: { mn: "Дунд", en: "Moderate" } },
+  { level: 4, icon: "🟠", tone: "text-white border-transparent bg-orange-700", color: "#f97316", label: { mn: "Их хүнтэй", en: "Busy" } },
+  { level: 5, icon: "🔴", tone: "text-white border-transparent bg-rose-700", color: "#f43f5e", label: { mn: "Суудал алга", en: "No seats" } },
 ];
 
 export function busynessInfo(level: BusynessLevel) {

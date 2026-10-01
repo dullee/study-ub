@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useId, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface DropdownProps {
   label: ReactNode;
@@ -60,24 +61,23 @@ export default function Dropdown({
         onClick={() => setOpen((value) => !value)}
         className={
           buttonClassName ??
-          `h-10 px-3 rounded-xl text-xs font-semibold border flex items-center gap-1.5 whitespace-nowrap transition-colors ${
+          // Тэнгэрийн туузан дээр: идэвхтэй/нээлттэй бол цагаан хуудас, эс бөгөөс цагаан хүрээ.
+          `h-10 px-3 rounded-md text-xs font-semibold border flex items-center gap-1.5 whitespace-nowrap transition-colors ${
             active || open
-              ? "bg-indigo-600 border-indigo-500 text-white"
-              : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
+              ? "bg-white border-white text-azure-deep shadow-sheet"
+              : "border-white/35 text-white hover:bg-white/15"
           }`
         }
       >
         {label}
         {hideCaret ? null : (
-          <span aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`}>
-            ▾
-          </span>
+          <ChevronDown aria-hidden="true" className={`hidden sm:block h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} strokeWidth={2.25} />
         )}
       </button>
       {open ? (
         <div
           id={panelId}
-          className={`absolute top-full mt-2 z-50 inset-x-4 sm:inset-x-auto sm:w-[22rem] max-h-[70dvh] overflow-y-auto bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 space-y-3 ${
+          className={`absolute top-full mt-2 z-50 inset-x-4 sm:inset-x-auto sm:w-[22rem] max-h-[70dvh] overflow-y-auto bg-sheet text-ink rounded-md shadow-lift p-4 space-y-4 ${
             align === "right" ? "sm:right-0" : "sm:left-0"
           }`}
         >

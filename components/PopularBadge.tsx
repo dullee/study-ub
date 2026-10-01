@@ -2,8 +2,9 @@
 
 import { isPopular, POPULAR_WINDOW_DAYS } from "@/lib/popular";
 import { useI18n } from "@/components/LanguageProvider";
+import { Flame } from "lucide-react";
 
-// Сүүлийн долоо хоногт олон сэтгэгдэл авсан газарт "🔥 Эрэлттэй". Хүрэхгүй бол юу ч харуулахгүй.
+// Сүүлийн долоо хоногт олон сэтгэгдэл авсан газарт "Эрэлттэй" (нарны өнгөөр). Хүрэхгүй бол юу ч харуулахгүй.
 export default function PopularBadge({ recentCount, className = "" }: { recentCount: number | undefined; className?: string }) {
   const { t } = useI18n();
   if (!isPopular(recentCount)) return null;
@@ -12,9 +13,9 @@ export default function PopularBadge({ recentCount, className = "" }: { recentCo
     <span
       title={detail}
       aria-label={`${t.popular}: ${detail}`}
-      className={`inline-flex items-center gap-1 bg-orange-500/90 text-white border border-orange-300/40 px-2 py-0.5 rounded-md font-semibold shadow-md shadow-orange-900/30 ${className}`}
+      className={`inline-flex items-center gap-1 text-sun-deep text-[11px] font-medium ${className}`}
     >
-      <span aria-hidden="true">🔥</span>
+      <Flame aria-hidden="true" className="h-3 w-3" strokeWidth={2.25} />
       {t.popular}
     </span>
   );

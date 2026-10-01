@@ -68,9 +68,9 @@ export default function LanguageSwitcher() {
       onClick={() => setLocale(next)}
       aria-label={t.switchLanguage}
       title={t.switchLanguage}
-      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl border border-slate-700 hover:border-slate-500 hover:bg-slate-800 transition-colors"
+      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-md border border-white/35 hover:bg-white/15 transition-colors"
     >
-      <span className="block h-3 w-6 overflow-hidden rounded-[3px] ring-1 ring-white/20">
+      <span className="block h-3 w-6 overflow-hidden rounded-[2px] ring-1 ring-white/40">
         <Flag />
       </span>
     </button>

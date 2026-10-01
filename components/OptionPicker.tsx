@@ -3,6 +3,8 @@
 import { useId, useState } from "react";
 import { Localized } from "@/types";
 import { useI18n } from "@/components/LanguageProvider";
+import { ChevronDown } from "lucide-react";
+import KeyIcon from "@/components/KeyIcon";
 
 type Option = { key: string; icon: string; label: Localized };
 
@@ -30,26 +32,26 @@ export default function OptionPicker({ options, value, onChange }: OptionPickerP
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((current) => !current)}
-        className={`w-full flex items-center gap-2 bg-slate-800 border rounded-lg p-2.5 text-left text-xs transition-colors ${
-          open ? "border-indigo-500" : "border-slate-700 hover:border-slate-500"
+        className={`w-full flex items-center gap-2 bg-panel border rounded-md p-2.5 text-left text-xs transition-colors ${
+          open ? "border-azure" : "border-line hover:border-line-strong"
         }`}
       >
-        <span className={`flex-1 min-w-0 truncate ${selected.length > 0 ? "text-white" : "text-slate-500"}`}>
+        <span className={`flex-1 min-w-0 truncate ${selected.length > 0 ? "text-ink" : "text-ink-muted"}`}>
           {selected.length > 0
-            ? selected.map((option) => `${option.icon} ${option.label[locale]}`).join(", ")
+            ? selected.map((option) => option.label[locale]).join(", ")
             : t.choose}
         </span>
         {selected.length > 0 ? (
-          <span className="shrink-0 rounded-md bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+          <span className="shrink-0 rounded-md bg-azure px-1.5 py-0.5 text-[10px] font-semibold text-white">
             {t.selectedCount(selected.length)}
           </span>
         ) : null}
-        <span aria-hidden="true" className={`shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}>
-          ▾
+        <span aria-hidden="true" className={`shrink-0 text-ink-muted transition-transform ${open ? "rotate-180" : ""}`}>
+          <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
         </span>
       </button>
       {open ? (
-        <div id={panelId} className="flex flex-wrap gap-1.5 bg-slate-800/40 border border-slate-800 rounded-lg p-2">
+        <div id={panelId} className="flex flex-wrap gap-1.5 bg-panel border border-line rounded-md p-2">
           {options.map((option) => {
             const isSelected = value.includes(option.key);
             return (
@@ -58,13 +60,13 @@ export default function OptionPicker({ options, value, onChange }: OptionPickerP
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => toggle(option.key)}
-                className={`px-2.5 py-1 rounded-lg border text-xs transition-colors ${
+                className={`px-2.5 py-1 rounded-md border text-xs transition-colors ${
                   isSelected
-                    ? "bg-indigo-600 border-indigo-500 text-white"
-                    : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
+                    ? "bg-azure border-azure text-white"
+                    : "bg-panel border-line text-ink-muted hover:border-line-strong"
                 }`}
               >
-                <span aria-hidden="true">{option.icon}</span> {option.label[locale]}
+                <KeyIcon k={option.key} className="h-3.5 w-3.5 inline -mt-0.5" /> {option.label[locale]}
               </button>
             );
           })}

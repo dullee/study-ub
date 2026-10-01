@@ -98,10 +98,11 @@ export function openStatus(
   };
 }
 
+// Цагаан хуудсан дээр уншигдахуйц (AA) өнгө.
 export const STATUS_TONE: Record<OpenStatus["tone"], string> = {
-  open: "text-emerald-400",
-  soon: "text-amber-400",
-  closed: "text-rose-400",
+  open: "text-good",
+  soon: "text-ink",
+  closed: "text-danger",
 };
 
 // Минут тутам шинэчлэгдэх цаг. Сервер дээр null — нээлттэй эсэхийг зөвхөн хөтөч дээр харуулж, hydration зөрөхгүй.
