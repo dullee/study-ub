@@ -11,18 +11,31 @@ import { usePathname } from "next/navigation";
 import Dropdown from "@/components/Dropdown";
 import MySubmissionsDialog from "@/components/MySubmissionsDialog";
 import { useMySubmissions } from "@/lib/useMySubmissions";
+import { CalendarDays, Hourglass, MapPin, SquareParking, Plus, Wrench } from "lucide-react";
+import Manul from "@/components/Manul";
+
+// Тэнгэрийн туузан дээрх товчнууд: цагаан хүрээтэй (хоёрдогч) ба цагаан хуудас (үндсэн үйлдэл).
+const onSkyBase = "flex items-center justify-center gap-1.5 h-9 rounded-md text-xs font-semibold border transition-colors";
+const onSky = `${onSkyBase} border-white/35 text-white hover:bg-white/15`;
+// Идэвхтэй (одоогийн хуудас): цагаан хуудас, хөх бичвэр.
+const onSkyActive = `${onSkyBase} border-white bg-white text-azure-deep`;
+const primaryOnSky =
+  "items-center justify-center gap-1.5 h-9 rounded-md text-xs font-semibold bg-white text-azure-deep hover:bg-white/90 shadow-sheet transition-colors";
+const countPill = "min-w-5 rounded-full bg-sun text-night px-1.5 text-[10px] font-bold leading-5 text-center tabular-nums";
 
 interface HeaderProps {
   onAddClick: () => void;
   addLabel?: string;
+  // Доор нь шүүлтүүрийн тууз залгагдвал (нүүр хуудас) бүрийн ирмэгийг тэр туузан дээр л зурна.
+  joined?: boolean;
 }
 
 const TABS = [
-  { href: "/", label: "navPlaces" },
-  { href: "/events", label: "navEvents" },
+  { href: "/", label: "navPlaces", icon: MapPin },
+  { href: "/events", label: "navEvents", icon: CalendarDays },
 ] as const;
 
-export default function Header({ onAddClick, addLabel }: HeaderProps) {
+export default function Header({ onAddClick, addLabel, joined = false }: HeaderProps) {
   const { t } = useI18n();
   const addText = addLabel ?? t.addPlace;
   const pathname = usePathname();
@@ -39,30 +52,28 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
   return (
     <header
       ref={headerRef}
-      className="border-b border-slate-800 bg-slate-900 relative lg:sticky lg:top-0 z-[1000]"
+      className={`sky-band ${joined ? "sky-band--joined" : ""} text-white relative lg:sticky lg:top-0 z-[1000]`}
     >
-      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">
-              <Link href="/" className="flex items-center gap-2 hover:text-indigo-200 transition-colors">
-                StudySpots{" "}
-                <span className="hidden sm:inline text-xs font-mono bg-indigo-600 text-white px-2 py-0.5 rounded-full">
-                  UB
-                </span>
-              </Link>
-            </h1>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 pt-3 pb-2 sm:pt-4 flex justify-between items-center gap-2 sm:gap-3">
+        <div className="min-w-0 overflow-hidden">
+          <h1 className="text-[15px] sm:text-[22px] font-bold tracking-[-0.02em] leading-none whitespace-nowrap">
+            <Link href="/" className="inline-flex items-center gap-1 sm:gap-1.5 hover:opacity-90 transition-opacity">
+              <Manul className="h-5 w-6 sm:h-7 sm:w-8 -my-1" />
+              {/* Маш нарийн утсанд (<380px) зөвхөн манул — товчнуудтай давхцахгүй. */}
+              <span className="max-[379px]:sr-only">StudySpots</span>
+              <span className="hidden sm:inline font-medium text-white/75">UB</span>
+            </Link>
+          </h1>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Танилцуулгад: нэвтрэлтгүй админы самбар, жишээ өгөгдөлтэй (app/admin/demo). */}
           <Link
             href="/admin/demo"
             aria-label={t.adminDemo}
             title={t.adminDemo}
-            className="flex items-center justify-center gap-1 h-9 w-9 sm:w-auto sm:px-4 rounded-xl text-xs font-semibold border bg-slate-800 text-slate-200 border-slate-700 hover:border-slate-500 hover:text-white transition-all"
+            className={`${onSky} w-9 sm:w-auto sm:px-3`}
           >
-            <span aria-hidden="true">🛠️</span>
+            <Wrench aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             <span className="hidden sm:inline">{t.adminDemo}</span>
           </Link>
           <Link
@@ -70,13 +81,9 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
             aria-label={t.findParking}
             title={t.findParking}
             aria-current={pathname === "/parking" ? "page" : undefined}
-            className={`flex items-center justify-center gap-1 h-9 w-9 sm:w-auto sm:px-4 rounded-xl text-xs font-semibold border transition-all ${
-              pathname === "/parking"
-                ? "bg-amber-500 text-slate-950 border-amber-400"
-                : "bg-amber-500/15 text-amber-200 border-amber-500/40 hover:bg-amber-500/25"
-            }`}
+            className={`${pathname === "/parking" ? onSkyActive : onSky} w-9 sm:w-auto sm:px-3`}
           >
-            <span aria-hidden="true">🅿️</span>
+            <SquareParking aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             <span className="hidden sm:inline">{t.findParking}</span>
           </Link>
           {/* Утсан дээр илгээсэн газар байвал ➕ нь "нэмэх / миний илгээсэн" цэс; эс бөгөөс шууд нэмнэ. */}
@@ -85,15 +92,11 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
               align="right"
               hideCaret
               ariaLabel={`${addText} · ${t.mySubmissions}`}
-              buttonClassName="relative bg-indigo-600 hover:bg-indigo-500 text-white h-9 w-9 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 flex items-center justify-center"
+              buttonClassName={`relative flex w-9 ${primaryOnSky}`}
               label={
                 <>
-                  <span aria-hidden="true">➕</span>
-                  {pendingCount > 0 ? (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-5 rounded-full bg-amber-500 text-slate-950 px-1 text-[10px] leading-5 text-center">
-                      {pendingCount}
-                    </span>
-                  ) : null}
+                  <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} />
+                  {pendingCount > 0 ? <span className={`absolute -top-1.5 -right-1.5 ${countPill}`}>{pendingCount}</span> : null}
                 </>
               }
             >
@@ -105,9 +108,9 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
                       close();
                       onAddClick();
                     }}
-                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold"
+                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-md bg-azure hover:bg-azure-deep text-white text-sm font-semibold"
                   >
-                    <span aria-hidden="true">➕</span> {addText}
+                    <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} /> {addText}
                   </button>
                   <button
                     type="button"
@@ -115,12 +118,10 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
                       close();
                       setSubmissionsOpen(true);
                     }}
-                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-300 text-sm font-semibold"
+                    className="flex items-center gap-2 w-full px-3 py-2.5 rounded-md border border-line bg-sheet hover:bg-panel text-ink text-sm font-semibold"
                   >
-                    <span aria-hidden="true">⏳</span> {t.mySubmissions}
-                    <span className="ml-auto min-w-5 rounded-full bg-amber-500 text-slate-950 px-1.5 text-[10px] leading-5 text-center">
-                      {pendingCount}
-                    </span>
+                    <Hourglass aria-hidden="true" className="h-4 w-4 text-sun-deep" strokeWidth={2} /> {t.mySubmissions}
+                    <span className={`ml-auto ${countPill}`}>{pendingCount}</span>
                   </button>
                 </div>
               )}
@@ -130,9 +131,9 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
             onClick={onAddClick}
             aria-label={addText}
             title={addText}
-            className={`${hasSubmissions ? "hidden sm:flex" : "flex"} bg-indigo-600 hover:bg-indigo-500 text-white h-9 w-9 sm:w-auto sm:px-4 rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all items-center justify-center gap-1`}
+            className={`${hasSubmissions ? "hidden sm:flex" : "flex"} w-9 sm:w-auto sm:px-3.5 ${primaryOnSky}`}
           >
-            <span aria-hidden="true">➕</span>
+            <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} />
             <span className="hidden sm:inline">{addText}</span>
           </button>
           {hasSubmissions ? (
@@ -141,24 +142,22 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
               onClick={() => setSubmissionsOpen(true)}
               title={t.mySubmissionsPending(pendingCount)}
               aria-label={`${t.mySubmissions}: ${t.mySubmissionsPending(pendingCount)}`}
-              className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-semibold border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 whitespace-nowrap"
+              className={`hidden sm:inline-flex px-3 whitespace-nowrap ${onSky}`}
             >
-              <span aria-hidden="true">⏳</span>
+              <Hourglass aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
               <span className="hidden md:inline">{t.mySubmissions}</span>
-              <span className="min-w-5 rounded-full bg-amber-500 text-slate-950 px-1.5 text-[10px] leading-5 text-center">
-                {pendingCount}
-              </span>
+              <span className={countPill}>{pendingCount}</span>
             </button>
           ) : null}
           <LanguageSwitcher />
           <Show when="signed-out">
             <SignInButton mode="modal">
-              <button className="text-slate-300 hover:text-white h-9 px-3 rounded-xl text-xs font-semibold border border-slate-700 hover:border-slate-500">
+              <button className={`px-3 ${onSky}`}>
                 {t.signIn}
               </button>
             </SignInButton>
             <SignUpButton mode="modal">
-              <button className="hidden sm:block bg-white/10 hover:bg-white/20 text-white h-9 px-3 rounded-xl text-xs font-semibold">
+              <button className="hidden sm:block h-9 px-3 rounded-md text-xs font-semibold text-white hover:bg-white/15 transition-colors">
                 {t.signUp}
               </button>
             </SignUpButton>
@@ -168,25 +167,25 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
           </Show>
         </div>
       </div>
-      <nav className="max-w-7xl mx-auto px-4 flex gap-1">
+      <nav className="max-w-7xl mx-auto px-4 flex gap-1 -mb-px">
         {TABS.map((tab) => {
           const active = pathname === tab.href;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors ${
-                active
-                  ? "border-indigo-500 text-white"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
+              aria-current={active ? "page" : undefined}
+              className={`inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold border-b-[3px] transition-colors ${
+                active ? "border-white text-white" : "border-transparent text-white/85 hover:text-white"
               }`}
             >
+              <tab.icon aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
               {t[tab.label]}
             </Link>
           );
         })}
       </nav>
-      {/* header-ийн backdrop-blur нь fixed элементийг header дотор барьдаг — цонхыг body-д зурна. */}
+      {/* Цонхыг body-д зурна: header-ийн stacking context дотор хоригдохгүй. */}
       {submissionsOpen && hasSubmissions
         ? createPortal(<MySubmissionsDialog spots={submissions} onClose={closeSubmissions} />, document.body)
         : null}
