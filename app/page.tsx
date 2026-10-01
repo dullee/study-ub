@@ -32,11 +32,12 @@ import {
 } from "@/lib/spotFilters";
 import { distanceKm, useUserLocation } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
+import Manul from "@/components/Manul";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full rounded-2xl border border-slate-800 bg-slate-800/40 animate-pulse" />
+    <div className="h-full w-full rounded-md bg-panel animate-pulse" />
   ),
 });
 
@@ -337,10 +338,9 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
-      <Header onAddClick={() => setIsModalOpen(true)} />
-      <main className="max-w-7xl mx-auto px-4 pt-2 sm:pt-6 space-y-3 sm:space-y-6">
-        <FilterSection
+    <div className="min-h-screen pb-12">
+      <Header joined onAddClick={() => setIsModalOpen(true)} />
+      <FilterSection
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           availableTags={[...AVAILABLE_TAGS]}
@@ -356,15 +356,16 @@ export default function Home() {
           setFilters={setFilters}
           onClearAll={clearAllFilters}
         />
+      <main className="max-w-7xl mx-auto px-4 pt-3 lg:pt-5">
         {/* Том дэлгэцэнд: зүүн талд картууд нэг баганаар, баруун талд header + шүүлтүүрийн доор наалдсан том газрын зураг.
             Утсан дээр: зураг шүүлтүүрийн доор наалдаж, картууд түүний доогуур гүйлгэгдэнэ (дэвсгэр өнгө нь доогуур гарах картыг халхална). */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_1fr] gap-3 lg:gap-0 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(340px,400px)_1fr] gap-3 lg:gap-5 items-start">
           <div
             ref={mapWrapperRef}
             className={
               mapFullscreen
                 ? "fixed inset-0 z-[1100] h-[100dvh] w-full"
-                : "order-1 lg:order-2 sticky top-[calc(var(--filters-h,64px)-1px)] z-20 bg-slate-900 pb-2 h-[34dvh] min-h-[200px] max-h-[320px] lg:pb-0 lg:bg-transparent lg:max-h-none lg:min-h-0 lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
+                : "order-1 lg:order-2 sticky top-[calc(var(--filters-h,64px)-1px)] z-20 bg-ground pb-2 h-[34dvh] min-h-[200px] max-h-[320px] lg:pb-0 lg:bg-transparent lg:max-h-none lg:min-h-0 lg:top-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)] lg:h-[calc(100dvh-var(--header-h,120px)-var(--filters-h,64px)-2rem)] scroll-mt-[calc(var(--header-h,120px)+var(--filters-h,64px)+1rem)]"
             }
           >
             <Map
@@ -383,34 +384,31 @@ export default function Home() {
           </div>
           <section aria-label={t.placesHeading} className="order-2 lg:order-1 space-y-2">
             {spotsLoading ? (
-              <div className="flex flex-col" aria-busy="true">
+              <div className="flex flex-col rounded-md bg-sheet shadow-sheet overflow-hidden" aria-busy="true">
                 {[0, 1, 2].map((i) => (
-                  <div
-                    key={i}
-                    aria-hidden="true"
-                    className="min-h-60 rounded-2xl border border-slate-800 bg-slate-800/40 animate-pulse flex flex-col justify-end p-3 gap-2"
-                  >
-                    <div className="h-4 w-2/3 rounded bg-slate-700" />
-                    <div className="h-3 w-1/3 rounded bg-slate-700/70" />
-                    <div className="h-3 w-1/2 rounded bg-slate-800" />
+                  <div key={i} aria-hidden="true" className="flex min-h-64 flex-col justify-end gap-2 p-3 border-b border-ground last:border-b-0 bg-panel animate-pulse">
+                    <div className="h-5 w-2/3 rounded bg-line" />
+                    <div className="h-3 w-1/2 rounded bg-line" />
+                    <div className="h-3 w-1/3 rounded bg-line" />
                   </div>
                 ))}
               </div>
             ) : filteredSpots.length === 0 ? (
-              <div className="text-center py-12 space-y-3">
-                <p className="text-slate-500 text-sm">{t.noResults}</p>
+              <div className="text-center py-10 px-6 space-y-3 rounded-md bg-sheet shadow-sheet">
+                <Manul variant="loaf" mood="sleepy" className="h-28 w-32 mx-auto" />
+                <p className="text-ink-muted text-sm">{t.noResults}</p>
                 {anyFilterActive ? (
                   <button
                     type="button"
                     onClick={clearAllFilters}
-                    className="text-xs font-semibold text-indigo-300 hover:text-white border border-indigo-800/60 rounded-lg px-3 py-1.5"
+                    className="text-xs font-semibold text-link hover:bg-azure-soft border border-azure/40 rounded-md px-3 py-1.5"
                   >
                     {t.clearFilters}
                   </button>
                 ) : null}
               </div>
             ) : (
-              <div ref={cardListRef} className="flex flex-col">
+              <div ref={cardListRef} className="flex flex-col rounded-md bg-sheet shadow-sheet overflow-hidden">
                 {filteredSpots.map((spot) => (
                   <SpotCard
                     key={spot.id}
