@@ -89,10 +89,60 @@ export const AMENITIES = [
   { key: "lockers", icon: "🔐", label: { mn: "Шүүгээ", en: "Lockers" } },
 ] as const;
 
-export function googleMapsUrl(spot: Pick<StudySpot, "maps_url" | "lat" | "lng">) {
-  const custom = spot.maps_url?.trim();
+export function googleMapsUrl(spot: {
+  maps_url?: string | null;
+  mapsUrl?: string | null;
+  lat: number;
+  lng: number;
+}): string;
+export function googleMapsUrl(spot: {
+  maps_url?: string | null;
+  mapsUrl?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+}): string | null;
+export function googleMapsUrl(spot: {
+  maps_url?: string | null;
+  mapsUrl?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+}) {
+  const custom = (spot.mapsUrl ?? spot.maps_url)?.trim();
   if (custom) return custom;
-  return `https://www.google.com/maps?q=${spot.lat},${spot.lng}`;
+  if (spot.lat != null && spot.lng != null) return `https://www.google.com/maps?q=${spot.lat},${spot.lng}`;
+  return null;
+}
+
+// Google Maps-ийн чиглэлийн холбоос. API түлхүүр шаардахгүй.
+export function googleMapsDirectionsUrl(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number }
+) {
+  const params = new URLSearchParams({
+    api: "1",
+    origin: `${from.lat},${from.lng}`,
+    destination: `${to.lat},${to.lng}`,
+    travelmode: "driving",
+  });
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+// Төлбөртэй зогсоол. Хоосон талбар null. Координатгүйг газрын зурагт харуулахгүй.
+// hourlyRate, hours нь эх сурвалжийн бичвэр — шууд сул байдал, амьд үнэ биш.
+export interface PaidParking {
+  id: string;
+  name: string;
+  district: string | null;
+  address: string | null;
+  capacity: number | null;
+  hourlyRate: string | null;
+  hours: string | null;
+  lat: number | null;
+  lng: number | null;
+  coordinatesVerified: boolean;
+  mapsUrl: string | null;
+  sourceUrl: string;
+  verifiedOn: string;
 }
 
 // "social" — YouTube, TikTok, Instagram, Facebook, X, Vimeo-ийн холбоос (lib/socialMedia.ts); embed-ээр тоглоно.

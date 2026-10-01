@@ -25,6 +25,11 @@ body {
   background: #0f172a;
 }
 
+.leaflet-div-icon.parking-pin {
+  background: transparent;
+  border: none;
+}
+
 /* iPhone 16px-ээс жижиг бичвэртэй талбарт дарахад хуудсыг томруулдаг — утсан дээр 16px болгоно. */
 @media (max-width: 639px) {
   input,

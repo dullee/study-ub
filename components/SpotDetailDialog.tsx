@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   ACCESSIBILITY,
   ACCESSIBILITY_GROUPS,
@@ -380,6 +381,12 @@ export default function SpotDetailDialog({
           </section>
 
           <div className="grid grid-cols-2 gap-2">
+            <Link
+              href={`/parking?spot=${spot.id}`}
+              className="col-span-2 py-2.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-100 text-sm font-semibold rounded-xl text-center border border-amber-500/40 transition-all"
+            >
+              {t.findParkingNearby}
+            </Link>
             <button
               type="button"
               onClick={() => {

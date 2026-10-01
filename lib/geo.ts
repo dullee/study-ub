@@ -6,6 +6,9 @@ import { distanceKm, LatLng } from "@/lib/distance";
 export { distanceKm };
 export type { LatLng };
 
+// Нүүр хуудсын газрын зурагтай ижил төв — Улаанбаатар.
+export const ULAANBAATAR: LatLng = { lat: 47.9188, lng: 106.9176 };
+
 // Алдааны бичвэрийг UI сонгосон хэлээр харуулна (geoDenied гэх мэт).
 export type GeoError = "geoDenied" | "geoUnavailable" | "geoTimeout" | "geoUnsupported";
 

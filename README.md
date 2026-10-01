@@ -93,6 +93,16 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_unsigned_preset
 ```
 
+## Төлбөртэй зогсоол
+
+«Зогсоол хайх» (`/parking`) Leaflet + OpenStreetMap ашиглана. Нэмэлт газрын зургийн API түлхүүр хэрэггүй.
+
+Очих газрыг нэр, хаягаар хайхдаа [Photon](https://photon.komoot.io/) (`lib/geocode/`) ашиглана. `photon.komoot.io` нь нийтийн demo сервер: fair-use, бэлэн байдал, их ачааллын баталгаа байхгүй. Автокомплитод Nominatim дуудахгүй. Өөр Photon сервер бол `GEOCODER_URL`. Өөр үйлчилгээ бол `Geocoder` интерфэйсийг `lib/geocode/index.ts`-д бүртгээд `GEOCODER` env-ийг солино. Хайлт олдохгүй бол хэрэглэгч газрын зураг дээр дарж очих цэгээ тавина.
+
+Анхны 28 байршил [Easy Parking](https://easy-parking.mn/locations)-ийн жагсаалтаас `data/paidParking.ts`-д байна. Зураг, логог хуулаагүй. Координат нь тухайн хуудсын газрын зургийн цэг. Цаг бүгд 24/7. Easy Parking дээр үнэ байхгүй газрууд 2000₮ / цаг. Хаяггүй байршлын хаяг нь газрын зургийн цэгийн байршил. Багтаамж нийтлэгдээгүй газарт `null`. Координат баталгаажаагүй бол газрын зурагт гарахгүй.
+
+Supabase-д мөр оруулах бол `20260929000001_paid_parking.sql` болон `20260929000002_paid_parking_details.sql`-ийг ажиллуулна. Хүснэгт хоосон үед апп `data/paidParking.ts`-ийг харуулна.
+
 ## Vercel
 
 GitHub repo холбоод Environment Variables дээр `.env.local`-ийн бүх түлхүүрийг (Supabase, Clerk, SMTP, Cloudinary) нэмнэ. `main` руу push хийхэд автоматаар deploy хийнэ.

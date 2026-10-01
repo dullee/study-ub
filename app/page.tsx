@@ -115,6 +115,14 @@ export default function Home() {
   const userId = user?.id ?? null;
 
   useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("add") !== "1") return;
+    setIsModalOpen(true);
+    url.searchParams.delete("add");
+    window.history.replaceState(window.history.state, "", url);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function load() {
       if (isSupabaseConfigured) {

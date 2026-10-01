@@ -44,15 +44,31 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              StudySpots{" "}
-              <span className="hidden sm:inline text-xs font-mono bg-indigo-600 text-white px-2 py-0.5 rounded-full">
-                UB
-              </span>
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">
+              <Link href="/" className="flex items-center gap-2 hover:text-indigo-200 transition-colors">
+                StudySpots{" "}
+                <span className="hidden sm:inline text-xs font-mono bg-indigo-600 text-white px-2 py-0.5 rounded-full">
+                  UB
+                </span>
+              </Link>
             </h1>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/parking"
+            aria-label={t.findParking}
+            title={t.findParking}
+            aria-current={pathname === "/parking" ? "page" : undefined}
+            className={`flex items-center justify-center gap-1 h-9 w-9 sm:w-auto sm:px-4 rounded-xl text-xs font-semibold border transition-all ${
+              pathname === "/parking"
+                ? "bg-amber-500 text-slate-950 border-amber-400"
+                : "bg-amber-500/15 text-amber-200 border-amber-500/40 hover:bg-amber-500/25"
+            }`}
+          >
+            <span aria-hidden="true">🅿️</span>
+            <span className="hidden sm:inline">{t.findParking}</span>
+          </Link>
           {/* Утсан дээр илгээсэн газар байвал ➕ нь "нэмэх / миний илгээсэн" цэс; эс бөгөөс шууд нэмнэ. */}
           <div className={hasSubmissions ? "sm:hidden" : "hidden"}>
             <Dropdown
