@@ -103,17 +103,17 @@ function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventConta
       ${row(
         e.where,
         escapeHtml(event.place_name) +
-          (mapsUrl ? ` · <a href="${mapsUrl}" style="color:#4f46e5">Google Maps</a>` : "")
+          (mapsUrl ? ` · <a href="${mapsUrl}" style="color:#1466c2">Google Maps</a>` : "")
       )}
       ${row(e.host, escapeHtml(event.host_name))}
       ${
         phone
-          ? row(e.phone, `<a href="${escapeHtml(telHref(phone))}" style="color:#4f46e5">${escapeHtml(phone)}</a>`)
+          ? row(e.phone, `<a href="${escapeHtml(telHref(phone))}" style="color:#1466c2">${escapeHtml(phone)}</a>`)
           : ""
       }
       ${
         chatUrl
-          ? row(e.groupChat, `<a href="${escapeHtml(chatUrl)}" style="color:#4f46e5;font-weight:600">${escapeHtml(chatLabel)}</a>`)
+          ? row(e.groupChat, `<a href="${escapeHtml(chatUrl)}" style="color:#1466c2;font-weight:600">${escapeHtml(chatLabel)}</a>`)
           : ""
       }
     </table>
@@ -122,7 +122,7 @@ function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventConta
         ? `<p style="margin:16px 0 0;color:#334155;white-space:pre-line">${escapeHtml(event.description)}</p>`
         : ""
     }
-    <p style="margin:24px 0 0"><a href="${eventUrl}" style="background:#4f46e5;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:600">${e.viewEvent}</a></p>`;
+    <p style="margin:24px 0 0"><a href="${eventUrl}" style="background:#1466c2;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600">${e.viewEvent}</a></p>`;
 
   const text = [
     `${e.when}: ${time}`,
@@ -139,7 +139,7 @@ function eventDetails(event: StudyEvent, eventsUrl: string, contacts: EventConta
 
 function layout(locale: Locale, heading: string, intro: string, body: string) {
   return `<div lang="${locale}" style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-    <p style="margin:0 0 4px;color:#4f46e5;font-weight:700">StudySpots UB</p>
+    <p style="margin:0 0 4px;color:#1466c2;font-weight:700">StudySpots UB</p>
     <h1 style="margin:0 0 8px;font-size:20px;color:#0f172a">${heading}</h1>
     <p style="margin:0 0 16px;color:#334155">${intro}</p>
     ${body}
