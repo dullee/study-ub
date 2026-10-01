@@ -19,6 +19,8 @@ import OptionPicker from "@/components/OptionPicker";
 import MediaPicker from "@/components/MediaPicker";
 import SmartImage from "@/components/SmartImage";
 import { useI18n } from "@/components/LanguageProvider";
+import { X } from "lucide-react";
+import FilePicker from "@/components/FilePicker";
 
 // "hint"-ийн бичвэрийг харуулахдаа сонгосон хэлээр авна; бусдыг үүсэх үед нь.
 type MapsStatus = { kind: "hint" | "loading" | "ok" | "error"; text: string };
@@ -228,70 +230,70 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-slate-900 sm:border border-slate-800 w-full max-w-lg rounded-none sm:rounded-2xl px-5 pb-5 sm:px-6 sm:pb-6 space-y-4 relative shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 flex justify-between items-center border-b border-slate-800">
-          <h3 className="text-base font-bold text-white">{t.addSpotTitle}</h3>
-          <button onClick={handleClose} className="text-slate-400 hover:text-white text-lg" type="button">
-            ✕
+    <div className="fixed inset-0 bg-night/55 z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-sheet sm:border border-line w-full max-w-lg rounded-none sm:rounded-md px-5 pb-5 sm:px-6 sm:pb-6 space-y-4 relative shadow-dialog h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-sheet flex justify-between items-center border-b border-line">
+          <h3 className="text-base font-bold text-ink">{t.addSpotTitle}</h3>
+          <button onClick={handleClose} className="flex items-center justify-center h-9 w-9 rounded-full text-ink-muted hover:text-ink hover:bg-panel transition-colors" type="button">
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-slate-400 mb-1">{t.spotName}</label>
+            <label className="block text-ink-muted mb-1">{t.spotName}</label>
             <input
               type="text"
               required
               value={formData.name} maxLength={LIMITS.spotName}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder={t.spotNamePlaceholder}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+              className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">{t.spotType}</label>
+            <label className="block text-ink-muted mb-1">{t.spotType}</label>
             <select
               required
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value as SpotCategory | "" })}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+              className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
             >
               <option value="" disabled>
                 {t.choose}
               </option>
               {SPOT_CATEGORIES.map((category) => (
                 <option key={category.key} value={category.key}>
-                  {category.icon} {category.label[locale]}
+                  {category.label[locale]}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">{t.shortDescription}</label>
+            <label className="block text-ink-muted mb-1">{t.shortDescription}</label>
             <textarea
               rows={3}
               value={formData.description} maxLength={LIMITS.spotDescription}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={t.descriptionPlaceholder}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500 resize-none"
+              className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40 resize-none"
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">{t.mapsLink}</label>
+            <label className="block text-ink-muted mb-1">{t.mapsLink}</label>
             <input
               type="url"
               value={formData.maps_url} maxLength={LIMITS.url}
               onChange={(e) => handleMapsLinkChange(e.target.value)}
               placeholder="https://maps.app.goo.gl/..."
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+              className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
             />
             <p
               className={`mt-1 ${
                 mapsStatus.kind === "error"
-                  ? "text-rose-400"
+                  ? "text-danger"
                   : mapsStatus.kind === "ok"
-                  ? "text-emerald-400"
-                  : "text-slate-500"
+                  ? "text-good"
+                  : "text-ink-muted"
               }`}
             >
               {mapsStatus.kind === "hint" ? t.mapsHint : mapsStatus.text}
@@ -299,31 +301,31 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-400 mb-1">{t.locationShort}</label>
+              <label className="block text-ink-muted mb-1">{t.locationShort}</label>
               <input
                 type="text"
                 required
                 value={formData.location} maxLength={LIMITS.spotLocation}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder={t.locationPlaceholder}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+                className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">{t.openingHours}</label>
+              <label className="block text-ink-muted mb-1">{t.openingHours}</label>
               <input
                 type="text"
                 value={formData.hours} maxLength={LIMITS.spotHours}
                 onChange={(e) => setFormData({ ...formData, hours: e.target.value })}
                 placeholder={t.hoursPlaceholder}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+                className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
               />
-              {osmHours && formData.hours === osmHours ? <p className="mt-1 text-amber-400/90">{t.hoursFromOsm}</p> : null}
+              {osmHours && formData.hours === osmHours ? <p className="mt-1 text-sun-deep/90">{t.hoursFromOsm}</p> : null}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-400 mb-1">Latitude</label>
+              <label className="block text-ink-muted mb-1">Latitude</label>
               <input
                 type="number"
                 step="any"
@@ -333,11 +335,11 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 min={-90}
                 max={90}
                 placeholder="47.9188"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+                className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">Longitude</label>
+              <label className="block text-ink-muted mb-1">Longitude</label>
               <input
                 type="number"
                 step="any"
@@ -347,68 +349,63 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
                 min={-180}
                 max={180}
                 placeholder="106.9176"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+                className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
               />
             </div>
           </div>
           {isCloudinaryConfigured ? (
             <div>
-              <label className="block text-slate-400 mb-1">{t.imageUpTo5mb}</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:text-xs file:font-semibold"
-              />
+              <label className="block text-ink-muted mb-1">{t.imageUpTo5mb}</label>
+              <FilePicker accept="image/*" fileName={imageFile?.name ?? null} onChange={handleFileChange} />
               {preview ? (
                 <SmartImage
                   src={preview}
                   alt={t.imagePreview}
                   width={800}
                   height={256}
-                  className="mt-2 h-32 w-full object-cover rounded-lg border border-slate-700"
+                  className="mt-2 h-32 w-full object-cover rounded-md border border-line"
                 />
               ) : null}
             </div>
           ) : (
             <div>
-              <label className="block text-slate-400 mb-1">{t.imageUrl}</label>
+              <label className="block text-ink-muted mb-1">{t.imageUrl}</label>
               <input
                 type="url"
                 value={formData.image} maxLength={LIMITS.url}
                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                 placeholder="https://images.unsplash.com/..."
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+                className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
               />
             </div>
           )}
           <div>
-            <label className="block text-slate-400 mb-1">{t.mediaLabel}</label>
+            <label className="block text-ink-muted mb-1">{t.mediaLabel}</label>
             <MediaPicker
               value={formData.media}
               onChange={(media) => setFormData((prev) => ({ ...prev, media }))}
               onUploadingChange={setMediaUploading}
             />
           </div>
-          <fieldset className="space-y-3 bg-slate-800/30 border border-slate-800 rounded-xl p-3">
-            <legend className="px-1 text-slate-400">{t.environmentRatings}</legend>
+          <fieldset className="space-y-3 bg-panel border border-line rounded-md p-3">
+            <legend className="px-1 text-ink-muted">{t.environmentRatings}</legend>
             <ScoreFields
               value={formData.scores}
               onChange={(scores) => setFormData({ ...formData, scores })}
             />
           </fieldset>
           <div>
-            <label className="block text-slate-400 mb-1">{t.tagsLabel}</label>
+            <label className="block text-ink-muted mb-1">{t.tagsLabel}</label>
             <input
               type="text"
               value={formData.tags}
               onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
               placeholder={t.tagsPlaceholder}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500"
+              className="w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40"
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">{t.amenities}</label>
+            <label className="block text-ink-muted mb-1">{t.amenities}</label>
             <OptionPicker
               options={AMENITIES}
               value={formData.amenities}
@@ -416,18 +413,18 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">{t.accessibility}</label>
+            <label className="block text-ink-muted mb-1">{t.accessibility}</label>
             <OptionPicker
               options={ACCESSIBILITY}
               value={formData.accessibility}
               onChange={(accessibility) => setFormData({ ...formData, accessibility })}
             />
           </div>
-          {error ? <p className="text-rose-400">{error}</p> : null}
+          {error ? <p className="text-danger">{error}</p> : null}
           <button
             type="submit"
             disabled={saving || mediaUploading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 mt-2"
+            className="w-full bg-azure hover:bg-azure-deep disabled:opacity-60 text-white font-medium py-2.5 rounded-md transition-all shadow-sheet mt-2"
           >
             {mediaUploading ? t.mediaUploading : saving ? (imageFile ? t.uploadingImage : t.saving) : t.submitSpot}
           </button>

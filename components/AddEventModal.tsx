@@ -6,6 +6,7 @@ import { useI18n } from "@/components/LanguageProvider";
 import { StudyEvent, StudySpot } from "@/types";
 import { normalizeChatUrl } from "@/lib/chatLinks";
 import { normalizePhone } from "@/lib/phone";
+import { X } from "lucide-react";
 
 export type EventDraft = Omit<StudyEvent, "id" | "created_at" | "host_name" | "user_id">;
 
@@ -32,7 +33,7 @@ function toLocalInput(ms: number) {
 // Буруу талбар улаан хүрээтэй: user-invalid — хөтчийн шалгалт (заавал, url, min), зөвхөн хэрэглэгч оролдсоны дараа;
 // aria-invalid — манай шалгалт (өнгөрсөн цаг, чатын холбоос, утас).
 const inputClass =
-  "w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500 user-invalid:border-rose-500 user-invalid:focus:border-rose-500 aria-invalid:border-rose-500 aria-invalid:focus:border-rose-500";
+  "w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure user-invalid:border-alert/40 user-invalid:focus:border-alert/40 aria-invalid:border-alert/40 aria-invalid:focus:border-alert/40";
 
 type BadField = "startsAt" | "chatUrl" | "phone";
 
@@ -109,17 +110,17 @@ export default function AddEventModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-slate-900 sm:border border-slate-800 w-full max-w-lg rounded-none sm:rounded-2xl px-5 pb-5 sm:px-6 sm:pb-6 space-y-4 relative shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 flex justify-between items-center border-b border-slate-800">
-          <h3 className="text-base font-bold text-white">{t.createEventTitle}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white text-lg" type="button">
-            ✕
+    <div className="fixed inset-0 bg-night/55 z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-sheet sm:border border-line w-full max-w-lg rounded-none sm:rounded-md px-5 pb-5 sm:px-6 sm:pb-6 space-y-4 relative shadow-dialog h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-sheet flex justify-between items-center border-b border-line">
+          <h3 className="text-base font-bold text-ink">{t.createEventTitle}</h3>
+          <button onClick={onClose} className="flex items-center justify-center h-9 w-9 rounded-full text-ink-muted hover:text-ink hover:bg-panel transition-colors" type="button">
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-slate-400 mb-1">{t.eventTitle}</label>
+            <label className="block text-ink-muted mb-1">{t.eventTitle}</label>
             <input
               type="text"
               required
@@ -130,7 +131,7 @@ export default function AddEventModal({
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">{t.eventPlace}</label>
+            <label className="block text-ink-muted mb-1">{t.eventPlace}</label>
             <select
               required
               value={formData.spotId}
@@ -150,7 +151,7 @@ export default function AddEventModal({
           </div>
           {formData.spotId === OTHER_PLACE ? (
             <div>
-              <label className="block text-slate-400 mb-1">{t.placeName}</label>
+              <label className="block text-ink-muted mb-1">{t.placeName}</label>
               <input
                 type="text"
                 required
@@ -163,7 +164,7 @@ export default function AddEventModal({
           ) : null}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-400 mb-1">{t.dateTime}</label>
+              <label className="block text-ink-muted mb-1">{t.dateTime}</label>
               <input
                 type="datetime-local"
                 required
@@ -178,7 +179,7 @@ export default function AddEventModal({
               />
             </div>
             <div>
-              <label className="block text-slate-400 mb-1">{t.maxPeople}</label>
+              <label className="block text-ink-muted mb-1">{t.maxPeople}</label>
               <input
                 type="number"
                 min={1}
@@ -189,11 +190,11 @@ export default function AddEventModal({
               />
             </div>
           </div>
-          <p className="text-slate-400">
-            {t.host} <span className="text-slate-200 font-semibold">{hostName}</span>
+          <p className="text-ink-muted">
+            {t.host} <span className="text-ink font-semibold">{hostName}</span>
           </p>
           <div>
-            <label className="block text-slate-400 mb-1">{t.eventDetails}</label>
+            <label className="block text-ink-muted mb-1">{t.eventDetails}</label>
             <textarea
               rows={3}
               value={formData.description} maxLength={LIMITS.eventDescription}
@@ -203,7 +204,7 @@ export default function AddEventModal({
             />
           </div>
           <div>
-            <label className="block text-slate-400 mb-1">{t.chatLinkLabel}</label>
+            <label className="block text-ink-muted mb-1">{t.chatLinkLabel}</label>
             <input
               type="url"
               inputMode="url"
@@ -216,10 +217,10 @@ export default function AddEventModal({
               placeholder={t.chatLinkPlaceholder}
               className={inputClass}
             />
-            <p className="mt-1 text-slate-500">{t.chatLinkHint}</p>
+            <p className="mt-1 text-ink-muted">{t.chatLinkHint}</p>
           </div>
           <div>
-            <label className="block text-slate-400 mb-1" htmlFor="event-phone">
+            <label className="block text-ink-muted mb-1" htmlFor="event-phone">
               {t.phoneLabel}
             </label>
             <input
@@ -237,13 +238,13 @@ export default function AddEventModal({
               placeholder={t.phonePlaceholder}
               className={inputClass}
             />
-            <p className="mt-1 text-slate-500">{t.phoneHint}</p>
+            <p className="mt-1 text-ink-muted">{t.phoneHint}</p>
           </div>
-          {error ? <p className="text-rose-400">{error}</p> : null}
+          {error ? <p className="text-danger">{error}</p> : null}
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 mt-2"
+            className="w-full bg-azure hover:bg-azure-deep disabled:opacity-60 text-white font-medium py-2.5 rounded-md transition-all shadow-sheet mt-2"
           >
             {saving ? t.saving : t.publishEvent}
           </button>

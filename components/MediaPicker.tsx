@@ -7,6 +7,7 @@ import { isFacebookPostPermalink, isInstagramStory, isShortSocialLink, parseSoci
 import { MediaThumb } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
 import { useDemoMode } from "@/components/DemoMode";
+import { Pencil, X } from "lucide-react";
 
 export const MAX_MEDIA = 30; // supabase/migrations/20260925000004_spot_media.sql-тэй тохирно.
 
@@ -163,7 +164,7 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
       {value.length > 0 || uploading > 0 ? (
         <ul className="grid grid-cols-4 sm:grid-cols-5 gap-2">
           {value.map((item, index) => (
-            <li key={`${item.url}-${index}`} className="relative aspect-square rounded-lg overflow-hidden border border-slate-700 bg-slate-800">
+            <li key={`${item.url}-${index}`} className="relative aspect-square rounded-md overflow-hidden border border-line bg-panel">
               <MediaThumb item={item} />
               {isLink(item) ? (
                 <button
@@ -172,10 +173,10 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
                   aria-label={t.editMediaLink}
                   title={t.editMediaLink}
                   className={`absolute top-1 left-1 h-6 w-6 rounded-full text-white text-xs ${
-                    editingIndex === index ? "bg-indigo-600" : "bg-slate-950/80 hover:bg-indigo-600"
+                    editingIndex === index ? "bg-azure" : "bg-night/55 hover:bg-azure"
                   }`}
                 >
-                  ✏️
+                  <Pencil aria-hidden="true" className="h-3 w-3" strokeWidth={2} />
                 </button>
               ) : null}
               <button
@@ -183,16 +184,16 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
                 onClick={() => remove(index)}
                 aria-label={t.removeMedia}
                 title={t.removeMedia}
-                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-slate-950/80 text-white text-xs hover:bg-rose-600"
+                className="flex items-center justify-center absolute top-1 right-1 h-6 w-6 rounded-full bg-night/55 text-white text-xs hover:bg-alert"
               >
-                ✕
+                <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
               </button>
             </li>
           ))}
           {Array.from({ length: uploading }).map((_, index) => (
             <li
               key={`uploading-${index}`}
-              className="aspect-square rounded-lg border border-dashed border-slate-600 bg-slate-800/60 animate-pulse flex items-center justify-center text-[10px] text-slate-400 text-center px-1"
+              className="aspect-square rounded-md border border-dashed border-line-strong bg-panel animate-pulse flex items-center justify-center text-[10px] text-ink-muted text-center px-1"
             >
               {t.mediaUploading}
             </li>
@@ -201,7 +202,7 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
       ) : null}
 
       {isCloudinaryConfigured ? (
-        <label className="flex items-center justify-center gap-2 w-full cursor-pointer rounded-lg border border-dashed border-slate-600 hover:border-indigo-500 bg-slate-800/40 px-3 py-2.5 text-slate-300 hover:text-white">
+        <label className="flex items-center justify-center gap-2 w-full cursor-pointer rounded-md border border-dashed border-line-strong hover:border-azure bg-panel px-3 py-2.5 text-ink-muted hover:text-ink">
           {t.addMedia}
           <input
             type="file"
@@ -228,25 +229,25 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
           }}
           placeholder={t.mediaUrlPlaceholder}
           aria-label={t.mediaLinkLabel}
-          className="flex-1 min-w-0 bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
+          className="flex-1 min-w-0 bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure"
         />
         <button
           type="button"
           onClick={addLink}
           disabled={resolving || !link.trim()}
-          className="shrink-0 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold"
+          className="shrink-0 px-3 rounded-md bg-azure hover:bg-azure-deep disabled:opacity-50 text-white font-semibold"
         >
           {resolving ? "…" : editingIndex !== null ? t.save : t.addLink}
         </button>
         {editingIndex !== null ? (
-          <button type="button" onClick={cancelEdit} className="shrink-0 px-3 rounded-lg bg-slate-700 text-slate-200 font-semibold">
+          <button type="button" onClick={cancelEdit} className="shrink-0 px-3 rounded-md bg-panel text-ink font-semibold">
             {t.cancel}
           </button>
         ) : null}
       </div>
-      <p className="text-slate-500">{t.mediaHint}</p>
+      <p className="text-ink-muted">{t.mediaHint}</p>
       {errors.map((message, index) => (
-        <p key={index} className="text-rose-400">
+        <p key={index} className="text-danger">
           {message}
         </p>
       ))}
