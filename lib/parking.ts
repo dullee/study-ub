@@ -1,4 +1,5 @@
 import { PaidParking, StudySpot } from "@/types";
+import { distanceKm, LatLng } from "@/lib/distance";
 
 // Очих газар: сурах газар, эсвэл нэр/хаягаар хайсан цэг. GPS ашиглахгүй.
 export type ParkingDestination = {
@@ -54,4 +55,24 @@ export function parkingNeedsVerification(parking: PaidParking) {
     !parking.hourlyRate?.trim() ||
     !parking.hours?.trim()
   );
+}
+
+// Нүүр хуудасны газрын зураг: картад заасан газрын ойролцоох зогсоолууд (ойроос хол руу, цөөн тоогоор).
+export const SPOT_PARKING_RADIUS_KM = 1;
+export const SPOT_PARKING_LIMIT = 6;
+
+export type NearbyParking = { parking: PaidParking & { lat: number; lng: number }; km: number };
+
+export function parkingNear(
+  point: LatLng,
+  parkings: PaidParking[],
+  radiusKm = SPOT_PARKING_RADIUS_KM,
+  limit = SPOT_PARKING_LIMIT
+): NearbyParking[] {
+  return parkings
+    .filter(hasVerifiedCoordinates)
+    .map((parking) => ({ parking, km: distanceKm(point, parking) }))
+    .filter((item) => item.km <= radiusKm)
+    .sort((a, b) => a.km - b.km)
+    .slice(0, limit);
 }

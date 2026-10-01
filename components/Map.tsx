@@ -5,11 +5,13 @@ import { Circle, CircleMarker, MapContainer, TileLayer, Marker, Popup, Tooltip, 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { googleMapsUrl, StudySpot } from "@/types";
-import { LatLng } from "@/lib/geo";
+import { formatDistance, LatLng } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
 import { Clock, MapPin, Maximize2, Minimize2 } from "lucide-react";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { BusynessLevel, busynessInfo, BusynessSummary } from "@/lib/busyness";
+import { paidParkingLocations } from "@/data/paidParking";
+import { parkingNear, SPOT_PARKING_RADIUS_KM } from "@/lib/parking";
 
 interface MapProps {
   spots: StudySpot[];
@@ -99,6 +101,15 @@ function pinIcon(variant: MarkerVariant, level?: BusynessLevel) {
   });
 }
 
+// Ойролцоох төлбөртэй зогсоол: зогсоолын газрын зурагтай ижил шар "P", жижиг — газрын тэмдгээс доогуур зэрэглэлтэй.
+const PARKING_PIN_SIZE = 22;
+const parkingIcon = L.divIcon({
+  className: "parking-pin",
+  iconSize: [PARKING_PIN_SIZE, PARKING_PIN_SIZE],
+  iconAnchor: [PARKING_PIN_SIZE / 2, PARKING_PIN_SIZE / 2],
+  html: `<div aria-hidden="true" style="width:${PARKING_PIN_SIZE}px;height:${PARKING_PIN_SIZE}px;border-radius:9999px;background:#f59e0b;color:#050c16;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;border:2px solid #fff;box-shadow:0 2px 4px rgba(5,12,22,.4)">P</div>`,
+});
+
 export default function Map({
   spots,
   dimmedIds,
@@ -121,6 +132,11 @@ export default function Map({
   const highlightedSpot = useMemo(
     () => spots.find((spot) => spot.id === highlightedId) ?? null,
     [spots, highlightedId]
+  );
+  // Картад заасан (утсанд: голд буй) газраас 1 км доторх зогсоолууд — тэр газар тодорсон үед л харагдана.
+  const nearbyParking = useMemo(
+    () => (highlightedSpot ? parkingNear(highlightedSpot, paidParkingLocations) : []),
+    [highlightedSpot]
   );
 
   return (
@@ -169,6 +185,23 @@ export default function Map({
             </Popup>
           </CircleMarker>
         ) : null}
+        {nearbyParking.map(({ parking, km }) => (
+          <Marker
+            key={parking.id}
+            position={[parking.lat, parking.lng]}
+            icon={parkingIcon}
+            zIndexOffset={1000}
+          >
+            <Tooltip direction="top" offset={[0, -12]} className="font-sans">
+              {parking.name}
+              <span className="font-normal tabular-nums">
+                {" · "}
+                {formatDistance(km, t)}
+                {parking.hourlyRate ? ` · ${parking.hourlyRate}` : ""}
+              </span>
+            </Tooltip>
+          </Marker>
+        ))}
         {spots.map((spot) => {
           const dimmed = dimmedIds.has(spot.id);
           const highlighted = spot.id === highlightedId;
@@ -185,6 +218,11 @@ export default function Map({
               {highlighted ? (
                 <Tooltip permanent direction="top" offset={[0, -18]} className="font-sans font-semibold">
                   {spot.name}
+                  <span className="block font-normal tabular-nums">
+                    {nearbyParking.length > 0
+                      ? t.parkingNearSpot(nearbyParking.length, SPOT_PARKING_RADIUS_KM)
+                      : t.parkingNoneNearSpot(SPOT_PARKING_RADIUS_KM)}
+                  </span>
                 </Tooltip>
               ) : null}
               <Popup>
