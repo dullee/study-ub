@@ -22,11 +22,12 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchPaidParking } from "@/lib/supabase/parking";
 import { fetchSpots } from "@/lib/supabase/spots";
 import { googleMapsDirectionsUrl, googleMapsUrl, PaidParking, StudySpot } from "@/types";
+import { Navigation, Search, SquareParking } from "lucide-react";
 
 const ParkingMap = dynamic(() => import("@/components/ParkingMap"), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full rounded-2xl border border-slate-800 bg-slate-800/40 animate-pulse" />
+    <div className="h-full w-full rounded-md border border-line bg-panel animate-pulse" />
   ),
 });
 
@@ -35,10 +36,10 @@ function isPublic(spot: StudySpot) {
 }
 
 const chipClass = (active: boolean) =>
-  `px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+  `px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
     active
-      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-      : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+      ? "bg-azure text-white shadow-sheet"
+      : "bg-panel text-ink-muted hover:bg-line hover:text-ink"
   }`;
 
 export default function ParkingPage() {
@@ -276,24 +277,24 @@ export default function ParkingPage() {
   const show = (value: string | null | undefined) => (value?.trim() ? value : t.parkingUnavailable);
 
   return (
-    <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
+    <div className="bg-sheet text-ink min-h-screen font-sans pb-12">
       <Header onAddClick={() => router.push("/?add=1")} />
       <main className="max-w-7xl mx-auto px-4 pt-2 sm:pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,360px)_1fr] gap-3 lg:gap-4 items-start">
           <section className="order-2 lg:order-1 space-y-3 lg:sticky lg:top-[calc(var(--header-h,120px)+1rem)] lg:max-h-[calc(100dvh-var(--header-h,120px)-2rem)] lg:overflow-y-auto lg:pr-1">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <span aria-hidden="true">🅿️</span>
+              <h2 className="text-base font-bold text-ink flex items-center gap-2">
+                <SquareParking aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
                 {t.parkingTitle}
               </h2>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">{t.parkingIntro}</p>
-              <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              <p className="text-xs text-ink-muted mt-1 leading-relaxed">{t.parkingIntro}</p>
+              <p className="text-[11px] text-ink-muted mt-2 leading-relaxed">
                 {t.parkingAttribution}{" "}
                 <a
                   href={PARKING_SOURCE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-indigo-300 hover:text-white font-semibold"
+                  className="text-link hover:text-ink font-semibold"
                 >
                   easy-parking.mn/locations
                 </a>
@@ -301,25 +302,27 @@ export default function ParkingPage() {
             </div>
 
             {destination ? (
-              <div className="rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-3 py-2.5 flex items-start justify-between gap-2">
+              <div className="rounded-md border border-azure bg-azure-soft px-3 py-2.5 flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-wide text-indigo-300">{t.parkingDestination}</p>
-                  <p className="text-sm font-semibold text-white truncate">{destinationName}</p>
+                  <p className="flex items-center gap-1.5 text-sm font-semibold text-ink min-w-0" aria-label={`${t.parkingDestination}: ${destinationName}`}>
+                    <Navigation aria-hidden="true" className="h-4 w-4 shrink-0 text-link" strokeWidth={2} />
+                    <span className="truncate">{destinationName}</span>
+                  </p>
                   {destination.location ? (
-                    <p className="text-xs text-slate-400 truncate">{destination.location}</p>
+                    <p className="text-xs text-ink-muted truncate">{destination.location}</p>
                   ) : null}
                 </div>
                 <button
                   type="button"
                   onClick={clearDestination}
-                  className="shrink-0 text-xs font-semibold text-indigo-200 hover:text-white"
+                  className="shrink-0 text-xs font-semibold text-link hover:text-ink"
                 >
                   {t.parkingChangePlace}
                 </button>
               </div>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs text-slate-500">{t.parkingPickPlace}</p>
+                <p className="text-xs text-ink-muted">{t.parkingPickPlace}</p>
                 <form className="relative" onSubmit={submitSearch}>
                   <input
                     type="search"
@@ -327,21 +330,21 @@ export default function ParkingPage() {
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder={t.parkingSearchPlaceholder}
                     aria-label={t.parkingSearchPlaceholder}
-                    className="w-full h-10 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 pl-10 pr-3 rounded-xl text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full h-10 bg-panel border border-line text-ink placeholder:text-ink-muted pl-10 pr-3 rounded-md text-sm focus:outline-none focus:border-azure transition-colors"
                   />
-                  <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm" aria-hidden="true">
-                    🔍
+                  <span className="absolute left-3.5 top-2.5 text-ink-muted text-sm" aria-hidden="true">
+                    <Search aria-hidden="true" className="h-5 w-5 text-ink-faint" strokeWidth={2} />
                   </span>
                 </form>
-                <ul className="max-h-56 overflow-y-auto rounded-xl border border-slate-800 divide-y divide-slate-800">
+                <ul className="max-h-56 overflow-y-auto rounded-md border border-line divide-y divide-line">
                   {!spotsReady ? (
-                    <li className="px-3 py-3 text-xs text-slate-500" aria-busy="true">
+                    <li className="px-3 py-3 text-xs text-ink-muted" aria-busy="true">
                       {t.loading}
                     </li>
                   ) : (
                     <>
                       {placeMatches.length > 0 ? (
-                        <li className="px-3 py-1.5 text-[10px] uppercase tracking-wide text-slate-500 bg-slate-900">
+                        <li className="px-3 py-1.5 text-xs font-semibold text-ink-muted bg-sheet">
                           {t.parkingStudyPlaces}
                         </li>
                       ) : null}
@@ -350,20 +353,20 @@ export default function ParkingPage() {
                           <button
                             type="button"
                             onClick={() => selectDestination(spot)}
-                            className="w-full text-left px-3 py-2.5 hover:bg-slate-800/80"
+                            className="w-full text-left px-3 py-2.5 hover:bg-panel"
                           >
-                            <span className="block text-sm font-semibold text-white">{spot.name}</span>
-                            <span className="block text-xs text-slate-400">{spot.location}</span>
+                            <span className="block text-sm font-semibold text-ink">{spot.name}</span>
+                            <span className="block text-xs text-ink-muted">{spot.location}</span>
                           </button>
                         </li>
                       ))}
                       {placeQuery.length >= 2 && placeStatus === "loading" ? (
-                        <li className="px-3 py-3 text-xs text-slate-500" aria-busy="true">
+                        <li className="px-3 py-3 text-xs text-ink-muted" aria-busy="true">
                           {t.parkingSearching}
                         </li>
                       ) : null}
                       {places.length > 0 ? (
-                        <li className="px-3 py-1.5 text-[10px] uppercase tracking-wide text-slate-500 bg-slate-900">
+                        <li className="px-3 py-1.5 text-xs font-semibold text-ink-muted bg-sheet">
                           {t.parkingAddressResults}
                         </li>
                       ) : null}
@@ -372,15 +375,15 @@ export default function ParkingPage() {
                           <button
                             type="button"
                             onClick={() => selectPlace(place)}
-                            className="w-full text-left px-3 py-2.5 hover:bg-slate-800/80"
+                            className="w-full text-left px-3 py-2.5 hover:bg-panel"
                           >
-                            <span className="block text-sm font-semibold text-white">{place.name}</span>
-                            <span className="block text-xs text-slate-400">{place.address}</span>
+                            <span className="block text-sm font-semibold text-ink">{place.name}</span>
+                            <span className="block text-xs text-ink-muted">{place.address}</span>
                           </button>
                         </li>
                       ))}
                       {placeMatches.length === 0 && places.length === 0 && placeStatus !== "loading" ? (
-                        <li className="px-3 py-3 text-xs text-slate-500">
+                        <li className="px-3 py-3 text-xs text-ink-muted">
                           {placeStatus === "error"
                             ? t.parkingSearchFailed
                             : mapPick
@@ -396,7 +399,7 @@ export default function ParkingPage() {
 
             {destination ? (
               <div className="space-y-1.5">
-                <p className="text-xs font-semibold text-slate-400">{t.parkingRadius}</p>
+                <p className="text-xs font-semibold text-ink-muted">{t.parkingRadius}</p>
                 <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t.parkingRadius}>
                   {PARKING_RADIUS_OPTIONS.map((km) => (
                     <button
@@ -416,21 +419,21 @@ export default function ParkingPage() {
 
             <div className="space-y-2" aria-live="polite">
               {parkings === null ? (
-                <div className="h-24 rounded-xl border border-slate-800 bg-slate-800/40 animate-pulse" aria-busy="true" />
+                <div className="h-24 rounded-md border border-line bg-panel animate-pulse" aria-busy="true" />
               ) : !hasParkingData ? (
-                <p className="text-sm text-slate-400 leading-relaxed rounded-xl border border-dashed border-slate-700 px-3 py-4">
+                <p className="text-sm text-ink-muted leading-relaxed rounded-md border border-dashed border-line px-3 py-4">
                   {t.parkingEmpty}
                 </p>
               ) : (
                 <>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-ink-muted">
                     {destination ? (
                       ranked.length === 0 ? (
                         t.parkingNoneInRadius(radiusKm)
                       ) : (
                         <>
                           {t.parkingNearbyCount(ranked.length)}
-                          <span className="text-slate-500"> · {t.parkingSorted}</span>
+                          <span className="text-ink-muted"> · {t.parkingSorted}</span>
                         </>
                       )
                     ) : (
@@ -448,10 +451,10 @@ export default function ParkingPage() {
                       return (
                         <li key={parking.id} id={`parking-${parking.id}`}>
                           <article
-                            className={`rounded-xl border px-3 py-2.5 ${
+                            className={`rounded-md border px-3 py-2.5 ${
                               selected
-                                ? "border-amber-400 bg-amber-500/10"
-                                : "border-slate-800 bg-slate-800/40"
+                                ? "border-sun/40 bg-sun-soft"
+                                : "border-line bg-panel"
                             }`}
                           >
                             <button
@@ -461,75 +464,75 @@ export default function ParkingPage() {
                               aria-pressed={selected}
                             >
                               <span className="flex items-start justify-between gap-2">
-                                <span className="text-sm font-semibold text-white">{parking.name}</span>
+                                <span className="text-sm font-semibold text-ink">{parking.name}</span>
                                 {km != null ? (
-                                  <span className="shrink-0 text-xs font-semibold text-amber-200">
+                                  <span className="shrink-0 text-xs font-semibold text-sun-deep">
                                     {formatDistance(km, t)}
                                   </span>
                                 ) : null}
                               </span>
                               {needsCheck ? (
-                                <span className="mt-1 inline-flex rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                                <span className="mt-1 inline-flex rounded-full border border-sun/40 bg-sun-soft px-2 py-0.5 text-[10px] font-semibold text-sun-deep">
                                   {t.parkingNeedsVerification}
                                 </span>
                               ) : null}
-                              <span className="block text-xs text-slate-400 mt-0.5">{show(parking.address)}</span>
-                              <span className="block text-[11px] text-slate-500 mt-1">{t.parkingSpacesNote}</span>
+                              <span className="block text-xs text-ink-muted mt-0.5">{show(parking.address)}</span>
+                              <span className="block text-[11px] text-ink-muted mt-1">{t.parkingSpacesNote}</span>
                             </button>
                             {selected ? (
                               <dl className="mt-2 space-y-1 text-xs">
                                 <div className="flex gap-2">
-                                  <dt className="text-slate-500 shrink-0">{t.parkingDistrict}</dt>
-                                  <dd className="text-slate-200">{show(parking.district)}</dd>
+                                  <dt className="text-ink-muted shrink-0">{t.parkingDistrict}</dt>
+                                  <dd className="text-ink">{show(parking.district)}</dd>
                                 </div>
                                 <div className="flex gap-2">
-                                  <dt className="text-slate-500 shrink-0">{t.factLocation}</dt>
-                                  <dd className="text-slate-200">{show(parking.address)}</dd>
+                                  <dt className="text-ink-muted shrink-0">{t.factLocation}</dt>
+                                  <dd className="text-ink">{show(parking.address)}</dd>
                                 </div>
                                 <div className="flex gap-2">
-                                  <dt className="text-slate-500 shrink-0">{t.parkingCapacity}</dt>
-                                  <dd className="text-slate-200">
+                                  <dt className="text-ink-muted shrink-0">{t.parkingCapacity}</dt>
+                                  <dd className="text-ink">
                                     {parking.capacity == null
                                       ? t.parkingUnavailable
                                       : t.parkingCapacityValue(parking.capacity)}
                                   </dd>
                                 </div>
                                 <div className="flex gap-2">
-                                  <dt className="text-slate-500 shrink-0">{t.parkingHourlyRate}</dt>
-                                  <dd className="text-slate-200">
+                                  <dt className="text-ink-muted shrink-0">{t.parkingHourlyRate}</dt>
+                                  <dd className="text-ink">
                                     {show(parking.hourlyRate)}
                                     {parking.hourlyRate ? (
-                                      <span className="block text-[11px] text-slate-500">{t.parkingSourceNote}</span>
+                                      <span className="block text-[11px] text-ink-muted">{t.parkingSourceNote}</span>
                                     ) : null}
                                   </dd>
                                 </div>
                                 <div className="flex gap-2">
-                                  <dt className="text-slate-500 shrink-0">{t.parkingHours}</dt>
-                                  <dd className="text-slate-200">
+                                  <dt className="text-ink-muted shrink-0">{t.parkingHours}</dt>
+                                  <dd className="text-ink">
                                     {show(parking.hours)}
                                     {parking.hours ? (
-                                      <span className="block text-[11px] text-slate-500">{t.parkingSourceNote}</span>
+                                      <span className="block text-[11px] text-ink-muted">{t.parkingSourceNote}</span>
                                     ) : null}
                                   </dd>
                                 </div>
                                 {km != null ? (
                                   <div className="flex gap-2">
-                                    <dt className="text-slate-500 shrink-0">{t.distance}</dt>
-                                    <dd className="text-slate-200">{formatDistance(km, t)}</dd>
+                                    <dt className="text-ink-muted shrink-0">{t.distance}</dt>
+                                    <dd className="text-ink">{formatDistance(km, t)}</dd>
                                   </div>
                                 ) : null}
                                 <div className="flex gap-2">
-                                  <dt className="text-slate-500 shrink-0">{t.parkingSource}</dt>
+                                  <dt className="text-ink-muted shrink-0">{t.parkingSource}</dt>
                                   <dd>
                                     <a
                                       href={parking.sourceUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-indigo-300 hover:text-white font-semibold"
+                                      className="text-link hover:text-ink font-semibold"
                                     >
                                       Easy Parking
                                     </a>
-                                    <span className="block text-[11px] text-slate-500">
+                                    <span className="block text-[11px] text-ink-muted">
                                       {t.parkingVerifiedOn(parking.verifiedOn)}
                                     </span>
                                   </dd>
@@ -540,7 +543,7 @@ export default function ParkingPage() {
                                       href={directions}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex text-xs font-semibold text-indigo-300 hover:text-white"
+                                      className="inline-flex text-xs font-semibold text-link hover:text-ink"
                                     >
                                       {mapDestination ? t.parkingDirections : t.openInGoogleMaps}
                                     </a>

@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 import { googleMapsUrl, StudySpot } from "@/types";
 import { LatLng } from "@/lib/geo";
 import { useI18n } from "@/components/LanguageProvider";
+import { Clock, MapPin, Maximize2, Minimize2 } from "lucide-react";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { BusynessLevel, busynessInfo, BusynessSummary } from "@/lib/busyness";
 
@@ -74,31 +75,27 @@ function ResizeController({ fullscreen }: { fullscreen: boolean }) {
   return null;
 }
 
-const ICON_OPTIONS: L.IconOptions = {
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-};
-
 type MarkerVariant = "normal" | "dimmed" | "highlight";
 
-// Ачааллын мэдээлэлтэй газрын тэмдэг: ижил зүү + баруун дээд буланд өнгөт цэг.
-// divIcon сүүдэр дэмжихгүй тул зүүнд CSS drop-shadow.
-function busyIcon(level: BusynessLevel, variant: MarkerVariant) {
-  const [w, h] = variant === "highlight" ? [36, 59] : [25, 41];
-  const dot = variant === "highlight" ? 15 : 12;
+// Дугуй тэмдэг (Leaflet-ийн стандарт дусал биш; зогсоолын газрын зурагтай нэг хэлбэр): үйлдлийн хөх, цагаан хүрээ,
+// дотор нь цэг — одоогийн ачаалалтай бол түүний өнгө, эс бөгөөс цагаан. Тодруулсан нь шөнийн хөх, том. Сүүдэр нарыг дагана.
+const PIN_SIZE: Record<MarkerVariant, number> = { normal: 26, dimmed: 20, highlight: 36 };
+
+function pinIcon(variant: MarkerVariant, level?: BusynessLevel) {
+  const size = PIN_SIZE[variant];
+  const fill = variant === "highlight" ? "#ff8a2a" : variant === "dimmed" ? "#3a587f" : "#1f7ae0";
+  const dot = level ? busynessInfo(level).color : "#ffffff";
   return L.divIcon({
     html:
-      `<div style="position:relative;width:${w}px;height:${h}px">` +
-      `<img src="${ICON_OPTIONS.iconRetinaUrl}" alt="" style="width:100%;height:100%;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))" />` +
-      `<span style="position:absolute;top:-4px;right:-6px;width:${dot}px;height:${dot}px;border-radius:9999px;` +
-      `background:${busynessInfo(level).color};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)"></span>` +
-      `</div>`,
-    className: variant === "dimmed" ? "grayscale opacity-50" : variant === "highlight" ? "drop-shadow-lg" : "busy-marker",
-    iconSize: [w, h],
-    iconAnchor: [Math.round(w / 2), h],
+      `<svg viewBox="0 0 26 26" width="${size}" height="${size}" aria-hidden="true" ` +
+      `style="display:block;overflow:visible;filter:drop-shadow(var(--sun-x) 2px 1.5px rgba(5,12,22,.45))">` +
+      `<circle cx="13" cy="13" r="11.5" fill="${fill}" stroke="#fff" stroke-width="2.5"/>` +
+      `<circle cx="13" cy="13" r="${level ? 5.5 : 3.5}" fill="${dot}" stroke="${level ? "#fff" : "none"}" stroke-width="1.5"/>` +
+      `</svg>`,
+    className: "spot-pin",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
   });
 }
 
@@ -116,17 +113,10 @@ export default function Map({
   onToggleFullscreen,
 }: MapProps) {
   const { t, locale } = useI18n();
-  const customIcon = useMemo(() => L.icon(ICON_OPTIONS), []);
-  const dimmedIcon = useMemo(() => L.icon({ ...ICON_OPTIONS, className: "grayscale opacity-50" }), []);
-  // Тодруулсан тэмдэг: том, бусдын өмнө.
-  const highlightIcon = useMemo(
-    () => L.icon({ ...ICON_OPTIONS, iconSize: [36, 59], iconAnchor: [18, 59], className: "drop-shadow-lg" }),
-    []
-  );
-  // 5 түвшин × 3 хувилбар — тэмдэг бүрт шинээр үүсгэхгүй.
-  const busyIcons = useMemo(() => {
+  // (ачаалал 0–5) × 3 хувилбар — тэмдэг бүрт шинээр үүсгэхгүй.
+  const pins = useMemo(() => {
     const cache: Record<string, L.DivIcon> = {};
-    return (level: BusynessLevel, variant: MarkerVariant) => (cache[`${level}:${variant}`] ??= busyIcon(level, variant));
+    return (variant: MarkerVariant, level?: BusynessLevel) => (cache[`${variant}:${level ?? 0}`] ??= pinIcon(variant, level));
   }, []);
   const highlightedSpot = useMemo(
     () => spots.find((spot) => spot.id === highlightedId) ?? null,
@@ -135,9 +125,7 @@ export default function Map({
 
   return (
     <div
-      className={`h-full w-full overflow-hidden shadow-2xl relative z-0 ${
-        fullscreen ? "" : "rounded-2xl border border-slate-800"
-      }`}
+      className={`h-full w-full overflow-hidden relative z-0 ${fullscreen ? "" : "rounded-md shadow-sheet"}`}
     >
       <button
         type="button"
@@ -145,25 +133,13 @@ export default function Map({
         aria-pressed={fullscreen}
         aria-label={fullscreen ? t.exitFullscreen : t.enterFullscreen}
         title={fullscreen ? t.exitFullscreenTitle : t.fullscreen}
-        className="absolute top-3 right-3 z-[1000] h-10 w-10 flex items-center justify-center rounded-lg bg-white text-slate-800 shadow-md border border-black/20 hover:bg-slate-100"
+        className="absolute top-3 right-3 z-[1000] h-10 w-10 flex items-center justify-center rounded-md bg-sheet text-ink shadow-sheet hover:bg-panel transition-colors"
       >
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          {fullscreen ? (
-            <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-          ) : (
-            <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-          )}
-        </svg>
+        {fullscreen ? (
+          <Minimize2 aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+        ) : (
+          <Maximize2 aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={2.25} />
+        )}
       </button>
       <MapContainer center={[47.9188, 106.9176]} zoom={13} className="h-full w-full">
         <ResizeController fullscreen={fullscreen} />
@@ -179,14 +155,14 @@ export default function Map({
             center={[userCoords.lat, userCoords.lng]}
             radius={radiusKm * 1000}
             interactive={false}
-            pathOptions={{ color: "#6366f1", weight: 2, dashArray: "6 6", fillColor: "#6366f1", fillOpacity: 0.08 }}
+            pathOptions={{ color: "#1466c2", weight: 2, dashArray: "6 6", fillColor: "#1466c2", fillOpacity: 0.07 }}
           />
         ) : null}
         {userCoords ? (
           <CircleMarker
             center={[userCoords.lat, userCoords.lng]}
             radius={8}
-            pathOptions={{ color: "#ffffff", weight: 3, fillColor: "#2563eb", fillOpacity: 1 }}
+            pathOptions={{ color: "#ffffff", weight: 3, fillColor: "#ff8a2a", fillOpacity: 1 }}
           >
             <Popup>
               <span className="font-sans text-xs font-semibold">{t.youAreHere}</span>
@@ -203,36 +179,33 @@ export default function Map({
             <Marker
               key={spot.id}
               position={[spot.lat, spot.lng]}
-              icon={
-                busy
-                  ? busyIcons(busy.level, variant)
-                  : highlighted
-                    ? highlightIcon
-                    : dimmed
-                      ? dimmedIcon
-                      : customIcon
-              }
+              icon={pins(variant, busy?.level)}
               zIndexOffset={highlighted ? 2000 : dimmed ? -1000 : 0}
             >
               {highlighted ? (
-                <Tooltip permanent direction="top" offset={[0, -58]} className="font-sans font-semibold">
+                <Tooltip permanent direction="top" offset={[0, -18]} className="font-sans font-semibold">
                   {spot.name}
                 </Tooltip>
               ) : null}
               <Popup>
                 <div className="font-sans text-xs">
-                  <b className="text-indigo-600 text-sm">{spot.name}</b>
+                  <b className="text-ink text-sm">{spot.name}</b>
                   <br />
-                  📍 {spot.location}
+                  <MapPin aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />{spot.location}
                   <br />
-                  ⏰ {spot.hours}
+                  <Clock aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />{spot.hours}
                   <br />
                   {busy && busyInfo && now !== null ? (
                     <>
-                      <span style={{ color: busyInfo.color }} className="font-semibold">
-                        ● {busyInfo.label[locale]}
+                      <span className="font-semibold text-ink">
+                        <span
+                          aria-hidden="true"
+                          className="inline-block h-2 w-2 rounded-full mr-1 align-middle"
+                          style={{ backgroundColor: busyInfo.color }}
+                        />
+                        {busyInfo.label[locale]}
                       </span>{" "}
-                      <span className="text-slate-500">
+                      <span className="text-ink-muted">
                         · {t.busynessDetail(busy.count, Math.max(0, Math.round((now - Date.parse(busy.latestAt)) / 60_000)))}
                       </span>
                       <br />
@@ -240,7 +213,7 @@ export default function Map({
                   ) : null}
                   {dimmed ? (
                     <>
-                      <span className="text-slate-500">{t.outsideDistance}</span>
+                      <span className="text-ink-muted">{t.outsideDistance}</span>
                       <br />
                     </>
                   ) : null}
@@ -257,7 +230,7 @@ export default function Map({
                   <button
                     type="button"
                     onClick={() => onOpenDetails(spot)}
-                    className="text-indigo-600 font-semibold hover:underline"
+                    className="text-link font-semibold hover:underline"
                   >
                     {t.details}
                   </button>

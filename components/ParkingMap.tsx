@@ -8,6 +8,7 @@ import { useI18n } from "@/components/LanguageProvider";
 import { distanceKm, formatDistance, ULAANBAATAR, LatLng } from "@/lib/geo";
 import { hasVerifiedCoordinates } from "@/lib/parking";
 import { googleMapsDirectionsUrl, googleMapsUrl, PaidParking } from "@/types";
+import { MapPin } from "lucide-react";
 
 interface ParkingMapProps {
   parkings: PaidParking[];
@@ -119,8 +120,8 @@ export default function ParkingMap({
 
   return (
     <div
-      className={`h-full w-full overflow-hidden shadow-2xl relative z-0 ${
-        fullscreen ? "" : "rounded-2xl border border-slate-800"
+      className={`h-full w-full overflow-hidden shadow-dialog relative z-0 ${
+        fullscreen ? "" : "rounded-md border border-line"
       }`}
     >
       <button
@@ -129,7 +130,7 @@ export default function ParkingMap({
         aria-pressed={fullscreen}
         aria-label={fullscreen ? t.exitFullscreen : t.enterFullscreen}
         title={fullscreen ? t.exitFullscreenTitle : t.fullscreen}
-        className="absolute top-3 right-3 z-[1000] h-10 w-10 flex items-center justify-center rounded-lg bg-white text-slate-800 shadow-md border border-black/20 hover:bg-slate-100"
+        className="absolute top-3 right-3 z-[1000] h-10 w-10 flex items-center justify-center rounded-md bg-sheet text-ink shadow-sheet border border-black/20 hover:bg-panel"
       >
         <svg
           viewBox="0 0 24 24"
@@ -166,14 +167,14 @@ export default function ParkingMap({
             center={[destination.lat, destination.lng]}
             radius={radiusKm * 1000}
             interactive={false}
-            pathOptions={{ color: "#6366f1", weight: 2, dashArray: "6 6", fillColor: "#6366f1", fillOpacity: 0.08 }}
+            pathOptions={{ color: "#1466c2", weight: 2, dashArray: "6 6", fillColor: "#1466c2", fillOpacity: 0.07 }}
           />
         ) : null}
         {destination ? (
           <CircleMarker
             center={[destination.lat, destination.lng]}
             radius={9}
-            pathOptions={{ color: "#ffffff", weight: 3, fillColor: "#4f46e5", fillOpacity: 1 }}
+            pathOptions={{ color: "#ffffff", weight: 3, fillColor: "#ff8a2a", fillOpacity: 1 }}
           >
             <Popup>
               <span className="font-sans text-xs font-semibold">{destination.name}</span>
@@ -198,9 +199,9 @@ export default function ParkingMap({
             >
               <Popup>
                 <div className="font-sans text-xs">
-                  <b className="text-sm text-amber-700">{parking.name}</b>
+                  <b className="text-sm text-ink">{parking.name}</b>
                   <br />
-                  📍 {parking.address?.trim() || missing}
+                  <MapPin aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />{parking.address?.trim() || missing}
                   {km != null ? (
                     <>
                       <br />
@@ -214,7 +215,7 @@ export default function ParkingMap({
                   {parking.hourlyRate || parking.hours ? (
                     <>
                       <br />
-                      <span className="text-slate-500">{t.parkingSourceNote}</span>
+                      <span className="text-ink-muted">{t.parkingSourceNote}</span>
                     </>
                   ) : null}
                   {directions ? (
@@ -232,7 +233,7 @@ export default function ParkingMap({
         })}
       </MapContainer>
       {pickOnMap ? (
-        <p className="pointer-events-none absolute bottom-3 left-3 right-14 z-[1000] rounded-lg bg-slate-950/85 px-3 py-2 text-xs text-white">
+        <p className="pointer-events-none absolute bottom-3 left-3 right-14 z-[1000] rounded-md bg-panel/85 px-3 py-2 text-xs text-ink">
           {pickHint}
         </p>
       ) : null}
