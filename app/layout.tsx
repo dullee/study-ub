@@ -1,35 +1,35 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { enUS, mnMN } from "@clerk/localizations";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Onest } from "next/font/google";
 import "./globals.css";
 import ClerkSupabaseBridge from "@/components/ClerkSupabaseBridge";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { Toaster } from "sonner";
 import { dictionaries } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
+import SkyClock from "@/components/SkyClock";
+import { SKY_INLINE_SCRIPT } from "@/lib/sky";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Onest: кирилл үсгийг анхнаас нь зурсан нэг гэр бүл — гарчиг, товч, өгөгдөл бүгд үүгээр.
+const onest = Onest({
+  variable: "--font-onest",
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// Сайтын slate/indigo өнгөтэй тааруулна.
+// High Blue Sky-ийн өнгөтэй (app/globals.css) тааруулна.
 const clerkAppearance = {
   variables: {
-    colorPrimary: "#4f46e5",
-    colorBackground: "#0f172a",
-    colorForeground: "#f1f5f9",
-    colorMutedForeground: "#94a3b8",
-    colorInput: "#1e293b",
-    colorInputForeground: "#ffffff",
-    colorNeutral: "#ffffff",
-    borderRadius: "0.75rem",
+    colorPrimary: "#1f7ae0",
+    colorBackground: "#102038",
+    colorForeground: "#eef3f9",
+    colorMutedForeground: "#a9b9cd",
+    colorInput: "#0a1626",
+    colorInputForeground: "#eef3f9",
+    colorNeutral: "#eef3f9",
+    borderRadius: "0.375rem",
+    fontFamily: "var(--font-onest)",
   },
 };
 
@@ -46,16 +46,28 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${onest.variable} h-full antialiased`}
+      // Тэнгэрийн inline script data-sky, --sun-x-ийг hydration-оос өмнө тавина.
+      suppressHydrationWarning
     >
+      <head>
+        {/* Эхний зурахаас өмнө: Улаанбаатарын цагаар тэнгэрийн өнгө (шөнө цэнхэр анивчихгүй). */}
+        <script dangerouslySetInnerHTML={{ __html: SKY_INLINE_SCRIPT }} />
+      </head>
       {/* Хөтчийн өргөтгөлүүд body-д class нэмдэг (ж: vc-init) — зөвхөн body-гийн attribute зөрүүг үл тоомсорлоно. */}
-      <body className="min-h-full flex flex-col bg-slate-900" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-ground text-ink" suppressHydrationWarning>
         <ClerkProvider localization={locale === "en" ? enUS : mnMN} appearance={clerkAppearance}>
           <LanguageProvider initialLocale={locale}>
             <ClerkSupabaseBridge />
+            <SkyClock />
             {children}
             {/* shadcn/sonner маягийн мэдэгдэл: хэдэн секундын дараа өөрөө алга болно. */}
-            <Toaster theme="dark" position="bottom-right" richColors closeButton />
+            <Toaster
+              theme="dark"
+              position="bottom-right"
+              closeButton
+              toastOptions={{ style: { fontFamily: "var(--font-onest)", borderRadius: 6, boxShadow: "var(--shadow-lift)" } }}
+            />
           </LanguageProvider>
         </ClerkProvider>
       </body>

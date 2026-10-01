@@ -1,28 +1,187 @@
 @import "tailwindcss";
 
+/*
+  High Blue Sky, шөнийн хувилбар — StudySpots UB-ийн дүрслэлийн систем (.impeccable/surfaces/app-page-tsx.md, DESIGN.md).
+  Улаанбаатарын шөнийн тэнгэрийн доорх хот: гүн хөх газар, нарны улбар шар өргөлт, манул сахиус.
+  Хуудас үргэлж харанхуй; тэнгэрийн туузны өнгө, сүүдрийн чиглэл <html data-sky>, --sun-x-ээр бодит цагийг дагана (lib/sky.ts).
+*/
+
 :root {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
+  color-scheme: dark;
+  /* Тэнгэрийн тууз — data-sky-аар солигдоно (бүгд цагаан бичвэрт AA). */
+  --sky-band: #16508f;
+  --sky-edge: transparent;
+  /* Сүүдрийн хэвтээ шилжилт: өглөө сөрөг (баруун тийш), орой эерэг. */
+  --sun-x: 0px;
+}
+
+:root[data-sky="dawn"] {
+  --sky-band: #1b3a63;
+  --sky-edge: #ffb27a;
+}
+:root[data-sky="dusk"] {
+  --sky-band: #1b2f57;
+  --sky-edge: #ff8a2a;
+}
+:root[data-sky="night"] {
+  --sky-band: #0c1a2e;
+  --sky-edge: #233d5e;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Газар (хуудас), хуудас (карт, цонх), хоёрдогч давхарга, зураас. */
+  --color-ground: #0a1626;
+  --color-sheet: #102038;
+  --color-panel: #172c48;
+  --color-line: #233d5e;
+  --color-line-strong: #4f6f99;
+  /* Бичвэр: ink 14.6:1, muted 8.2:1, faint 5.4:1 (хуудсан дээр). */
+  --color-ink: #eef3f9;
+  --color-ink-muted: #a9b9cd;
+  --color-ink-faint: #8496ae;
+  /* Дүүргэлт (товч, сонголт): цагаан бичвэртэй. */
+  --color-azure: #1466c2;
+  --color-azure-deep: #0f4f98;
+  --color-azure-soft: #14335a;
+  --color-alert: #c8261b;
+  --color-alert-soft: #3a1614;
+  --color-ok: #14804a;
+  --color-ok-soft: #0f2e20;
+  --color-sun: #ff8a2a;
+  --color-sun-soft: #3a2412;
+  /* Харанхуй дэвсгэр дээрх бичвэрийн өнгө (дүүргэлтийн өнгө бичвэрт хэт бараан): холбоос, алдаа, сайн, нар. */
+  --color-link: #8cc2ff;
+  --color-danger: #ff8f85;
+  --color-good: #5fd79a;
+  --color-sun-deep: #ffb070;
+  /* Хамгийн гүн шөнө: бүрхүүл, tooltip, тод дүүргэлт дээрх бараан бичвэр. */
+  --color-night: #050c16;
+  --color-band: var(--sky-band);
+  --color-band-edge: var(--sky-edge);
+
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+
+  /* Давхарга бүрт ганц сүүдэр (хуудас < өргөгдсөн < цонх); хэвтээ шилжилт нарыг дагана. Харанхуйд ирмэг нь цайвар цагираг. */
+  --shadow-sheet: var(--sun-x) 2px 4px -1px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.05);
+  --shadow-lift: calc(var(--sun-x) * 1.5) 8px 16px -6px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.07);
+  --shadow-dialog: calc(var(--sun-x) * 2.5) 22px 44px -14px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.08);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  caret-color: var(--color-link);
+}
+
+/* Хөтчийн өөрийн хэсгүүд ч системээ дагана. */
+::selection {
+  background: #ff8a2a;
+  color: #050c16;
+}
+:focus-visible {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+html {
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+a {
+  text-underline-offset: 3px;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-ink-faint);
+  opacity: 1;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-azure);
+}
+select option {
+  background: var(--color-sheet);
+  color: var(--color-ink);
+}
+
+/* Тэнгэрийн тууз өнгөө аажмаар солино (минут тутам шинэчлэгдэнэ). */
+.sky-band {
+  background-color: var(--sky-band);
+  box-shadow: inset 0 -3px 0 var(--sky-edge);
+  transition: background-color 1.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sky-band :focus-visible {
+  outline-color: #ffffff;
+}
+.sky-band--joined {
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sky-band {
+    transition: none;
+  }
 }
 
 .leaflet-container {
   height: 100%;
   width: 100%;
   z-index: 0;
-  background: #0f172a;
+  background: #dde5ee;
+  font-family: var(--font-sans);
+}
+/* Цайвар газрын зураг: OSM хавтанг бага зэрэг хөргөж, намдаана — харанхуй хуудсан дээр нүд гялбуулахгүй, тэмдгүүд түрүүлж харагдана. */
+.leaflet-tile-pane {
+  filter: saturate(0.7) brightness(0.96) hue-rotate(-8deg);
+}
+.leaflet-bar {
+  border: none !important;
+  box-shadow: var(--shadow-sheet) !important;
+  border-radius: 6px !important;
+  overflow: hidden;
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--color-sheet) !important;
+  color: var(--color-ink) !important;
+  border-bottom-color: var(--color-line) !important;
+}
+.leaflet-bar a:hover {
+  background: var(--color-panel) !important;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--color-sheet);
+  color: var(--color-ink);
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 6px;
+  box-shadow: var(--shadow-lift);
+}
+.leaflet-popup-tip {
+  box-shadow: none;
+}
+.leaflet-container a {
+  color: var(--color-link);
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-ink-muted);
+}
+.leaflet-tooltip {
+  background: var(--color-ink);
+  color: var(--color-night);
+  border-radius: 4px;
+  border: none;
+  box-shadow: var(--shadow-sheet);
+  font-weight: 600;
+}
+.leaflet-tooltip-top::before {
+  border-top-color: var(--color-ink);
+}
+.leaflet-control-attribution {
+  background: rgb(255 255 255 / 0.8) !important;
+  color: #4f6178 !important;
+}
+.leaflet-container .leaflet-control-attribution a {
+  color: var(--color-azure-deep);
 }
 
 .leaflet-div-icon.parking-pin {
