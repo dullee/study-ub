@@ -45,6 +45,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useConfirm } from "@/components/ConfirmDialog";
 import ScoreFields from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
+import Stars from "@/components/Stars";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { toast } from "sonner";
 import { reportTopic, SpotReport } from "@/lib/reports";
@@ -77,21 +78,25 @@ import {
   saveLocalSpots,
   updateLocalEvent,
 } from "@/lib/localStore";
+import { Check, CheckCheck, ChevronRight, Images, MapPin, Pencil, Phone, Tag, Trash2, TriangleAlert, Undo2, X } from "lucide-react";
+import KeyIcon from "@/components/KeyIcon";
+import FilePicker from "@/components/FilePicker";
+import Manul from "@/components/Manul";
 
 const inputClass =
-  "w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white focus:outline-none focus:border-indigo-500";
+  "w-full bg-sheet border border-line-strong rounded-md p-2 text-ink focus:outline-none focus:border-azure";
 
 type Tab = "pending" | "reports" | "places" | "comments" | "events";
 
 // Товчнуудын өнгө: зөвшөөрөх — ногоон, татгалзах — улаан, устгах — улаан хүрээтэй (бусдаас хол, баруун талд).
 const btn =
-  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-60";
-const btnNeutral = `${btn} bg-slate-700 hover:bg-slate-600 text-slate-100`;
-const btnApprove = `${btn} bg-emerald-600 hover:bg-emerald-500 text-white`;
-const btnReject = `${btn} bg-rose-600 hover:bg-rose-500 text-white`;
-const btnDelete = `${btn} border border-rose-700/70 text-rose-300 hover:bg-rose-950/70 hover:text-rose-200`;
-const cardClass = "rounded-2xl border border-slate-800 bg-slate-800/40 overflow-hidden";
-const actionBar = "flex flex-wrap items-center gap-2 px-4 py-3 border-t border-slate-800 bg-slate-900/40";
+  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors disabled:opacity-60";
+const btnNeutral = `${btn} bg-panel hover:bg-line text-ink`;
+const btnApprove = `${btn} bg-ok hover:bg-ok/90 text-white`;
+const btnReject = `${btn} bg-alert hover:bg-alert/90 text-white`;
+const btnDelete = `${btn} border border-alert/40 text-danger hover:bg-alert-soft hover:text-danger`;
+const cardClass = "rounded-md border border-line bg-panel overflow-hidden";
+const actionBar = "flex flex-wrap items-center gap-2 px-4 py-3 border-t border-line bg-panel/60";
 
 // app/admin/page.tsx сервер дээр Clerk-ийн админ эрхийг шалгасны дараа л харагдана.
 // Демо горимд (/admin/demo) хөтчийн localStorage-д ч бичихгүй — өөрчлөлт зөвхөн дэлгэц дээр, хуудас сэргээхэд алга болно.
@@ -513,19 +518,19 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
   ] as const;
 
   return (
-    <main className="min-h-screen bg-slate-900 text-slate-100">
-      <header className="border-b border-slate-800 sticky top-0 bg-slate-900/90 backdrop-blur z-10">
+    <main className="min-h-screen bg-sheet text-ink">
+      <header className="sky-band text-white sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
           <h1 className="font-bold">
             {t.adminTitle}
             {demo ? (
-              <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-wide bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded">
+              <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-wide bg-sun text-night px-1.5 py-0.5 rounded">
                 {t.demoBadge}
               </span>
             ) : null}
           </h1>
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-xs text-slate-400 hover:text-white">
+            <Link href="/" className="text-xs font-semibold text-white/85 hover:text-white">
               {t.home}
             </Link>
             <LanguageSwitcher />
@@ -533,20 +538,20 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
           </div>
         </div>
         {demo ? (
-          <p className="border-t border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs text-center px-4 py-2">
+          <p className="border-t border-sun/40 bg-sun-soft text-sun-deep text-xs text-center px-4 py-2">
             {t.demoBanner}
           </p>
         ) : null}
       </header>
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-        <nav className="flex flex-wrap gap-1 p-1 rounded-xl bg-slate-800/60 border border-slate-800 w-fit max-w-full">
+        <nav className="flex flex-wrap gap-1 p-1 rounded-md bg-panel border border-line w-fit max-w-full">
           {tabs.map(([id, label, count]) => (
             <button
               key={id}
               onClick={() => setTab(id)}
               aria-pressed={tab === id}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                tab === id ? "bg-indigo-600 text-white shadow" : "text-slate-400 hover:text-white"
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                tab === id ? "bg-azure text-white shadow-sheet" : "text-ink-muted hover:text-ink"
               }`}
             >
               {label}
@@ -555,8 +560,8 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                   tab === id
                     ? "bg-white/20"
                     : (id === "pending" || id === "reports") && count > 0
-                      ? "bg-amber-500 text-slate-950"
-                      : "bg-slate-700 text-slate-300"
+                      ? "bg-sun text-night"
+                      : "bg-panel text-ink-muted"
                 }`}
               >
                 {count}
@@ -568,17 +573,17 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
           <button
             type="button"
             onClick={() => setTab("reports")}
-            className="w-full flex items-center justify-between gap-3 text-left text-sm text-amber-200 bg-amber-500/10 border border-amber-500/40 rounded-xl px-4 py-3 hover:bg-amber-500/15"
+            className="w-full flex items-center justify-between gap-3 text-left text-sm text-sun-deep bg-sun-soft border border-sun/40 rounded-md px-4 py-3 hover:bg-sun-soft"
           >
             <span>
-              <span aria-hidden="true">⚠️ </span>
+              <TriangleAlert aria-hidden="true" className="h-4 w-4 inline -mt-0.5 mr-1.5" strokeWidth={2} />
               {t.reportsBanner(openReports.length)}
             </span>
             <span className="shrink-0 font-semibold">{t.reportsBannerView}</span>
           </button>
         ) : null}
         {actionError ? (
-          <p role="alert" className="text-sm text-rose-300 bg-rose-950/60 border border-rose-800/50 rounded-xl px-4 py-3">
+          <p role="alert" className="text-sm text-danger bg-alert-soft border border-alert/40 rounded-md px-4 py-3">
             {actionError}
           </p>
         ) : null}
@@ -588,8 +593,8 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
             <div className="flex gap-2" role="group" aria-label={t.tabPending}>
               {(
                 [
-                  ["places", `📍 ${t.tabPlaces}`, pending.length],
-                  ["events", `📅 ${t.tabEvents}`, pendingEvents.length],
+                  ["places", t.tabPlaces, pending.length],
+                  ["events", t.tabEvents, pendingEvents.length],
                 ] as const
               ).map(([id, label, count]) => (
                 <button
@@ -597,16 +602,16 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                   type="button"
                   onClick={() => setPendingTab(id)}
                   aria-pressed={pendingTab === id}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors ${
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors ${
                     pendingTab === id
-                      ? "border-indigo-500 bg-indigo-600/20 text-white"
-                      : "border-slate-700 text-slate-400 hover:text-white hover:border-slate-500"
+                      ? "border-azure bg-azure-soft text-link"
+                      : "border-line text-ink-muted hover:text-ink hover:border-line-strong"
                   }`}
                 >
                   {label}
                   <span
                     className={`min-w-5 px-1.5 rounded-full text-[10px] leading-5 text-center ${
-                      count > 0 ? "bg-amber-500 text-slate-950" : "bg-slate-700 text-slate-300"
+                      count > 0 ? "bg-sun text-night" : "bg-panel text-ink-muted"
                     }`}
                   >
                     {count}
@@ -619,7 +624,10 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
               <div className="space-y-6">
                 <div className="space-y-2">
                   {pending.length === 0 ? (
-                    <p className="text-sm text-slate-500">{t.noPending}</p>
+                    <p className="flex items-center gap-2 text-sm text-ink-muted">
+                      <Manul mood="sleepy" className="h-7 w-8" />
+                      {t.noPending}
+                    </p>
                   ) : (
                     pending.map((spot) =>
                       (
@@ -629,24 +637,24 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                             actions={
                               <>
                                 <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
-                                  ✏️ {t.edit}
+                                  <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.edit}
                                 </button>
-                                <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+                                <span className="w-px h-5 bg-panel mx-1" aria-hidden="true" />
                                 <button onClick={() => rejectSpot(spot)} className={btnReject}>
-                                  ✕ {t.reject}
+                                  <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {t.reject}
                                 </button>
                                 <button onClick={() => acceptSpot(spot)} className={btnApprove}>
-                                  ✓ {t.approve}
+                                  <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {t.approve}
                                 </button>
                               </>
                             }
                           >
-                            <h2 className="font-semibold text-white truncate">{spot.name}</h2>
-                            <p className="text-xs text-slate-400 truncate">
+                            <h2 className="font-semibold text-ink truncate">{spot.name}</h2>
+                            <p className="text-xs text-ink-muted truncate">
                               {spot.location} · {spot.hours} · {spot.lat}, {spot.lng}
                             </p>
                             {spot.tags.length > 0 ? (
-                              <p className="text-[11px] text-slate-500 truncate">🏷 {spot.tags.join(", ")}</p>
+                              <p className="text-[11px] text-ink-muted truncate"><Tag aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />{spot.tags.join(", ")}</p>
                             ) : null}
                           </SpotRow>
                         </article>
@@ -658,9 +666,9 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                 {/* Татгалзсан газрууд — анхдагчаар хаалттай; эндээс дахин зөвшөөрөх эсвэл устгана. */}
                 {rejected.length > 0 ? (
                   <details className="group pt-2">
-                    <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
+                    <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-alert/40 bg-alert-soft text-xs font-semibold text-danger hover:bg-alert-soft [&::-webkit-details-marker]:hidden">
                       <span aria-hidden="true" className="transition-transform group-open:rotate-90">
-                        ▸
+                        <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
                       </span>
                       {t.rejectedPlaces(rejected.length)}
                     </summary>
@@ -673,23 +681,23 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                               actions={
                                 <>
                                   <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
-                                    ✏️ {t.edit}
+                                    <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.edit}
                                   </button>
                                   <button onClick={() => returnToReview(spot)} className={btnNeutral}>
                                     {t.backToReview}
                                   </button>
                                   <button onClick={() => acceptSpot(spot)} className={btnApprove}>
-                                    ✓ {t.approve}
+                                    <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {t.approve}
                                   </button>
-                                  <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                                  <span className="w-px h-5 bg-panel mx-2" aria-hidden="true" />
                                   <button onClick={() => removeSpot(spot)} className={btnDelete}>
-                                    🗑 {t.delete}
+                                    <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.delete}
                                   </button>
                                 </>
                               }
                             >
-                              <h2 className="font-semibold text-white truncate">{spot.name}</h2>
-                              <p className="text-xs text-slate-400 truncate">{spot.location}</p>
+                              <h2 className="font-semibold text-ink truncate">{spot.name}</h2>
+                              <p className="text-xs text-ink-muted truncate">{spot.location}</p>
                             </SpotRow>
                           </article>
                         )
@@ -705,38 +713,41 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
               <div className="space-y-6">
                 <div className="space-y-2">
                   {pendingEvents.length === 0 ? (
-                    <p className="text-sm text-slate-500">{t.noPendingEvents}</p>
+                    <p className="flex items-center gap-2 text-sm text-ink-muted">
+                      <Manul mood="sleepy" className="h-7 w-8" />
+                      {t.noPendingEvents}
+                    </p>
                   ) : (
                     pendingEvents.map((event) => (
                       <article key={event.id} className={cardClass}>
                         <div className="p-4 space-y-1 min-w-0">
-                          <h2 className="font-semibold text-white">{event.title}</h2>
-                          <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
-                          <p className="text-xs text-slate-400">
-                            📍 {event.place_name} · {t.host} {event.host_name}
+                          <h2 className="font-semibold text-ink">{event.title}</h2>
+                          <p className="text-xs text-link">{formatEventTime(event.starts_at, undefined, locale)}</p>
+                          <p className="text-xs text-ink-muted">
+                            <MapPin aria-hidden="true" className="h-3.5 w-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{event.place_name} · {t.host} {event.host_name}
                           </p>
                           {phones[event.id] ? (
-                            <p className="text-xs text-slate-400">
-                              📞{" "}
-                              <a href={telHref(phones[event.id])} className="text-emerald-300 hover:text-emerald-200">
+                            <p className="text-xs text-ink-muted">
+                              <Phone aria-hidden="true" className="h-3.5 w-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />
+                              <a href={telHref(phones[event.id])} className="text-good hover:text-good">
                                 {phones[event.id]}
                               </a>
                             </p>
                           ) : null}
                           {event.description ? (
-                            <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
+                            <p className="text-xs text-ink-muted line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
                           ) : null}
                         </div>
                         <div className={actionBar}>
                           <button onClick={() => setEditingEventId(event.id)} className={btnNeutral}>
-                            ✏️ {t.edit}
+                            <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.edit}
                           </button>
-                          <span className="w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+                          <span className="w-px h-5 bg-panel mx-1" aria-hidden="true" />
                           <button onClick={() => rejectEvent(event)} className={btnReject}>
-                            ✕ {t.reject}
+                            <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {t.reject}
                           </button>
                           <button onClick={() => acceptEvent(event)} className={btnApprove}>
-                            ✓ {t.approve}
+                            <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {t.approve}
                           </button>
                         </div>
                       </article>
@@ -746,9 +757,9 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
 
                 {rejectedEvents.length > 0 ? (
                   <details className="group">
-                    <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 [&::-webkit-details-marker]:hidden">
+                    <summary className="list-none cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-alert/40 bg-alert-soft text-xs font-semibold text-danger hover:bg-alert-soft [&::-webkit-details-marker]:hidden">
                       <span aria-hidden="true" className="transition-transform group-open:rotate-90">
-                        ▸
+                        <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
                       </span>
                       {t.rejectedEvents(rejectedEvents.length)}
                     </summary>
@@ -756,9 +767,9 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                       {rejectedEvents.map((event) => (
                         <article key={event.id} className={`${cardClass} opacity-80 hover:opacity-100`}>
                           <div className="p-4 space-y-1">
-                            <h2 className="font-semibold text-white">{event.title}</h2>
-                            <p className="text-xs text-slate-400">
-                              📍 {event.place_name} · {formatEventTime(event.starts_at, undefined, locale)}
+                            <h2 className="font-semibold text-ink">{event.title}</h2>
+                            <p className="text-xs text-ink-muted">
+                              <MapPin aria-hidden="true" className="h-3.5 w-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{event.place_name} · {formatEventTime(event.starts_at, undefined, locale)}
                             </p>
                           </div>
                           <div className={actionBar}>
@@ -766,11 +777,11 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                               {t.backToReview}
                             </button>
                             <button onClick={() => acceptEvent(event)} className={btnApprove}>
-                              ✓ {t.approve}
+                              <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {t.approve}
                             </button>
-                            <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                            <span className="w-px h-5 bg-panel mx-2" aria-hidden="true" />
                             <button onClick={() => removeEvent(event)} className={btnDelete}>
-                              🗑 {t.delete}
+                              <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.delete}
                             </button>
                           </div>
                         </article>
@@ -786,7 +797,10 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
         {tab === "reports" && (
           <section className="space-y-3">
             {openReports.length === 0 ? (
-              <p className="text-sm text-slate-500">{t.noReports}</p>
+              <p className="flex items-center gap-2 text-sm text-ink-muted">
+                      <Manul mood="sleepy" className="h-7 w-8" />
+                      {t.noReports}
+                    </p>
             ) : (
               openReports.map((report) => (
                 <ReportCard key={report.id} report={report} spotName={spotName(report.spot_id)}>
@@ -796,27 +810,27 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                     </button>
                   ) : null}
                   <button onClick={() => updateReportStatus(report, "resolved")} className={btnApprove}>
-                    ✅ {t.markResolved}
+                    <CheckCheck aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {t.markResolved}
                   </button>
                   <button onClick={() => removeReport(report)} className={`${btnDelete} ml-auto`}>
-                    🗑 {t.delete}
+                    <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.delete}
                   </button>
                 </ReportCard>
               ))
             )}
             {resolvedReports.length > 0 ? (
               <details className="group">
-                <summary className="cursor-pointer select-none text-xs font-semibold text-slate-400 hover:text-white py-2">
+                <summary className="cursor-pointer select-none text-xs font-semibold text-ink-muted hover:text-ink py-2">
                   {t.resolvedReports(resolvedReports.length)}
                 </summary>
                 <div className="space-y-3 pt-2 opacity-80">
                   {resolvedReports.map((report) => (
                     <ReportCard key={report.id} report={report} spotName={spotName(report.spot_id)}>
                       <button onClick={() => updateReportStatus(report, "open")} className={btnNeutral}>
-                        ↩ {t.reopenReport}
+                        <Undo2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.reopenReport}
                       </button>
                       <button onClick={() => removeReport(report)} className={`${btnDelete} ml-auto`}>
-                        🗑 {t.delete}
+                        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.delete}
                       </button>
                     </ReportCard>
                   ))}
@@ -836,18 +850,18 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                     actions={
                       <>
                         <button onClick={() => setEditingSpotId(spot.id)} className={btnNeutral}>
-                          ✏️ {t.edit}
+                          <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.edit}
                         </button>
                         {/* Устгахыг засахаас зааглагчаар тусгаарлана. */}
-                        <span className="w-px h-5 bg-slate-700 mx-2" aria-hidden="true" />
+                        <span className="w-px h-5 bg-panel mx-2" aria-hidden="true" />
                         <button onClick={() => removeSpot(spot)} className={btnDelete}>
-                          🗑 {t.delete}
+                          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.delete}
                         </button>
                       </>
                     }
                   >
-                    <h2 className="font-semibold text-white truncate">{spot.name}</h2>
-                    <p className="text-xs text-slate-400 truncate">{spot.location}</p>
+                    <h2 className="font-semibold text-ink truncate">{spot.name}</h2>
+                    <p className="text-xs text-ink-muted truncate">{spot.location}</p>
                   </SpotRow>
                 </article>
               )
@@ -858,28 +872,25 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
         {tab === "comments" && (
           <section className="space-y-3">
             {reviews.length === 0 ? (
-              <p className="text-sm text-slate-500">{t.noReviews}</p>
+              <p className="text-sm text-ink-muted">{t.noReviews}</p>
             ) : (
               reviews.map((review) => (
                 <article key={review.id} className={`${cardClass} text-sm`}>
                   <div className="p-4 space-y-2">
-                    <p className="text-xs text-indigo-300">
+                    <p className="text-xs text-link">
                       {spotName(review.spot_id)}
-                      <span className="text-slate-400"> · {review.author_name ?? t.guest}</span>
+                      <span className="text-ink-muted"> · {review.author_name ?? t.guest}</span>
                     </p>
-                    <p className="font-semibold text-amber-400">
-                      {"★".repeat(review.rating)}
-                      <span className="text-slate-600">{"★".repeat(5 - review.rating)}</span>
-                    </p>
-                    <p className="text-slate-200 whitespace-pre-line">{review.comment}</p>
+                    <Stars value={review.rating} />
+                    <p className="text-ink whitespace-pre-line">{review.comment}</p>
                     <ReviewScoreLine review={review} />
                   </div>
                   <div className={actionBar}>
                     <button onClick={() => setEditingReview(review)} className={btnNeutral}>
-                      ✏️ {t.edit}
+                      <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.edit}
                     </button>
                     <button onClick={() => removeReview(review)} className={`${btnDelete} ml-auto`}>
-                      🗑 {t.delete}
+                      <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.delete}
                     </button>
                   </div>
                 </article>
@@ -890,9 +901,9 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
 
         {tab === "events" && (
           <section className="space-y-3">
-            {eventError ? <p className="text-sm text-rose-400">{eventError}</p> : null}
+            {eventError ? <p className="text-sm text-danger">{eventError}</p> : null}
             {sortedEvents.length === 0 ? (
-              <p className="text-sm text-slate-500">{t.noEventsAdmin}</p>
+              <p className="text-sm text-ink-muted">{t.noEventsAdmin}</p>
             ) : (
               sortedEvents.map((event) => {
                 const going = attendees.filter((attendee) => attendee.event_id === event.id).length;
@@ -902,39 +913,39 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
                     <>
                       <div className="p-4 space-y-1 min-w-0">
                         <div className="flex items-start justify-between gap-3">
-                          <h2 className="font-semibold text-white">{event.title}</h2>
+                          <h2 className="font-semibold text-ink">{event.title}</h2>
                           {isPast ? (
-                            <span className="shrink-0 text-[10px] font-semibold bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">
+                            <span className="shrink-0 text-[10px] font-semibold bg-panel text-ink-muted px-2 py-0.5 rounded-full">
                               {t.statusPast}
                             </span>
                           ) : null}
                         </div>
-                        <p className="text-xs text-indigo-300">{formatEventTime(event.starts_at, undefined, locale)}</p>
-                        <p className="text-xs text-slate-400">
-                          📍 {event.place_name} · {t.host} {event.host_name}
+                        <p className="text-xs text-link">{formatEventTime(event.starts_at, undefined, locale)}</p>
+                        <p className="text-xs text-ink-muted">
+                          <MapPin aria-hidden="true" className="h-3.5 w-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{event.place_name} · {t.host} {event.host_name}
                         </p>
                         {phones[event.id] ? (
-                          <p className="text-xs text-slate-400">
-                            📞{" "}
-                            <a href={telHref(phones[event.id])} className="text-emerald-300 hover:text-emerald-200">
+                          <p className="text-xs text-ink-muted">
+                            <Phone aria-hidden="true" className="h-3.5 w-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />
+                            <a href={telHref(phones[event.id])} className="text-good hover:text-good">
                               {phones[event.id]}
                             </a>
                           </p>
                         ) : null}
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-ink-muted">
                           {t.attending} {going}
                           {event.max_people !== null ? ` / ${event.max_people}` : ""}
                         </p>
                         {event.description ? (
-                          <p className="text-xs text-slate-300 line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
+                          <p className="text-xs text-ink-muted line-clamp-2 whitespace-pre-line pt-1">{event.description}</p>
                         ) : null}
                       </div>
                       <div className={actionBar}>
                         <button onClick={() => setEditingEventId(event.id)} className={btnNeutral}>
-                          ✏️ {t.edit}
+                          <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.edit}
                         </button>
                         <button onClick={() => removeEvent(event)} className={`${btnDelete} ml-auto`}>
-                          🗑 {t.delete}
+                          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.delete}
                         </button>
                       </div>
                     </>
@@ -975,21 +986,21 @@ function AdminPanelInner({ demo }: { demo: boolean }) {
         >
           {(requestClose) => (
           <form id="admin-review-form" onSubmit={saveReview} className="space-y-3 text-xs">
-            <p className="text-indigo-300">
+            <p className="text-link">
               {spotName(editingReview.spot_id)}
-              <span className="text-slate-400"> · {editingReview.author_name ?? t.guest}</span>
+              <span className="text-ink-muted"> · {editingReview.author_name ?? t.guest}</span>
             </p>
             <label className="block space-y-1">
-              <span className="block text-slate-400">{t.ratingLabel} (1–5)</span>
+              <span className="block text-ink-muted">{t.ratingLabel} (1–5)</span>
               <input className={inputClass} type="number" min={1} max={5} value={editingReview.rating} onChange={(e) => setEditingReview({ ...editingReview, rating: Number(e.target.value) })} />
             </label>
             <ScoreFields value={editingReview} onChange={(scores) => setEditingReview({ ...editingReview, ...scores })} />
             <label className="block space-y-1">
-              <span className="block text-slate-400">{t.tabReviews}</span>
+              <span className="block text-ink-muted">{t.tabReviews}</span>
               <textarea className={inputClass} rows={4} value={editingReview.comment} maxLength={LIMITS.reviewComment} onChange={(e) => setEditingReview({ ...editingReview, comment: e.target.value })} />
             </label>
             <div className="flex flex-wrap gap-2">
-              <button className={`${btn} bg-indigo-600 hover:bg-indigo-500 text-white`}>{t.save}</button>
+              <button className={`${btn} bg-azure hover:bg-azure-deep text-white`}>{t.save}</button>
               <button type="button" onClick={requestClose} className={btnNeutral}>{t.cancel}</button>
             </div>
           </form>
@@ -1079,7 +1090,7 @@ function AdminDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[1200] bg-slate-950/80 backdrop-blur-sm flex items-stretch sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-[1200] bg-night/55 flex items-stretch sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) requestClose();
       }}
@@ -1088,13 +1099,13 @@ function AdminDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-dialog-title"
-        className="relative w-full max-w-2xl bg-slate-900 sm:border border-slate-800 rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6"
+        className="relative w-full max-w-2xl bg-sheet sm:border border-line rounded-none sm:rounded-md shadow-dialog h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6"
       >
-        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 mb-4 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-3">
-          <h2 id="admin-dialog-title" className="font-bold text-white">
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 mb-4 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-sheet border-b border-line flex items-center justify-between gap-3">
+          <h2 id="admin-dialog-title" className="font-bold text-ink">
             {title}
             {dirty ? (
-              <span className="ml-2 align-middle text-[10px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+              <span className="ml-2 align-middle text-[10px] font-semibold text-sun-deep bg-sun-soft border border-sun/40 px-1.5 py-0.5 rounded">
                 {t.unsavedBadge}
               </span>
             ) : null}
@@ -1103,9 +1114,9 @@ function AdminDialog({
             type="button"
             onClick={requestClose}
             aria-label={t.close}
-            className="h-9 w-9 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
+            className="flex items-center justify-center h-9 w-9 shrink-0 rounded-full bg-panel text-ink hover:bg-line transition-colors"
           >
-            ✕
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
           </button>
         </div>
         {typeof children === "function" ? children(requestClose) : children}
@@ -1130,7 +1141,7 @@ function UnsavedChangesDialog({
   useEffect(() => keepRef.current?.focus(), []);
   return (
     <div
-      className="fixed inset-0 z-[1300] bg-slate-950/70 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[1300] bg-night/55 flex items-center justify-center p-4"
       onMouseDown={(e) => {
         e.stopPropagation();
         if (e.target === e.currentTarget) onKeepEditing();
@@ -1141,17 +1152,17 @@ function UnsavedChangesDialog({
         aria-modal="true"
         aria-labelledby="unsaved-title"
         aria-describedby="unsaved-message"
-        className="w-full max-w-sm bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 space-y-4"
+        className="w-full max-w-sm bg-sheet border border-line rounded-md shadow-dialog p-5 space-y-4"
       >
         <div className="flex gap-3">
-          <span aria-hidden="true" className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-lg bg-amber-500/15 text-amber-300">
-            ✎
+          <span aria-hidden="true" className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-lg bg-sun-soft text-sun-deep">
+            <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
           </span>
           <div className="space-y-1">
-            <h2 id="unsaved-title" className="font-semibold text-white">
+            <h2 id="unsaved-title" className="font-semibold text-ink">
               {t.unsavedTitle}
             </h2>
-            <p id="unsaved-message" className="text-sm text-slate-400">
+            <p id="unsaved-message" className="text-sm text-ink-muted">
               {t.unsavedMessage}
             </p>
           </div>
@@ -1160,7 +1171,7 @@ function UnsavedChangesDialog({
           <button
             type="button"
             onClick={onDiscard}
-            className="mr-auto px-4 py-2 rounded-lg text-sm font-semibold text-rose-300 hover:text-white hover:bg-rose-600/80"
+            className="mr-auto px-4 py-2 rounded-md text-sm font-semibold text-danger hover:bg-alert-soft"
           >
             {t.discardChanges}
           </button>
@@ -1168,14 +1179,14 @@ function UnsavedChangesDialog({
             ref={keepRef}
             type="button"
             onClick={onKeepEditing}
-            className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-sm font-semibold text-slate-100"
+            className="px-4 py-2 rounded-md bg-panel hover:bg-line text-sm font-semibold text-ink"
           >
             {t.keepEditing}
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-sm font-semibold text-white"
+            className="px-4 py-2 rounded-md bg-azure hover:bg-azure-deep text-sm font-semibold text-white"
           >
             {t.save}
           </button>
@@ -1192,9 +1203,9 @@ function ReportCard({ report, spotName, children }: { report: SpotReport; spotNa
   return (
     <article className={`${cardClass} text-sm`}>
       <div className="p-4 space-y-2">
-        <p className="text-xs text-indigo-300">
+        <p className="text-xs text-link">
           {spotName}
-          <span className="text-slate-400">
+          <span className="text-ink-muted">
             {" "}
             · {report.author_name ?? t.guest} · {sent}
           </span>
@@ -1204,14 +1215,21 @@ function ReportCard({ report, spotName, children }: { report: SpotReport; spotNa
             {report.topics.map((key) => {
               const topic = reportTopic(key);
               return (
-                <li key={key} className="text-xs bg-amber-500/15 border border-amber-500/40 text-amber-200 px-2 py-0.5 rounded-md">
-                  {topic ? `${topic.icon} ${topic.label[locale]}` : key}
+                <li key={key} className="text-xs bg-sun-soft border border-sun/40 text-sun-deep px-2 py-0.5 rounded-md">
+                  {topic ? (
+                    <span className="inline-flex items-center gap-1">
+                      <KeyIcon k={key === "other" ? "other-message" : key} className="h-3 w-3" />
+                      {topic.label[locale]}
+                    </span>
+                  ) : (
+                    key
+                  )}
                 </li>
               );
             })}
           </ul>
         ) : null}
-        {report.message ? <p className="text-slate-200 whitespace-pre-line">{report.message}</p> : null}
+        {report.message ? <p className="text-ink whitespace-pre-line">{report.message}</p> : null}
       </div>
       <div className={actionBar}>{children}</div>
     </article>
@@ -1239,7 +1257,7 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
             href={googleMapsUrl(spot)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-full border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 rounded-full border border-line text-ink-muted hover:text-ink hover:border-line-strong"
           >
             <GoogleMapsIcon className="h-3.5 w-3.5" />
             Google Maps
@@ -1251,14 +1269,14 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
               onClick={() => setShown((value) => !value)}
               className={`whitespace-nowrap px-2.5 py-1 rounded-full border font-semibold transition-colors ${
                 shown
-                  ? "bg-sky-500 border-sky-400 text-white"
-                  : "bg-sky-500/10 border-sky-500/50 text-sky-300 hover:bg-sky-500/20"
+                  ? "bg-azure border-azure text-white"
+                  : "bg-azure-soft border-azure/40 text-link hover:border-azure"
               }`}
             >
               {shown ? t.hidePhotoButton : t.photoButton}
             </button>
           ) : (
-            <span className="whitespace-nowrap px-2.5 py-1 rounded-full border border-dashed border-slate-700 text-slate-500">
+            <span className="whitespace-nowrap px-2.5 py-1 rounded-full border border-dashed border-line text-ink-muted">
               {t.noPhoto}
             </span>
           )}
@@ -1269,11 +1287,11 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
               onClick={() => setMediaShown((value) => !value)}
               className={`whitespace-nowrap px-2.5 py-1 rounded-full border font-semibold transition-colors ${
                 mediaShown
-                  ? "bg-violet-500 border-violet-400 text-white"
-                  : "bg-violet-500/10 border-violet-500/50 text-violet-300 hover:bg-violet-500/20"
+                  ? "bg-azure border-azure text-white"
+                  : "bg-azure-soft border-azure/40 text-link hover:border-azure"
               }`}
             >
-              🎞 {t.mediaSummary(media.length - videoCount - linkCount, videoCount, linkCount)}
+              <Images aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.mediaSummary(media.length - videoCount - linkCount, videoCount, linkCount)}
             </button>
           ) : null}
         </div>
@@ -1301,7 +1319,7 @@ function SpotRow({ spot, actions, children }: { spot: StudySpot; actions: ReactN
             width={1024}
             height={576}
             sizes="(min-width: 512px) 512px, 100vw"
-            className="max-h-72 w-full max-w-lg object-cover rounded-xl border border-slate-700"
+            className="max-h-72 w-full max-w-lg object-cover rounded-md border border-line"
           />
         </a>
       ) : null}
@@ -1419,7 +1437,7 @@ function SpotEditForm({
         <option value="">{t.noCategory}</option>
         {SPOT_CATEGORIES.map((category) => (
           <option key={category.key} value={category.key}>
-            {category.icon} {category.label[locale]}
+            {category.label[locale]}
           </option>
         ))}
       </select>
@@ -1431,15 +1449,15 @@ function SpotEditForm({
         onChange={(e) => setDraft({ ...draft, description: e.target.value })}
       />
       <div className="sm:col-span-2 space-y-2">
-        <label className="block text-slate-400">{t.amenities}</label>
+        <label className="block text-ink-muted">{t.amenities}</label>
         <OptionPicker options={AMENITIES} value={draft.amenities ?? []} onChange={(amenities) => setDraft({ ...draft, amenities })} />
       </div>
       <div className="sm:col-span-2 space-y-2">
-        <label className="block text-slate-400">{t.accessibility}</label>
+        <label className="block text-ink-muted">{t.accessibility}</label>
         <OptionPicker options={ACCESSIBILITY} value={draft.accessibility ?? []} onChange={(accessibility) => setDraft({ ...draft, accessibility })} />
       </div>
-      <fieldset className="sm:col-span-2 space-y-2 border border-slate-800 rounded-xl p-3">
-        <legend className="px-1 text-slate-400">{t.initialRatings}</legend>
+      <fieldset className="sm:col-span-2 space-y-2 border border-line rounded-md p-3">
+        <legend className="px-1 text-ink-muted">{t.initialRatings}</legend>
         <ScoreFields
           value={draft}
           onChange={(scores) =>
@@ -1454,7 +1472,7 @@ function SpotEditForm({
       </fieldset>
 
       <div className="sm:col-span-2 space-y-2">
-        <label className="block text-slate-400">{t.photo}</label>
+        <label className="block text-ink-muted">{t.photo}</label>
         {shownImage ? (
           <SmartImage
             src={shownImage}
@@ -1462,20 +1480,15 @@ function SpotEditForm({
             width={896}
             height={504}
             sizes="(min-width: 448px) 448px, 100vw"
-            className="max-h-48 w-full max-w-md object-cover rounded-lg border border-slate-700"
+            className="max-h-48 w-full max-w-md object-cover rounded-md border border-line"
           />
         ) : (
-          <span className="inline-block px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-400">
+          <span className="inline-block px-2 py-1 rounded-md bg-panel border border-line text-ink-muted">
             {t.noPhoto}
           </span>
         )}
         {isCloudinaryConfigured ? (
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-300 file:mr-3 file:px-3 file:py-1.5 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:text-xs file:font-semibold"
-          />
+          <FilePicker accept="image/*" fileName={imageFile?.name ?? null} onChange={handleFileChange} />
         ) : (
           <input
             className={inputClass}
@@ -1486,14 +1499,14 @@ function SpotEditForm({
           />
         )}
         {shownImage ? (
-          <button type="button" onClick={removePhoto} className="px-3 py-1.5 rounded-lg bg-rose-900/70">
+          <button type="button" onClick={removePhoto} className="px-3 py-1.5 rounded-md bg-alert-soft">
             {t.removePhoto}
           </button>
         ) : null}
       </div>
 
       <div className="sm:col-span-2 space-y-2">
-        <label className="block text-slate-400">{t.mediaLabel}</label>
+        <label className="block text-ink-muted">{t.mediaLabel}</label>
         <MediaPicker
           value={draft.media ?? []}
           onChange={(media) => setDraft((prev) => ({ ...prev, media }))}
@@ -1501,12 +1514,12 @@ function SpotEditForm({
         />
       </div>
 
-      {error ? <p className="sm:col-span-2 text-rose-400">{error}</p> : null}
+      {error ? <p className="sm:col-span-2 text-danger">{error}</p> : null}
       <div className="sm:col-span-2 flex gap-2">
-        <button disabled={saving || mediaUploading} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
+        <button disabled={saving || mediaUploading} className="px-3 py-1.5 rounded-md bg-azure disabled:opacity-60">
           {saving ? (imageFile ? t.uploadingImage : t.saving) : t.save}
         </button>
-        <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-lg bg-slate-700">
+        <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-md bg-panel">
           {t.cancel}
         </button>
       </div>
@@ -1627,23 +1640,23 @@ function EventEditForm({
   return (
     <form id="admin-event-form" onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
       <label className="space-y-1 sm:col-span-2">
-        <span className="block text-slate-400">{t.eventTitle}</span>
+        <span className="block text-ink-muted">{t.eventTitle}</span>
         <input className={inputClass} required value={draft.title} maxLength={LIMITS.eventTitle} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
       </label>
       <label className="space-y-1">
-        <span className="block text-slate-400">{t.placeName}</span>
+        <span className="block text-ink-muted">{t.placeName}</span>
         <input className={inputClass} required value={draft.place_name} maxLength={LIMITS.placeName} onChange={(e) => setDraft({ ...draft, place_name: e.target.value })} />
       </label>
       <label className="space-y-1">
-        <span className="block text-slate-400">{t.dateTime}</span>
+        <span className="block text-ink-muted">{t.dateTime}</span>
         <input className={inputClass} type="datetime-local" required value={draft.startsAt} onChange={(e) => setDraft({ ...draft, startsAt: e.target.value })} />
       </label>
       <label className="space-y-1">
-        <span className="block text-slate-400">{t.maxPeople}</span>
+        <span className="block text-ink-muted">{t.maxPeople}</span>
         <input className={inputClass} type="number" min={1} placeholder={t.unlimited} value={draft.maxPeople} max={LIMITS.maxPeople} onChange={(e) => setDraft({ ...draft, maxPeople: e.target.value })} />
       </label>
       <label className="space-y-1">
-        <span className="block text-slate-400">{t.chatLinkLabel}</span>
+        <span className="block text-ink-muted">{t.chatLinkLabel}</span>
         <input
           className={inputClass}
           type="url"
@@ -1655,7 +1668,7 @@ function EventEditForm({
         />
       </label>
       <label className="space-y-1">
-        <span className="block text-slate-400">{t.phoneLabel}</span>
+        <span className="block text-ink-muted">{t.phoneLabel}</span>
         <input
           className={inputClass}
           type="tel"
@@ -1668,15 +1681,15 @@ function EventEditForm({
         />
       </label>
       <label className="space-y-1 sm:col-span-2">
-        <span className="block text-slate-400">{t.eventDetails}</span>
+        <span className="block text-ink-muted">{t.eventDetails}</span>
         <textarea className={`${inputClass} resize-none`} rows={3} value={draft.description} maxLength={LIMITS.eventDescription} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
       </label>
-      {error ? <p className="sm:col-span-2 text-rose-400">{error}</p> : null}
+      {error ? <p className="sm:col-span-2 text-danger">{error}</p> : null}
       <div className="sm:col-span-2 flex flex-wrap gap-2">
-        <button disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 disabled:opacity-60">
+        <button disabled={saving} className="px-3 py-1.5 rounded-md bg-azure disabled:opacity-60">
           {saving ? t.saving : t.save}
         </button>
-        <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-lg bg-slate-700">
+        <button type="button" onClick={onCancel} disabled={saving} className="px-3 py-1.5 rounded-md bg-panel">
           {t.cancel}
         </button>
       </div>
