@@ -388,6 +388,10 @@ const mn = {
   // Админ
   accessDenied: "Хандах эрхгүй",
   adminOnly: "Энэ хуудас зөвхөн админд зориулагдсан.",
+  adminDemo: "Админ демо",
+  tryAdminDemo: "Нэвтрэлтгүй админы демо үзэх →",
+  demoBadge: "Демо",
+  demoBanner: "Демо горим — жишээ өгөгдөл. Өөрчлөлт хадгалагдахгүй, хуудас сэргээхэд анхны байдалдаа орно.",
   adminTitle: "StudySpots админ",
   tabPending: "Хүлээгдэж буй",
   tabPlaces: "Газрууд",
@@ -842,6 +846,10 @@ const en: Dictionary = {
 
   accessDenied: "Access denied",
   adminOnly: "This page is for admins only.",
+  adminDemo: "Admin demo",
+  tryAdminDemo: "Try the admin demo (no sign-in) →",
+  demoBadge: "Demo",
+  demoBanner: "Demo mode — sample data. Nothing is saved; reloading the page resets everything.",
   adminTitle: "StudySpots admin",
   tabPending: "Pending",
   tabPlaces: "Places",

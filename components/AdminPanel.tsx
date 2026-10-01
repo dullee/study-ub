@@ -49,6 +49,8 @@ import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import { toast } from "sonner";
 import { reportTopic, SpotReport } from "@/lib/reports";
 import { deleteReport, fetchReports, setReportStatus, subscribeNewReports } from "@/lib/supabase/reports";
+import { demoAdminData } from "@/lib/demoAdminData";
+import { DemoModeProvider, useDemoMode } from "@/components/DemoMode";
 import {
   deleteReview,
   deleteSpot,
@@ -92,7 +94,36 @@ const cardClass = "rounded-2xl border border-slate-800 bg-slate-800/40 overflow-
 const actionBar = "flex flex-wrap items-center gap-2 px-4 py-3 border-t border-slate-800 bg-slate-900/40";
 
 // app/admin/page.tsx сервер дээр Clerk-ийн админ эрхийг шалгасны дараа л харагдана.
-export default function AdminPanel() {
+// Демо горимд (/admin/demo) хөтчийн localStorage-д ч бичихгүй — өөрчлөлт зөвхөн дэлгэц дээр, хуудас сэргээхэд алга болно.
+const LOCAL_WRITES = {
+  saveLocalReports,
+  saveLocalSpots,
+  removeLocalReview,
+  saveLocalReview,
+  updateLocalEvent,
+  saveLocalChatLink,
+  saveLocalEventPhone,
+  removeLocalEvent,
+};
+const NO_WRITES: typeof LOCAL_WRITES = {
+  saveLocalReports: () => {},
+  saveLocalSpots: () => {},
+  removeLocalReview: () => {},
+  saveLocalReview: () => {},
+  updateLocalEvent: () => {},
+  saveLocalChatLink: () => {},
+  saveLocalEventPhone: () => {},
+  removeLocalEvent: () => {},
+};
+
+// demo: нэвтрэлтгүй танилцуулга — жишээ өгөгдөл, Supabase/Cloudinary-д огт хүрэхгүй.
+export default function AdminPanel({ demo = false }: { demo?: boolean }) {
+  const panel = <AdminPanelInner demo={demo} />;
+  return demo ? <DemoModeProvider>{panel}</DemoModeProvider> : panel;
+}
+
+function AdminPanelInner({ demo }: { demo: boolean }) {
+  const local = demo ? NO_WRITES : LOCAL_WRITES;
   const { isLoaded } = useAuth();
   const { t, locale } = useI18n();
   const [tab, setTab] = useState<Tab>("pending");
@@ -124,6 +155,16 @@ export default function AdminPanel() {
     if (!isLoaded) return;
     let cancelled = false;
     async function load() {
+      if (demo) {
+        const data = demoAdminData();
+        setSpots(data.spots);
+        setReviews(data.reviews);
+        setEvents(data.events);
+        setAttendees(data.attendees);
+        setPhones(data.phones);
+        setReports(data.reports);
+        return;
+      }
       if (isSupabaseConfigured) {
         const [spotRows, reviewRows, eventRows, attendeeRows, phoneRows, reportRows] = await Promise.all([
           fetchAllSpots(),
@@ -157,7 +198,7 @@ export default function AdminPanel() {
     return () => {
       cancelled = true;
     };
-  }, [isLoaded]);
+  }, [isLoaded, demo]);
 
   // Самбар нээлттэй байхад шинэ мэдэгдэл шууд ирж, дээд буланд мэдэгдэл гарна.
   const spotsRef = useRef(spots);
@@ -190,7 +231,7 @@ export default function AdminPanel() {
     }
     const saved = updated;
     const next = reports.map((item) => (item.id === report.id ? saved : item));
-    if (!remote) saveLocalReports(next);
+    if (!remote) local.saveLocalReports(next);
     setReports(next);
   };
 
@@ -208,7 +249,7 @@ export default function AdminPanel() {
       return;
     }
     const next = reports.filter((item) => item.id !== report.id);
-    if (!remote) saveLocalReports(next);
+    if (!remote) local.saveLocalReports(next);
     setReports(next);
   };
 
@@ -222,7 +263,7 @@ export default function AdminPanel() {
         return false;
       }
     } else {
-      saveLocalSpots(next);
+      local.saveLocalSpots(next);
     }
     setSpots(next);
     return true;
@@ -286,7 +327,7 @@ export default function AdminPanel() {
     const remaining = reviews.filter((review) => review.spot_id !== id);
     setReviews(remaining);
     if (!remote) {
-      reviews.filter((review) => review.spot_id === id).forEach((review) => removeLocalReview(review.id));
+      reviews.filter((review) => review.spot_id === id).forEach((review) => local.removeLocalReview(review.id));
     }
   };
 
@@ -298,7 +339,7 @@ export default function AdminPanel() {
     } else {
       const next = spots.map((item) => (item.id === updated.id ? updated : item));
       setSpots(next);
-      saveLocalSpots(next);
+      local.saveLocalSpots(next);
     }
     setEditDirty(false);
     setEditingSpotId(null);
@@ -317,7 +358,7 @@ export default function AdminPanel() {
       }
       setReviews(reviews.map((item) => (item.id === saved.id ? saved : item)));
     } else {
-      saveLocalReview(editingReview);
+      local.saveLocalReview(editingReview);
       setReviews(reviews.map((item) => (item.id === editingReview.id ? editingReview : item)));
     }
     setEditingReview(null);
@@ -339,7 +380,7 @@ export default function AdminPanel() {
         return;
       }
     } else {
-      removeLocalReview(id);
+      local.removeLocalReview(id);
     }
     setReviews(reviews.filter((item) => item.id !== id));
   };
@@ -357,9 +398,9 @@ export default function AdminPanel() {
       }
       setEvents((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
     } else {
-      updateLocalEvent(updated);
-      if (chatChanged) saveLocalChatLink(updated.id, chatUrl);
-      if (phoneChanged) saveLocalEventPhone(updated.id, phone);
+      local.updateLocalEvent(updated);
+      if (chatChanged) local.saveLocalChatLink(updated.id, chatUrl);
+      if (phoneChanged) local.saveLocalEventPhone(updated.id, phone);
       setEvents((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
     }
     if (phoneChanged) {
@@ -391,7 +432,7 @@ export default function AdminPanel() {
         return;
       }
     } else {
-      removeLocalEvent(event.id);
+      local.removeLocalEvent(event.id);
     }
     setEvents((prev) => prev.filter((item) => item.id !== event.id));
     setAttendees((prev) => prev.filter((attendee) => attendee.event_id !== event.id));
@@ -407,7 +448,7 @@ export default function AdminPanel() {
       }
       setEvents((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
     } else {
-      updateLocalEvent(updated);
+      local.updateLocalEvent(updated);
       setEvents((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
     }
     return true;
@@ -475,15 +516,27 @@ export default function AdminPanel() {
     <main className="min-h-screen bg-slate-900 text-slate-100">
       <header className="border-b border-slate-800 sticky top-0 bg-slate-900/90 backdrop-blur z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 sm:py-4 flex justify-between items-center gap-3">
-          <h1 className="font-bold">{t.adminTitle}</h1>
+          <h1 className="font-bold">
+            {t.adminTitle}
+            {demo ? (
+              <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-wide bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded">
+                {t.demoBadge}
+              </span>
+            ) : null}
+          </h1>
           <div className="flex items-center gap-3">
             <Link href="/" className="text-xs text-slate-400 hover:text-white">
               {t.home}
             </Link>
             <LanguageSwitcher />
-            <UserButton />
+            {demo ? null : <UserButton />}
           </div>
         </div>
+        {demo ? (
+          <p className="border-t border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs text-center px-4 py-2">
+            {t.demoBanner}
+          </p>
+        ) : null}
       </header>
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         <nav className="flex flex-wrap gap-1 p-1 rounded-xl bg-slate-800/60 border border-slate-800 w-fit max-w-full">
@@ -1270,6 +1323,7 @@ function SpotEditForm({
   onCancel: () => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
+  const demo = useDemoMode();
   const { t, locale } = useI18n();
   const [draft, setDraft] = useState(spot);
   // Шошгыг текстээр хадгалж, хадгалахдаа массив болгоно — бичиж байхад таслал, зай арилахгүй.
@@ -1327,7 +1381,7 @@ function SpotEditForm({
     let image = draft.image;
     if (imageFile) {
       try {
-        image = await uploadImage(imageFile);
+        image = demo ? URL.createObjectURL(imageFile) : await uploadImage(imageFile);
       } catch (err) {
         console.error("Image upload:", err);
         setError(t.imageUploadFailed);

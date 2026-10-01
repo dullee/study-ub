@@ -6,6 +6,7 @@ import { isCloudinaryConfigured, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, uploadMedia }
 import { isFacebookPostPermalink, isInstagramStory, isShortSocialLink, parseSocialLink } from "@/lib/socialMedia";
 import { MediaThumb } from "@/components/MediaGallery";
 import { useI18n } from "@/components/LanguageProvider";
+import { useDemoMode } from "@/components/DemoMode";
 
 export const MAX_MEDIA = 30; // supabase/migrations/20260925000004_spot_media.sql-тэй тохирно.
 
@@ -22,6 +23,8 @@ interface MediaPickerProps {
 // Холбоосоор ч нэмнэ: YouTube, TikTok, Instagram, Facebook, X, Vimeo пост/бичлэг эсвэл зураг, бичлэгийн шууд холбоос.
 export default function MediaPicker({ value, onChange, onUploadingChange }: MediaPickerProps) {
   const { t } = useI18n();
+  // Админы демо: файлыг Cloudinary руу хуулахгүй, хөтөч дээрх урьдчилсан харагдацаар.
+  const demo = useDemoMode();
   const [uploading, setUploading] = useState(0);
   const [errors, setErrors] = useState<string[]>([]);
   const [link, setLink] = useState("");
@@ -58,7 +61,13 @@ export default function MediaPicker({ value, onChange, onUploadingChange }: Medi
     if (accepted.length === 0) return;
 
     setBusy(accepted.length);
-    const results = await Promise.allSettled(accepted.map((file) => uploadMedia(file)));
+    const results = await Promise.allSettled(
+      accepted.map((file) =>
+        demo
+          ? Promise.resolve<SpotMedia>({ url: URL.createObjectURL(file), type: file.type.startsWith("video/") ? "video" : "image" })
+          : uploadMedia(file)
+      )
+    );
     const added: SpotMedia[] = [];
     results.forEach((result, index) => {
       if (result.status === "fulfilled") added.push(result.value);

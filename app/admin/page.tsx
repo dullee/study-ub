@@ -15,6 +15,9 @@ export default async function AdminPage() {
         <div className="w-full max-w-sm bg-slate-800/60 border border-slate-700 rounded-2xl p-6 space-y-3 text-center">
           <h1 className="text-lg font-bold">{t.accessDenied}</h1>
           <p className="text-sm text-slate-400">{t.adminOnly}</p>
+          <Link href="/admin/demo" className="block text-sm font-semibold text-amber-300 hover:text-amber-200">
+            {t.tryAdminDemo}
+          </Link>
           <Link href="/" className="inline-block text-xs text-indigo-300 hover:text-white">
             {t.home}
           </Link>

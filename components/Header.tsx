@@ -55,6 +55,16 @@ export default function Header({ onAddClick, addLabel }: HeaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {/* Танилцуулгад: нэвтрэлтгүй админы самбар, жишээ өгөгдөлтэй (app/admin/demo). */}
+          <Link
+            href="/admin/demo"
+            aria-label={t.adminDemo}
+            title={t.adminDemo}
+            className="flex items-center justify-center gap-1 h-9 w-9 sm:w-auto sm:px-4 rounded-xl text-xs font-semibold border bg-slate-800 text-slate-200 border-slate-700 hover:border-slate-500 hover:text-white transition-all"
+          >
+            <span aria-hidden="true">🛠️</span>
+            <span className="hidden sm:inline">{t.adminDemo}</span>
+          </Link>
           <Link
             href="/parking"
             aria-label={t.findParking}
