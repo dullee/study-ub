@@ -11,6 +11,7 @@ import ScoreFields, { ScoreValues } from "@/components/ScoreFields";
 import ReviewScoreLine from "@/components/ReviewScoreLine";
 import { useI18n } from "@/components/LanguageProvider";
 import { LIMITS } from "@/lib/limits";
+import { Star, X } from "lucide-react";
 
 interface ReviewsDialogProps {
   spot: StudySpot;
@@ -21,18 +22,18 @@ interface ReviewsDialogProps {
 }
 
 const inputClass =
-  "w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500";
+  "w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure";
 
 function ReviewSkeleton() {
   return (
-    <li className="bg-slate-800/40 border border-slate-800 rounded-xl p-4 space-y-2.5 animate-pulse" aria-hidden="true">
+    <li className="bg-panel border border-line rounded-md p-4 space-y-2.5 animate-pulse" aria-hidden="true">
       <div className="flex justify-between">
-        <div className="h-3.5 w-28 rounded bg-slate-700" />
-        <div className="h-3 w-16 rounded bg-slate-800" />
+        <div className="h-3.5 w-28 rounded bg-panel" />
+        <div className="h-3 w-16 rounded bg-panel" />
       </div>
-      <div className="h-3 w-20 rounded bg-slate-700/70" />
-      <div className="h-3 w-full rounded bg-slate-800" />
-      <div className="h-3 w-2/3 rounded bg-slate-800" />
+      <div className="h-3 w-20 rounded bg-line" />
+      <div className="h-3 w-full rounded bg-panel" />
+      <div className="h-3 w-2/3 rounded bg-panel" />
     </li>
   );
 }
@@ -40,13 +41,13 @@ function ReviewSkeleton() {
 export function ReviewItem({ review, clamp = false }: { review: Review; clamp?: boolean }) {
   const { t } = useI18n();
   return (
-    <li className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 text-sm space-y-1.5">
+    <li className="bg-panel border border-line rounded-md p-4 text-sm space-y-1.5">
       <div className="flex justify-between gap-2 items-center">
-        <span className="font-semibold text-slate-100">{review.author_name ?? t.guest}</span>
-        <span className="text-xs text-slate-500">{new Date(review.created_at).toLocaleDateString("en-CA")}</span>
+        <span className="font-semibold text-ink">{review.author_name ?? t.guest}</span>
+        <span className="text-xs text-ink-muted">{new Date(review.created_at).toLocaleDateString("en-CA")}</span>
       </div>
       <Stars value={review.rating} className="text-sm" />
-      <p className={`text-slate-200 whitespace-pre-line ${clamp ? "line-clamp-2" : ""}`}>{review.comment}</p>
+      <p className={`text-ink whitespace-pre-line ${clamp ? "line-clamp-2" : ""}`}>{review.comment}</p>
       <ReviewScoreLine review={review} />
     </li>
   );
@@ -119,8 +120,8 @@ function ReviewForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 text-xs bg-slate-800/30 border border-slate-800 rounded-xl p-4">
-      {existing ? <p className="text-sm font-semibold text-slate-200">{t.yourReview}</p> : null}
+    <form onSubmit={handleSubmit} className="space-y-3 text-xs bg-panel border border-line rounded-md p-4">
+      {existing ? <p className="text-sm font-semibold text-ink">{t.yourReview}</p> : null}
       <div className="flex items-center gap-1" role="radiogroup" aria-label={t.ratingLabel}>
         {[1, 2, 3, 4, 5].map((value) => (
           <button
@@ -130,16 +131,19 @@ function ReviewForm({
             aria-checked={rating === value}
             aria-label={t.stars(value)}
             onClick={() => setRating(value)}
-            className={`text-2xl leading-none ${
-              value <= rating ? "text-amber-400" : "text-slate-600 hover:text-slate-400"
-            }`}
+            className="p-0.5 rounded"
           >
-            ★
+            <Star
+              aria-hidden="true"
+              className="h-7 w-7"
+              strokeWidth={0}
+              fill={value <= rating ? "#e89a00" : "#3a587f"}
+            />
           </button>
         ))}
       </div>
-      <details className="bg-slate-900/40 border border-slate-800 rounded-lg">
-        <summary className="cursor-pointer select-none px-3 py-2 text-slate-300">{t.rateScoresOptional}</summary>
+      <details className="bg-panel/60 border border-line rounded-md">
+        <summary className="cursor-pointer select-none px-3 py-2 text-ink-muted">{t.rateScoresOptional}</summary>
         <div className="px-3 pb-3">
           <ScoreFields value={scores} onChange={setScores} />
         </div>
@@ -156,7 +160,7 @@ function ReviewForm({
           className={inputClass}
         />
         {comment.length > LIMITS.reviewComment * 0.8 ? (
-          <p className="text-right text-[11px] text-slate-500">
+          <p className="text-right text-[11px] text-ink-muted">
             {comment.length}/{LIMITS.reviewComment}
           </p>
         ) : null}
@@ -164,11 +168,11 @@ function ReviewForm({
       <button
         type="submit"
         disabled={saving || comment.trim() === ""}
-        className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-medium py-2.5 rounded-xl"
+        className="w-full bg-azure hover:bg-azure-deep disabled:opacity-60 text-white font-medium py-2.5 rounded-md"
       >
         {saving ? t.sending : existing ? t.updateReview : t.postReviewAs(displayName(user))}
       </button>
-      {error ? <p className="text-rose-400">{error}</p> : null}
+      {error ? <p className="text-danger">{error}</p> : null}
     </form>
   );
 }
@@ -181,7 +185,7 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
 
   return (
     <div
-      className="fixed inset-0 bg-slate-950/70 z-[1200] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-night/55 z-[1200] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -190,30 +194,30 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
         role="dialog"
         aria-modal="true"
         aria-labelledby="reviews-dialog-title"
-        className="relative bg-slate-900 sm:border border-slate-800 w-full max-w-2xl rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[88vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6 space-y-4"
+        className="relative bg-sheet sm:border border-line w-full max-w-2xl rounded-none sm:rounded-md shadow-dialog h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[88vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6 space-y-4"
       >
-        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-start justify-between gap-3">
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-sheet border-b border-line flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 id="reviews-dialog-title" className="text-lg font-bold text-white">
+            <h2 id="reviews-dialog-title" className="text-lg font-bold text-ink">
               {t.reviewsHeading} {loading ? "" : `(${reviews.length})`}
             </h2>
-            <p className="text-xs text-slate-400 truncate">{spot.name}</p>
+            <p className="text-xs text-ink-muted truncate">{spot.name}</p>
           </div>
           <button
             onClick={onClose}
             type="button"
             aria-label={t.closeReviews}
-            className="h-10 w-10 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
+            className="flex items-center justify-center h-10 w-10 shrink-0 rounded-full bg-panel text-ink hover:bg-line transition-colors"
           >
-            ✕
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
           </button>
         </div>
 
         {!isLoaded ? null : !user ? (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center space-y-2 text-xs">
-            <p className="text-slate-400">{t.signInToReview}</p>
+          <div className="bg-panel border border-line rounded-md p-4 text-center space-y-2 text-xs">
+            <p className="text-ink-muted">{t.signInToReview}</p>
             <SignInButton mode="modal">
-              <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-semibold">
+              <button className="bg-azure hover:bg-azure-deep text-white px-4 py-2 rounded-md font-semibold">
                 {t.signIn}
               </button>
             </SignInButton>
@@ -232,7 +236,7 @@ export default function ReviewsDialog({ spot, reviews, loading, onReviewAdded, o
               <ReviewSkeleton />
             </>
           ) : reviews.length === 0 ? (
-            <li className="text-xs text-slate-500 text-center py-8">
+            <li className="text-xs text-ink-muted text-center py-8">
               {t.noReviewsYet}
             </li>
           ) : (

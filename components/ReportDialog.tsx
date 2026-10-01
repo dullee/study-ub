@@ -9,9 +9,11 @@ import { insertReport } from "@/lib/supabase/reports";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { loadLocalReports, saveLocalReports } from "@/lib/localStore";
 import { useI18n } from "@/components/LanguageProvider";
+import { X } from "lucide-react";
+import KeyIcon from "@/components/KeyIcon";
 
 const inputClass =
-  "w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500";
+  "w-full bg-sheet border border-line-strong rounded-md p-2.5 text-ink focus:outline-none focus:border-azure";
 
 // Газрын цонхны дээр нээгдэнэ: аль мэдээлэл буруу байгааг сонгож, тайлбар бичээд админд илгээнэ.
 // Esc-ийг SpotDetailDialog барина — эхлээд энэ цонх хаагдана.
@@ -65,7 +67,7 @@ export default function ReportDialog({ spot, onClose }: { spot: Pick<StudySpot, 
 
   return (
     <div
-      className="fixed inset-0 bg-slate-950/70 z-[1200] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-night/55 z-[1200] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -74,39 +76,39 @@ export default function ReportDialog({ spot, onClose }: { spot: Pick<StudySpot, 
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-dialog-title"
-        className="relative bg-slate-900 sm:border border-slate-800 w-full max-w-lg rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[88vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6 space-y-4"
+        className="relative bg-sheet sm:border border-line w-full max-w-lg rounded-none sm:rounded-md shadow-dialog h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[88vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6 space-y-4"
       >
-        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-start justify-between gap-3">
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-sheet border-b border-line flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 id="report-dialog-title" className="text-lg font-bold text-white">
+            <h2 id="report-dialog-title" className="text-lg font-bold text-ink">
               {t.reportTitle}
             </h2>
-            <p className="text-xs text-slate-400 truncate">{spot.name}</p>
+            <p className="text-xs text-ink-muted truncate">{spot.name}</p>
           </div>
           <button
             onClick={onClose}
             type="button"
             aria-label={t.close}
-            className="h-10 w-10 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
+            className="flex items-center justify-center h-10 w-10 shrink-0 rounded-full bg-panel text-ink hover:bg-line transition-colors"
           >
-            ✕
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
           </button>
         </div>
 
         {!isLoaded ? null : !user ? (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center space-y-2 text-xs">
-            <p className="text-slate-400">{t.signInToReport}</p>
+          <div className="bg-panel border border-line rounded-md p-4 text-center space-y-2 text-xs">
+            <p className="text-ink-muted">{t.signInToReport}</p>
             <SignInButton mode="modal">
-              <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-semibold">
+              <button className="bg-azure hover:bg-azure-deep text-white px-4 py-2 rounded-md font-semibold">
                 {t.signIn}
               </button>
             </SignInButton>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-            <p className="text-sm text-slate-300">{t.reportIntro(spot.name)}</p>
+            <p className="text-sm text-ink-muted">{t.reportIntro(spot.name)}</p>
             <fieldset className="space-y-2">
-              <legend className="text-slate-400 mb-2">{t.reportWhat}</legend>
+              <legend className="text-ink-muted mb-2">{t.reportWhat}</legend>
               <div className="flex flex-wrap gap-1.5">
                 {REPORT_TOPICS.map((topic) => {
                   const selected = topics.includes(topic.key);
@@ -116,20 +118,20 @@ export default function ReportDialog({ spot, onClose }: { spot: Pick<StudySpot, 
                       type="button"
                       aria-pressed={selected}
                       onClick={() => toggle(topic.key)}
-                      className={`px-2.5 py-1.5 rounded-lg border text-xs transition-colors ${
+                      className={`px-2.5 py-1.5 rounded-md border text-xs transition-colors ${
                         selected
-                          ? "bg-amber-500/20 border-amber-500 text-amber-200"
-                          : "bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-500"
+                          ? "bg-sun-soft border-sun/40 text-sun-deep"
+                          : "bg-panel border-line text-ink-muted hover:border-line-strong"
                       }`}
                     >
-                      <span aria-hidden="true">{topic.icon}</span> {topic.label[locale]}
+                      <KeyIcon k={topic.key === "other" ? "other-message" : topic.key} className="h-3.5 w-3.5 inline -mt-0.5" /> {topic.label[locale]}
                     </button>
                   );
                 })}
               </div>
             </fieldset>
             <div>
-              <label htmlFor="report-message" className="block text-slate-400 mb-1">
+              <label htmlFor="report-message" className="block text-ink-muted mb-1">
                 {t.reportMessageLabel}
               </label>
               <textarea
@@ -142,11 +144,11 @@ export default function ReportDialog({ spot, onClose }: { spot: Pick<StudySpot, 
                 className={`${inputClass} resize-none`}
               />
             </div>
-            {error ? <p className="text-rose-400">{error}</p> : null}
+            {error ? <p className="text-danger">{error}</p> : null}
             <button
               type="submit"
               disabled={saving}
-              className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 font-semibold py-2.5 rounded-xl"
+              className="w-full bg-sun hover:bg-sun disabled:opacity-60 text-night font-semibold py-2.5 rounded-md"
             >
               {saving ? t.sending : t.reportSend}
             </button>

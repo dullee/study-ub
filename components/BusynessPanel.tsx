@@ -111,22 +111,22 @@ export default function BusynessPanel({
   const minutesAgo = summary && now !== null ? Math.max(0, Math.round((now - Date.parse(summary.latestAt)) / 60_000)) : 0;
 
   return (
-    <section className="space-y-3 bg-slate-800/30 border border-slate-800 rounded-xl p-4">
+    <section className="space-y-3 bg-panel border border-line rounded-md p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1 min-w-0">
-          <h3 className="text-sm font-semibold text-slate-200">{t.busynessHeading}</h3>
+          <h3 className="text-sm font-semibold text-ink">{t.busynessHeading}</h3>
           {loading || now === null ? (
-            <div className="h-6 w-40 rounded-lg bg-slate-800 animate-pulse" aria-hidden="true" />
+            <div className="h-6 w-40 rounded-md bg-panel animate-pulse" aria-hidden="true" />
           ) : current && summary ? (
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`inline-flex items-center gap-2 text-sm font-semibold border px-2.5 py-1 rounded-lg ${current.tone}`}>
+              <span className={`inline-flex items-center gap-2 text-sm font-semibold border px-2.5 py-1 rounded-md ${current.tone}`}>
                 <BusynessMeter level={summary.level} />
                 {current.label[locale]}
               </span>
-              <span className="text-xs text-slate-400">{t.busynessDetail(summary.count, minutesAgo)}</span>
+              <span className="text-xs text-ink-muted">{t.busynessDetail(summary.count, minutesAgo)}</span>
             </div>
           ) : (
-            <p className="text-xs text-slate-500">{t.busynessNoData}</p>
+            <p className="text-xs text-ink-muted">{t.busynessNoData}</p>
           )}
         </div>
 
@@ -135,7 +135,7 @@ export default function BusynessPanel({
             <button
               type="button"
               onClick={start}
-              className="shrink-0 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-colors"
+              className="shrink-0 px-3.5 py-2 bg-azure hover:bg-azure-deep text-white text-sm font-semibold rounded-md transition-colors"
             >
               {mine ? t.yourCheckin(busynessInfo(mine.level).label[locale]) : t.imHereButton}
             </button>
@@ -143,7 +143,7 @@ export default function BusynessPanel({
             <SignInButton mode="modal">
               <button
                 type="button"
-                className="shrink-0 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold rounded-xl border border-slate-700"
+                className="shrink-0 px-3.5 py-2 bg-panel hover:bg-line text-ink text-sm font-semibold rounded-md border border-line"
                 title={t.signInToCheckin}
               >
                 {t.imHereButton}
@@ -156,18 +156,18 @@ export default function BusynessPanel({
       {open && !picking ? (
         <div className="space-y-2 text-xs">
           {location.status === "error" ? (
-            <p className="text-rose-400">{t[location.error]}</p>
+            <p className="text-danger">{t[location.error]}</p>
           ) : proximity && location.status === "ready" ? (
             <>
-              <p className="text-rose-400">
+              <p className="text-danger">
                 {t.tooFarToCheckin(formatDistance(proximity.distanceKm, t), CHECKIN_RADIUS_METERS)}
               </p>
               {proximity.imprecise ? (
-                <p className="text-slate-400">{t.locationImprecise(t.meters(Math.round(location.accuracy)))}</p>
+                <p className="text-ink-muted">{t.locationImprecise(t.meters(Math.round(location.accuracy)))}</p>
               ) : null}
             </>
           ) : (
-            <p className="flex items-center gap-2 text-slate-300" role="status">
+            <p className="flex items-center gap-2 text-ink-muted" role="status">
               <Spinner />
               {t.checkingLocation}
             </p>
@@ -177,11 +177,11 @@ export default function BusynessPanel({
               <button
                 type="button"
                 onClick={() => locate({ fresh: true })}
-                className="font-semibold text-indigo-300 hover:text-white"
+                className="font-semibold text-link hover:text-ink"
               >
                 {t.checkAgain}
               </button>
-              <button type="button" onClick={() => setOpen(false)} className="text-slate-400 hover:text-white">
+              <button type="button" onClick={() => setOpen(false)} className="text-ink-muted hover:text-ink">
                 {t.checkinCancel}
               </button>
             </div>
@@ -191,7 +191,7 @@ export default function BusynessPanel({
 
       {picking ? (
         <div className="space-y-2">
-          <p className="text-xs text-slate-300">{t.howBusyPrompt}</p>
+          <p className="text-xs text-ink-muted">{t.howBusyPrompt}</p>
           <div
             className="grid grid-cols-2 sm:grid-cols-5 gap-2"
             role="radiogroup"
@@ -208,10 +208,10 @@ export default function BusynessPanel({
                   aria-checked={sending || (!saving && mine?.level === option.level)}
                   disabled={saving}
                   onClick={() => submit(option.level)}
-                  className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border text-xs font-semibold transition-all enabled:hover:scale-[1.03] ${
+                  className={`flex flex-col items-center gap-1 py-2.5 rounded-md border text-xs font-semibold transition-all enabled:hover:scale-[1.03] ${
                     option.tone
-                  } ${sending ? "ring-2 ring-indigo-400" : saving ? "opacity-40" : ""} ${
-                    !saving && mine?.level === option.level ? "ring-2 ring-indigo-400" : ""
+                  } ${sending ? "ring-2 ring-azure" : saving ? "opacity-40" : ""} ${
+                    !saving && mine?.level === option.level ? "ring-2 ring-azure" : ""
                   }`}
                 >
                   {sending ? <Spinner /> : <BusynessMeter level={option.level} />}
@@ -221,7 +221,7 @@ export default function BusynessPanel({
             })}
           </div>
           {saving ? (
-            <p className="flex items-center gap-2 text-xs text-slate-300" role="status">
+            <p className="flex items-center gap-2 text-xs text-ink-muted" role="status">
               <Spinner />
               {t.sending}
             </p>
@@ -229,7 +229,7 @@ export default function BusynessPanel({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="text-xs text-slate-400 hover:text-white"
+              className="text-xs text-ink-muted hover:text-ink"
             >
               {t.checkinCancel}
             </button>
@@ -237,7 +237,7 @@ export default function BusynessPanel({
         </div>
       ) : null}
 
-      <div className="border-t border-slate-800 pt-3">
+      <div className="border-t border-line pt-3">
         <PopularTimes spotId={spotId} />
       </div>
     </section>
