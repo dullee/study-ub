@@ -1,0 +1,123 @@
+{
+  "title": "Choose the visual world for StudySpots UB",
+  "question": "The roll assigned High Blue Sky. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "High Blue Sky",
+      "kicker": "THE ROLL",
+      "lineage": "Ulaanbaatar's 250 clear days a year: the deep high-altitude blue and its hard noon light",
+      "thesis": "The app as a slice of UB's sky: one committed blue field whose tone follows the city's real time of day, so 'right now' is felt before it is read.",
+      "palette": ["#1677D9", "#0B2340", "#F6F8FA", "#FF7A1A", "#FFFFFF"],
+      "materials": ["flat opaque colour fields", "hard zero-blur noon shadows", "sun-bleached white sheets"],
+      "viewport": "A sky band owns the top: name, search and filters set white on blue, its tone tracking UB's clock (noon blue, dusk orange edge, night navy); the map is the ground below and place cards are white sheets casting hard noon shadows.",
+      "risk": "A big flat blue can read as a generic brand blue if the sky clock and the hard light are not fully committed.",
+      "raised": [
+        { "from": "challenger-ikeda-datamatics", "raise": "Every figure (Mbps, metres, minutes ago, reports) set in tabular numerals as a compact data strip, never buried in prose." },
+        { "from": "challenger-emigre-bitmap-specimen", "raise": "One type family at a strict stepped scale; live busyness set large enough to read at arm's length outdoors." },
+        { "from": "challenger-rw-manual-acetate-tab-board", "raise": "Strict ply: page, card and dialog each get exactly one hard-shadow depth; nothing floats without one." }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Bus Stop Board",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "UB bus-stop and route signage",
+      "thesis": "Every place is a stop on a route board: its name, its number, and how soon you can get a seat.",
+      "palette": ["#FFD400", "#111111", "#FFFFFF", "#0058A8"],
+      "materials": ["enamel sign plates", "route-number blocks", "reflective tape edges"],
+      "viewport": "A yellow route board heads the screen with the nearest places as numbered stops, busyness as arrival-style countdown blocks.",
+      "risk": "The most familiar of the set: wayfinding yellow-on-black is close to what transit and map apps already ship."
+    },
+    {
+      "id": "challenger-gate-board",
+      "label": "Departures Board",
+      "verdict": "competitive",
+      "lineage": "boarding pass and live gate board",
+      "thesis": "Places as rows on a live departures board, reranking in place as seats free up.",
+      "palette": ["#111418", "#F5F5F0", "#FFC800", "#8A9099"],
+      "materials": ["split-flap rows", "segmented pass stubs", "monospaced scan blocks"],
+      "viewport": "A board of nearby places ranked by 'seats free now', the selected place's pass beside it with hours and Wi-Fi as stub segments.",
+      "case": "Fuses cleanly: busyness becomes a live rerank, which is the clearest 'where now'; loses on local identification.",
+      "risk": "Can feel like an airport, not a city, if the board grammar is applied to everything.",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-boarding-pass-and-gate-board-hero.webp"
+    },
+    {
+      "id": "challenger-streaming-wall",
+      "label": "Catalog Wall",
+      "verdict": "competitive",
+      "lineage": "streaming title-card walls",
+      "thesis": "Places as poster rows (Open now, Quiet now, Saved) where the focused tile expands to tell you what it is.",
+      "palette": ["#0E0E10", "#1C1C20", "#FF5A36", "#EDEDED"],
+      "materials": ["full-bleed place photos", "focus-lift tiles"],
+      "viewport": "Horizontal rows of place photos by situation, the focused tile showing busyness, hours and Wi-Fi.",
+      "case": "Fuses: rows map to real situations and browsing is clear; loses on identification because it reads as any streaming app.",
+      "risk": "User photos vary wildly in quality, and the wall depends on them.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-streaming-title-card-wall-hero.webp"
+    },
+    {
+      "id": "challenger-crouwel-grid",
+      "label": "Graph Paper Grid",
+      "verdict": "competitive",
+      "lineage": "Wim Crouwel grid specimens, via every student's graph-paper notebook",
+      "thesis": "The city on a visible construction grid: places snap to cells, numbers and names built from the same armature.",
+      "palette": ["#FFFFFF", "#2F6FDB", "#C9D8F2", "#111111"],
+      "materials": ["visible grid hairlines", "cell-built display numerals"],
+      "viewport": "A gridded sheet with the map as one cell block and place cards snapping into the columns beside it.",
+      "case": "Fuses through students' graph-paper notebooks; holds identification, weaker at answering 'where now'.",
+      "risk": "The grid can turn into decoration and crowd small Cyrillic text.",
+      "hero": "https://impeccable.style/worlds/cards/crouwel-grid-specimen-hero.webp"
+    },
+    {
+      "id": "challenger-ikeda-datamatics",
+      "label": "Datamatics Field",
+      "verdict": "declined",
+      "lineage": "Ryoji Ikeda data-sublime",
+      "thesis": "Places as barcode columns of pure black and white data.",
+      "palette": ["#000000", "#FFFFFF"],
+      "materials": ["hairline bar fields", "monospace numerics"],
+      "viewport": "A barcode field with one column per place, selection pulling its numbers into focus.",
+      "case": "Loses both axes: strobing data reads as art, not as where to study.",
+      "risk": "Unusable outdoors and for anyone not already fluent in it.",
+      "kept": "Numbers as a disciplined tabular data strip."
+    },
+    {
+      "id": "challenger-emigre-bitmap-specimen",
+      "label": "Bitmap Specimen",
+      "verdict": "declined",
+      "lineage": "Emigre bitmap type specimens",
+      "thesis": "Place names in proud pixel letterforms at poster scale.",
+      "palette": ["#F4F1EA", "#111111", "#2BD46B"],
+      "materials": ["pixel display type", "halftone"],
+      "viewport": "A giant pixel headline of the nearest place over dense columns.",
+      "case": "Loses both axes: bitmap Cyrillic hurts reading and says nothing about places.",
+      "risk": "Novelty that ages in a week.",
+      "kept": "A strict stepped type scale, one family repeated at set sizes."
+    },
+    {
+      "id": "challenger-rw-manual-acetate-tab-board",
+      "label": "Acetate Manual",
+      "verdict": "declined",
+      "lineage": "boxed-software reference manuals",
+      "thesis": "Each section a coloured divider board under clear acetate leaves.",
+      "palette": ["#E8731E", "#F2C400", "#2E9E5B", "#1E7FA8"],
+      "materials": ["milk acetate", "punched tabs"],
+      "viewport": "A tab rail of categories down the edge, place content on hinged leaves.",
+      "case": "Loses both axes: manual-reading is not how people pick a café on the street.",
+      "risk": "Heavy layering slows a quick decision.",
+      "kept": "Strict layer discipline: one shadow depth per layer."
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code" },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A clean map-and-listings app: white cards, place photos, stars, one brand blue.",
+    "palette": ["#FFFFFF", "#111827", "#1D6FE0", "#F3F4F6"],
+    "materials": ["clean grid", "rounded photo cards"],
+    "viewport": "Map beside a list of photo cards with ratings, filters as rounded chips.",
+    "risk": "Indistinguishable from Google Maps-style listings by design."
+  },
+  "steer": true
+}

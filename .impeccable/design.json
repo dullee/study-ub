@@ -1,0 +1,989 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-01T08:37:48.000Z",
+  "title": "Design System: StudySpots UB",
+  "extensions": {
+    "colorMeta": {
+      "azure": {
+        "role": "primary",
+        "displayName": "Action Azure",
+        "canonical": "oklch(51.7% 0.162 255.6)",
+        "tonalRamp": [
+          "#00032e",
+          "#002162",
+          "#004096",
+          "#1164c0",
+          "#438ae3",
+          "#79b1fa",
+          "#a9d4ff",
+          "#d0f1ff"
+        ]
+      },
+      "azure-deep": {
+        "role": "primary",
+        "displayName": "Deep Azure",
+        "canonical": "oklch(43.3% 0.134 255.6)",
+        "tonalRamp": [
+          "#000528",
+          "#002458",
+          "#014389",
+          "#2a66b1",
+          "#528bd4",
+          "#83b1ed",
+          "#b0d4ff",
+          "#d6f1ff"
+        ]
+      },
+      "azure-soft": {
+        "role": "primary",
+        "displayName": "Azure Wash",
+        "canonical": "oklch(32.0% 0.079 255.5)",
+        "tonalRamp": [
+          "#00091b",
+          "#102744",
+          "#27466d",
+          "#476893",
+          "#6b8bb6",
+          "#95b0d4",
+          "#bed3ef",
+          "#e0f0ff"
+        ]
+      },
+      "link": {
+        "role": "primary",
+        "displayName": "Sky Link",
+        "canonical": "oklch(80.0% 0.104 252.1)",
+        "tonalRamp": [
+          "#000820",
+          "#00274c",
+          "#134679",
+          "#3568a0",
+          "#5c8dc3",
+          "#8ab2de",
+          "#b5d4f8",
+          "#daf1ff"
+        ]
+      },
+      "pin": {
+        "role": "primary",
+        "displayName": "Map Azure",
+        "canonical": "oklch(58.4% 0.176 255.1)",
+        "tonalRamp": [
+          "#000131",
+          "#001f66",
+          "#003e9d",
+          "#0063c7",
+          "#3989ea",
+          "#73b1ff",
+          "#a4d4ff",
+          "#cdf2ff"
+        ]
+      },
+      "chart-bar": {
+        "role": "primary",
+        "displayName": "Chart Azure",
+        "canonical": "oklch(64.5% 0.167 255.1)",
+        "tonalRamp": [
+          "#00022f",
+          "#002063",
+          "#004098",
+          "#0464c2",
+          "#3f8ae5",
+          "#76b1fc",
+          "#a7d4ff",
+          "#cff2ff"
+        ]
+      },
+      "night": {
+        "role": "primary",
+        "displayName": "Night",
+        "canonical": "oklch(15.2% 0.025 254.5)",
+        "tonalRamp": [
+          "#06090f",
+          "#202730",
+          "#3c4652",
+          "#5d6775",
+          "#808a98",
+          "#a6afba",
+          "#cbd2da",
+          "#eaeff6"
+        ]
+      },
+      "sky-day": {
+        "role": "primary",
+        "displayName": "Day Sky",
+        "canonical": "oklch(43.0% 0.119 254.0)",
+        "tonalRamp": [
+          "#000724",
+          "#002552",
+          "#0a4581",
+          "#2f67a8",
+          "#578ccc",
+          "#86b1e6",
+          "#b3d4fe",
+          "#d7f1ff"
+        ]
+      },
+      "sky-dawn": {
+        "role": "primary",
+        "displayName": "Dawn Sky",
+        "canonical": "oklch(34.7% 0.081 256.2)",
+        "tonalRamp": [
+          "#00081c",
+          "#102745",
+          "#27466e",
+          "#476794",
+          "#6b8bb7",
+          "#95b0d5",
+          "#bed3f0",
+          "#e0f0ff"
+        ]
+      },
+      "sky-dusk": {
+        "role": "primary",
+        "displayName": "Dusk Sky",
+        "canonical": "oklch(31.1% 0.077 262.7)",
+        "tonalRamp": [
+          "#02081b",
+          "#162543",
+          "#2f446d",
+          "#4e6692",
+          "#7289b5",
+          "#9bafd3",
+          "#c2d2ef",
+          "#e3efff"
+        ]
+      },
+      "sky-night": {
+        "role": "primary",
+        "displayName": "Night Sky",
+        "canonical": "oklch(21.7% 0.044 257.4)",
+        "tonalRamp": [
+          "#040913",
+          "#1c2737",
+          "#36465c",
+          "#566780",
+          "#7a8aa3",
+          "#a1afc3",
+          "#c7d2e2",
+          "#e7effc"
+        ]
+      },
+      "sky-edge-dawn": {
+        "role": "primary",
+        "displayName": "Dawn Edge",
+        "canonical": "oklch(82.5% 0.115 56.4)",
+        "tonalRamp": [
+          "#1b0000",
+          "#451600",
+          "#703000",
+          "#965214",
+          "#bb7743",
+          "#d9a078",
+          "#f4c7a7",
+          "#ffe7cf"
+        ]
+      },
+      "sun": {
+        "role": "secondary",
+        "displayName": "Sun",
+        "canonical": "oklch(74.9% 0.173 54.0)",
+        "tonalRamp": [
+          "#230000",
+          "#530000",
+          "#831500",
+          "#ad3e00",
+          "#d26700",
+          "#ed965a",
+          "#ffc093",
+          "#ffe2c0"
+        ]
+      },
+      "sun-deep": {
+        "role": "secondary",
+        "displayName": "Sun Text",
+        "canonical": "oklch(82.0% 0.123 58.9)",
+        "tonalRamp": [
+          "#1c0000",
+          "#461500",
+          "#712f00",
+          "#985100",
+          "#bc763a",
+          "#daa072",
+          "#f5c7a3",
+          "#ffe7cc"
+        ]
+      },
+      "sun-soft": {
+        "role": "secondary",
+        "displayName": "Sun Wash",
+        "canonical": "oklch(28.3% 0.045 58.9)",
+        "tonalRamp": [
+          "#110702",
+          "#332215",
+          "#573f2d",
+          "#7a604d",
+          "#9d8370",
+          "#bfa99a",
+          "#decdc1",
+          "#f9ece2"
+        ]
+      },
+      "chart-now": {
+        "role": "secondary",
+        "displayName": "Chart Now",
+        "canonical": "oklch(66.7% 0.178 47.7)",
+        "tonalRamp": [
+          "#250000",
+          "#560000",
+          "#870500",
+          "#b13700",
+          "#d7620f",
+          "#f2925f",
+          "#ffbd96",
+          "#ffe0c3"
+        ]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Open Green",
+        "canonical": "oklch(53.0% 0.125 154.8)",
+        "tonalRamp": [
+          "#001000",
+          "#00330e",
+          "#005725",
+          "#067a45",
+          "#459e69",
+          "#7dc094",
+          "#acdfbd",
+          "#d3fadf"
+        ]
+      },
+      "ok-soft": {
+        "role": "tertiary",
+        "displayName": "Green Wash",
+        "canonical": "oklch(27.3% 0.046 161.6)",
+        "tonalRamp": [
+          "#010c06",
+          "#152c21",
+          "#2f4d3e",
+          "#4f6e5e",
+          "#739281",
+          "#9cb5a7",
+          "#c3d7cc",
+          "#e4f3ea"
+        ]
+      },
+      "good": {
+        "role": "tertiary",
+        "displayName": "Good",
+        "canonical": "oklch(79.4% 0.140 158.6)",
+        "tonalRamp": [
+          "#001100",
+          "#00350f",
+          "#005927",
+          "#007d46",
+          "#29a16b",
+          "#70c295",
+          "#a4e2be",
+          "#cdfce0"
+        ]
+      },
+      "alert": {
+        "role": "tertiary",
+        "displayName": "Closed Red",
+        "canonical": "oklch(54.0% 0.198 29.3)",
+        "tonalRamp": [
+          "#290000",
+          "#5d0000",
+          "#910000",
+          "#bd170e",
+          "#e45040",
+          "#fe8675",
+          "#ffb4a5",
+          "#ffdace"
+        ]
+      },
+      "alert-soft": {
+        "role": "tertiary",
+        "displayName": "Red Wash",
+        "canonical": "oklch(25.5% 0.058 25.2)",
+        "tonalRamp": [
+          "#140404",
+          "#3a1d1b",
+          "#603936",
+          "#845955",
+          "#a87d78",
+          "#c8a4a0",
+          "#e6c9c6",
+          "#ffe9e6"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Danger",
+        "canonical": "oklch(76.8% 0.137 26.1)",
+        "tonalRamp": [
+          "#210000",
+          "#4f0206",
+          "#7d1b1b",
+          "#a63f3a",
+          "#cb675f",
+          "#e8948c",
+          "#ffbeb6",
+          "#ffe0da"
+        ]
+      },
+      "busy-1-empty": {
+        "role": "tertiary",
+        "displayName": "Busyness 1: Empty",
+        "canonical": "oklch(50.8% 0.105 165.6)",
+        "tonalRamp": [
+          "#001004",
+          "#00321c",
+          "#005538",
+          "#067958",
+          "#459c7b",
+          "#7dbea2",
+          "#acdec8",
+          "#d3f9e7"
+        ]
+      },
+      "busy-2-quiet": {
+        "role": "tertiary",
+        "displayName": "Busyness 2: Quiet",
+        "canonical": "oklch(84.9% 0.207 128.8)",
+        "tonalRamp": [
+          "#000f00",
+          "#083100",
+          "#1e5500",
+          "#3e7900",
+          "#639d00",
+          "#8fc04c",
+          "#b9e08b",
+          "#dcfbbb"
+        ]
+      },
+      "busy-3-moderate": {
+        "role": "tertiary",
+        "displayName": "Busyness 3: Moderate",
+        "canonical": "oklch(83.7% 0.164 84.4)",
+        "tonalRamp": [
+          "#1a0200",
+          "#421a00",
+          "#6b3700",
+          "#915900",
+          "#b47f00",
+          "#d2a747",
+          "#eecc88",
+          "#ffebb9"
+        ]
+      },
+      "busy-4-busy": {
+        "role": "tertiary",
+        "displayName": "Busyness 4: Busy",
+        "canonical": "oklch(55.3% 0.174 38.4)",
+        "tonalRamp": [
+          "#250000",
+          "#560000",
+          "#880000",
+          "#b33200",
+          "#d95e36",
+          "#f48f6f",
+          "#ffbba1",
+          "#ffdeca"
+        ]
+      },
+      "busy-5-full": {
+        "role": "tertiary",
+        "displayName": "Busyness 5: No seats",
+        "canonical": "oklch(51.4% 0.198 16.9)",
+        "tonalRamp": [
+          "#280000",
+          "#5c0007",
+          "#90001c",
+          "#bc0f3b",
+          "#e34c5f",
+          "#fd838c",
+          "#ffb2b6",
+          "#ffd8da"
+        ]
+      },
+      "busy-dot-1": {
+        "role": "tertiary",
+        "displayName": "Busyness Dot 1",
+        "canonical": "oklch(69.6% 0.149 162.5)",
+        "tonalRamp": [
+          "#001201",
+          "#003613",
+          "#005a2c",
+          "#007f4b",
+          "#00a36f",
+          "#64c499",
+          "#9de3c0",
+          "#c9fde2"
+        ]
+      },
+      "busy-dot-2": {
+        "role": "tertiary",
+        "displayName": "Busyness Dot 2",
+        "canonical": "oklch(76.8% 0.204 130.8)",
+        "tonalRamp": [
+          "#000f00",
+          "#013200",
+          "#155600",
+          "#377a00",
+          "#5e9e00",
+          "#8bc152",
+          "#b6e18f",
+          "#dafbbd"
+        ]
+      },
+      "busy-dot-3": {
+        "role": "tertiary",
+        "displayName": "Busyness Dot 3",
+        "canonical": "oklch(76.9% 0.165 70.1)",
+        "tonalRamp": [
+          "#1e0000",
+          "#4a1000",
+          "#772b00",
+          "#9f4e00",
+          "#c37400",
+          "#e09f4e",
+          "#f9c78c",
+          "#ffe7bb"
+        ]
+      },
+      "busy-dot-4": {
+        "role": "tertiary",
+        "displayName": "Busyness Dot 4",
+        "canonical": "oklch(70.5% 0.187 47.6)",
+        "tonalRamp": [
+          "#260000",
+          "#580000",
+          "#8a0000",
+          "#b53200",
+          "#da5f00",
+          "#f5905b",
+          "#ffbc93",
+          "#ffdfc0"
+        ]
+      },
+      "busy-dot-5": {
+        "role": "tertiary",
+        "displayName": "Busyness Dot 5",
+        "canonical": "oklch(64.5% 0.215 16.4)",
+        "tonalRamp": [
+          "#2b0000",
+          "#600004",
+          "#960018",
+          "#c30038",
+          "#ea425d",
+          "#ff7e8a",
+          "#ffafb5",
+          "#ffd6d9"
+        ]
+      },
+      "star-gold": {
+        "role": "tertiary",
+        "displayName": "Star Gold",
+        "canonical": "oklch(74.6% 0.159 73.1)",
+        "tonalRamp": [
+          "#1d0000",
+          "#481400",
+          "#732f00",
+          "#9a5100",
+          "#be7700",
+          "#dba151",
+          "#f6c88e",
+          "#ffe8bc"
+        ]
+      },
+      "dim": {
+        "role": "tertiary",
+        "displayName": "Dim",
+        "canonical": "oklch(45.5% 0.074 255.4)",
+        "tonalRamp": [
+          "#01091a",
+          "#122742",
+          "#2a466b",
+          "#496890",
+          "#6d8bb3",
+          "#97b0d1",
+          "#bfd3ed",
+          "#e1f0ff"
+        ]
+      },
+      "manul-fur": {
+        "role": "tertiary",
+        "displayName": "Manul Fur",
+        "canonical": "oklch(75.3% 0.027 76.7)",
+        "tonalRamp": [
+          "#0d0803",
+          "#2c251b",
+          "#4d4335",
+          "#6f6455",
+          "#928778",
+          "#b5ada0",
+          "#d7d0c6",
+          "#f3eee6"
+        ]
+      },
+      "manul-fur-dark": {
+        "role": "tertiary",
+        "displayName": "Manul Shade",
+        "canonical": "oklch(55.1% 0.031 68.9)",
+        "tonalRamp": [
+          "#0e0803",
+          "#2e241a",
+          "#504234",
+          "#726353",
+          "#958677",
+          "#b8ac9f",
+          "#d9cfc5",
+          "#f5ede5"
+        ]
+      },
+      "manul-cream": {
+        "role": "tertiary",
+        "displayName": "Manul Cream",
+        "canonical": "oklch(93.1% 0.019 80.1)",
+        "tonalRamp": [
+          "#0b0905",
+          "#2a261e",
+          "#4a443a",
+          "#6c655a",
+          "#8f887d",
+          "#b3ada4",
+          "#d5d0c9",
+          "#f1eee8"
+        ]
+      },
+      "manul-mark": {
+        "role": "tertiary",
+        "displayName": "Manul Markings",
+        "canonical": "oklch(37.6% 0.021 61.4)",
+        "tonalRamp": [
+          "#0d0805",
+          "#2d251e",
+          "#4e433a",
+          "#6f645a",
+          "#93877d",
+          "#b6aca4",
+          "#d7cfc9",
+          "#f3ede8"
+        ]
+      },
+      "manul-eye": {
+        "role": "tertiary",
+        "displayName": "Manul Eye",
+        "canonical": "oklch(87.1% 0.145 101.1)",
+        "tonalRamp": [
+          "#110700",
+          "#332500",
+          "#564400",
+          "#796600",
+          "#9b8a00",
+          "#bdb05a",
+          "#dcd393",
+          "#f7f1c1"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "oklch(19.8% 0.037 256.0)",
+        "tonalRamp": [
+          "#040912",
+          "#1d2734",
+          "#384658",
+          "#58677b",
+          "#7c8a9e",
+          "#a3afc0",
+          "#c8d2df",
+          "#e8eff9"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Navy Sheet",
+        "canonical": "oklch(24.3% 0.051 258.3)",
+        "tonalRamp": [
+          "#030915",
+          "#1a273a",
+          "#344660",
+          "#546784",
+          "#788aa7",
+          "#9fafc7",
+          "#c6d2e5",
+          "#e6effe"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Navy Panel",
+        "canonical": "oklch(29.1% 0.058 256.1)",
+        "tonalRamp": [
+          "#020917",
+          "#17273c",
+          "#314663",
+          "#506887",
+          "#748bab",
+          "#9cb0ca",
+          "#c3d2e7",
+          "#e4f0ff"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(35.6% 0.066 255.1)",
+        "tonalRamp": [
+          "#010918",
+          "#14273f",
+          "#2d4667",
+          "#4c688c",
+          "#708baf",
+          "#99b0ce",
+          "#c1d3ea",
+          "#e2f0ff"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Line",
+        "canonical": "oklch(53.5% 0.076 255.5)",
+        "tonalRamp": [
+          "#00091b",
+          "#112743",
+          "#29466c",
+          "#486891",
+          "#6c8bb4",
+          "#96b0d2",
+          "#bfd3ee",
+          "#e0f0ff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(96.2% 0.010 252.8)",
+        "tonalRamp": [
+          "#08090b",
+          "#24272a",
+          "#42454a",
+          "#62666c",
+          "#858a8f",
+          "#abaeb2",
+          "#ced1d5",
+          "#eceff1"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "oklch(78.0% 0.034 254.0)",
+        "tonalRamp": [
+          "#050911",
+          "#1e2733",
+          "#394657",
+          "#596779",
+          "#7c8b9c",
+          "#a3afbe",
+          "#c9d2de",
+          "#e8eff8"
+        ]
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "oklch(66.7% 0.041 255.7)",
+        "tonalRamp": [
+          "#040913",
+          "#1c2736",
+          "#37465b",
+          "#57677e",
+          "#7a8ba1",
+          "#a1afc2",
+          "#c7d2e1",
+          "#e7effb"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "White",
+        "canonical": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#090909",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#aeaeae",
+          "#d1d1d1",
+          "#eeeeee"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The place name at the top of a detail dialog; 24px below 640px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The StudySpots UB wordmark on the sky band beside the manul; 15px below 640px."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Place name on a photo card, white, clamped to two lines."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Helper copy, dialog messages, menu rows; descriptions run 15px at a 65ch measure."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Action labels inside dialogs and panels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Band buttons, chips, section labels, status lines, form labels; weight 500 for chips and helper lines."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Tabular fact strip on a row, fact-tile labels, removable filter chips."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Count pills; chart axis labels and annotations at lighter weights."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet",
+        "value": "var(--sun-x) 2px 4px -1px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.05)",
+        "purpose": "Anything lying on the ground or the band: place list, map frame, map controls, search field, white band button."
+      },
+      {
+        "name": "lift",
+        "value": "calc(var(--sun-x) * 1.5) 8px 16px -6px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.07)",
+        "purpose": "Momentary floating surfaces: dropdown menus, map popups, toasts, chart tooltip."
+      },
+      {
+        "name": "dialog",
+        "value": "calc(var(--sun-x) * 2.5) 22px 44px -14px rgb(0 0 0 / 0.75), 0 0 0 1px rgb(255 255 255 / 0.08)",
+        "purpose": "Modal sheets over a Night scrim at 55%."
+      },
+      {
+        "name": "pin",
+        "value": "drop-shadow(var(--sun-x) 2px 1.5px rgba(5, 12, 22, 0.45))",
+        "purpose": "Map pins (CSS filter)."
+      },
+      {
+        "name": "sky-edge",
+        "value": "inset 0 -3px 0 var(--sky-edge)",
+        "purpose": "Line along the bottom of the sky band at dawn, dusk and night; an edge, not a depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "sky-shift",
+        "value": "background-color 1.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The band easing between dawn, day, dusk and night; removed under prefers-reduced-motion."
+      },
+      {
+        "name": "state-color",
+        "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Colour-only hover and selection changes on buttons, chips, rows and tabs (Tailwind's transition-colors default)."
+      },
+      {
+        "name": "sun-x",
+        "value": "-4px to 4px, recomputed every 60s",
+        "purpose": "Horizontal shadow offset from the real sun position over Ulaanbaatar; 0 at solar noon and at night."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "container",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one filled action in a dialog or panel: show on map, submit, check in.",
+      "html": "<button class=\"ds-btn-primary\">Газрын зураг дээр харах</button>",
+      "css": ".ds-btn-primary { background: #1466c2; color: #ffffff; padding: 10px 16px; border: none; border-radius: 6px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: #0f4f98; } .ds-btn-primary:focus-visible { outline: 2px solid #8cc2ff; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "White, hairline-bordered action beside a primary one.",
+      "html": "<button class=\"ds-btn-secondary\">Google Maps</button>",
+      "css": ".ds-btn-secondary { background: #102038; color: #eef3f9; padding: 10px 16px; border: 1px solid #233d5e; border-radius: 6px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-secondary:hover { background: #172c48; } .ds-btn-secondary:focus-visible { outline: 2px solid #8cc2ff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Band Buttons",
+      "kind": "button",
+      "refersTo": "button-on-sky",
+      "description": "Controls on the sky band: outlined default, inverted current page, and the white-sheet primary (add place).",
+      "html": "<div class=\"ds-band\"><button class=\"ds-btn-sky\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M9 17V7h4a3 3 0 0 1 0 6H9\"/></svg>Зогсоол хайх</button><button class=\"ds-btn-sky ds-btn-sky--active\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><path d=\"M9 17V7h4a3 3 0 0 1 0 6H9\"/></svg>Зогсоол хайх</button><button class=\"ds-btn-sky ds-btn-sky--primary\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Шинэ газар нэмэх</button></div>",
+      "css": ".ds-band { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; background: #16508f; } .ds-btn-sky { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 12px; background: transparent; color: #ffffff; border: 1px solid rgb(255 255 255 / 0.35); border-radius: 6px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-sky:hover { background: rgb(255 255 255 / 0.15); } .ds-btn-sky:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; } .ds-btn-sky--active, .ds-btn-sky--active:hover { background: #ffffff; border-color: #ffffff; color: #0f4f98; } .ds-btn-sky--primary { background: #ffffff; border-color: transparent; color: #0f4f98; padding: 0 14px; box-shadow: var(--sun-x, 0px) 2px 3px -1px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.05); } .ds-btn-sky--primary:hover { background: rgb(255 255 255 / 0.9); }"
+    },
+    {
+      "name": "Band Tabs",
+      "kind": "nav",
+      "refersTo": "button-on-sky",
+      "description": "Places / Events navigation on the band (active: white with a 3px white underline).",
+      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab ds-tab--active\" href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg>Газрууд</a><a class=\"ds-tab\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 2v4\"/><path d=\"M16 2v4\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\"/><path d=\"M3 10h18\"/></svg>Эвентүүд</a></nav>",
+      "css": ".ds-tabs { display: flex; align-items: center; gap: 4px; padding: 0 16px; background: #16508f; } .ds-tab { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 3px solid transparent; color: rgb(255 255 255 / 0.85); text-decoration: none; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 600; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-tab:hover { color: #ffffff; } .ds-tab:focus-visible { outline: 2px solid #16508f; outline-offset: 2px; } .ds-tab--active { color: #ffffff; border-bottom-color: #ffffff; }"
+    },
+    {
+      "name": "Search on the Band",
+      "kind": "input",
+      "refersTo": "search-on-sky",
+      "description": "The borderless white search field in the filter strip; focuses with a Sun ring.",
+      "html": "<div class=\"ds-band-search\"><label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input type=\"search\" placeholder=\"Газрын нэр эсвэл байршлаар хайх…\" aria-label=\"Хайх\"></label></div>",
+      "css": ".ds-band-search { padding: 12px 16px; background: #16508f; } .ds-search { position: relative; display: block; color: #8496ae; } .ds-search svg { position: absolute; left: 12px; top: 10px; } .ds-search input { width: 100%; height: 40px; padding: 0 12px 0 40px; background: #ffffff; color: #eef3f9; border: none; border-radius: 6px; box-shadow: var(--sun-x, 0px) 2px 3px -1px rgb(0 0 0 / 0.45), 0 0 0 1px rgb(255 255 255 / 0.05); font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 14px; caret-color: #16508f; transition: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-search input:focus { outline: none; box-shadow: 0 0 0 2px #ff8a2a; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Form field inside a dialog: Strong Line border, Action Azure border on focus, Closed Red at 40% once invalid.",
+      "html": "<label class=\"ds-field\"><span>Газрын нэр</span><input type=\"text\" value=\"Хотын нийтийн номын сан\"></label>",
+      "css": ".ds-field { display: block; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 12px; color: #a9b9cd; } .ds-field span { display: block; margin-bottom: 4px; } .ds-field input { width: 100%; padding: 10px; background: #102038; color: #eef3f9; border: 1px solid #4f6f99; border-radius: 6px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 12px; caret-color: #1466c2; } .ds-field input:focus { outline: none; border-color: #8cc2ff; } .ds-field input:user-invalid { border-color: rgb(200 38 27 / 0.4); }"
+    },
+    {
+      "name": "Filter Chips",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Toggle chips inside the filter menu with the Sun count pill, and an active filter as it appears on the band.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"false\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/></svg>Одоо нээлттэй</button><button class=\"ds-chip ds-chip--on\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20h.01\"/><path d=\"M2 8.82a15 15 0 0 1 20 0\"/><path d=\"M5 12.859a10 10 0 0 1 14 0\"/><path d=\"M8.5 16.429a5 5 0 0 1 7 0\"/></svg>Wi-Fi хурдан</button><span class=\"ds-count\">2</span></div><div class=\"ds-chips ds-chips--band\"><button class=\"ds-chip-sky\"><svg viewBox=\"0 0 24 24\" width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20h.01\"/><path d=\"M2 8.82a15 15 0 0 1 20 0\"/><path d=\"M5 12.859a10 10 0 0 1 14 0\"/><path d=\"M8.5 16.429a5 5 0 0 1 7 0\"/></svg>Wi-Fi хурдан<svg viewBox=\"0 0 24 24\" width=\"12\" height=\"12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px; background: #102038; } .ds-chips--band { background: #16508f; } .ds-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #172c48; color: #eef3f9; border: none; border-radius: 6px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-chip:hover { background: #233d5e; } .ds-chip:focus-visible { outline: 2px solid #8cc2ff; outline-offset: 2px; } .ds-chip--on, .ds-chip--on:hover { background: #1466c2; color: #ffffff; } .ds-count { min-width: 20px; padding: 0 6px; background: #ff8a2a; color: #050c16; border-radius: 9999px; text-align: center; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 10px; font-weight: 700; line-height: 20px; font-variant-numeric: tabular-nums; } .ds-chip-sky { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px 2px 8px; background: rgb(255 255 255 / 0.15); color: #ffffff; border: 1px solid rgb(255 255 255 / 0.3); border-radius: 4px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; } .ds-chip-sky:hover { background: rgb(255 255 255 / 0.25); } .ds-chip-sky:focus-visible { outline: 2px solid #8cc2ff; outline-offset: 2px; }"
+    },
+    {
+      "name": "Busyness Badge",
+      "kind": "custom",
+      "refersTo": "busyness-badge-empty",
+      "description": "Live busyness, Empty to No seats: five-bar meter plus the word on the level's fill; dashed outline when there are no recent reports.",
+      "html": "<div class=\"ds-busy-row\"><span class=\"ds-busy ds-busy-1\"><span class=\"ds-meter\"><i style=\"height:20%\"></i><i style=\"height:40%\" class=\"ds-off\"></i><i style=\"height:60%\" class=\"ds-off\"></i><i style=\"height:80%\" class=\"ds-off\"></i><i style=\"height:100%\" class=\"ds-off\"></i></span>Хоосон</span><span class=\"ds-busy ds-busy-2\"><span class=\"ds-meter\"><i style=\"height:20%\"></i><i style=\"height:40%\"></i><i style=\"height:60%\" class=\"ds-off\"></i><i style=\"height:80%\" class=\"ds-off\"></i><i style=\"height:100%\" class=\"ds-off\"></i></span>Сул</span><span class=\"ds-busy ds-busy-3\"><span class=\"ds-meter\"><i style=\"height:20%\"></i><i style=\"height:40%\"></i><i style=\"height:60%\"></i><i style=\"height:80%\" class=\"ds-off\"></i><i style=\"height:100%\" class=\"ds-off\"></i></span>Дунд</span><span class=\"ds-busy ds-busy-4\"><span class=\"ds-meter\"><i style=\"height:20%\"></i><i style=\"height:40%\"></i><i style=\"height:60%\"></i><i style=\"height:80%\"></i><i style=\"height:100%\" class=\"ds-off\"></i></span>Их хүнтэй</span><span class=\"ds-busy ds-busy-5\"><span class=\"ds-meter\"><i style=\"height:20%\"></i><i style=\"height:40%\"></i><i style=\"height:60%\"></i><i style=\"height:80%\"></i><i style=\"height:100%\"></i></span>Суудал алга</span><span class=\"ds-busy ds-busy-0\"><span class=\"ds-meter\"><i style=\"height:20%\" class=\"ds-off\"></i><i style=\"height:40%\" class=\"ds-off\"></i><i style=\"height:60%\" class=\"ds-off\"></i><i style=\"height:80%\" class=\"ds-off\"></i><i style=\"height:100%\" class=\"ds-off\"></i></span>Мэдээлэлгүй</span></div>",
+      "css": ".ds-busy-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; background: #102038; } .ds-busy { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 4px; border: 1px solid transparent; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 700; line-height: 1.33; } .ds-meter { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; } .ds-meter i { width: 4px; border-radius: 2px; background: currentColor; } .ds-meter i.ds-off { opacity: 0.3; } .ds-busy-1 { background: #047857; color: #ffffff; } .ds-busy-2 { background: #a3e635; color: #050c16; } .ds-busy-3 { background: #fbbf24; color: #050c16; } .ds-busy-4 { background: #c2410c; color: #ffffff; } .ds-busy-5 { background: #be123c; color: #ffffff; } .ds-busy-0 { background: transparent; border: 1px dashed #4f6f99; color: #a9b9cd; font-weight: 500; }"
+    },
+    {
+      "name": "Fact Tiles and Tags",
+      "kind": "card",
+      "refersTo": "inset-panel",
+      "description": "The tonal second layer inside a sheet: Cool Panel tiles for labelled facts, static tags, and the Azure Wash category tag.",
+      "html": "<div class=\"ds-inset-wrap\"><div class=\"ds-facts\"><div class=\"ds-fact\"><p class=\"ds-fact-label\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/></svg>Цагийн хуваарь</p><p class=\"ds-fact-value\">09:00 – 18:00</p></div><div class=\"ds-fact\"><p class=\"ds-fact-label\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20h.01\"/><path d=\"M2 8.82a15 15 0 0 1 20 0\"/><path d=\"M5 12.859a10 10 0 0 1 14 0\"/><path d=\"M8.5 16.429a5 5 0 0 1 7 0\"/></svg>Wi-Fi (медиан)</p><p class=\"ds-fact-value\">18 Mbps</p><p class=\"ds-fact-note\">2 үнэлгээнээс</p></div></div><ul class=\"ds-tags\"><li class=\"ds-tag ds-tag--category\">Номын сан</li><li class=\"ds-tag\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20h.01\"/><path d=\"M2 8.82a15 15 0 0 1 20 0\"/><path d=\"M5 12.859a10 10 0 0 1 14 0\"/><path d=\"M8.5 16.429a5 5 0 0 1 7 0\"/></svg>Wi-Fi хурдан</li><li class=\"ds-tag\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 22v-5\"/><path d=\"M9 8V2\"/><path d=\"M15 8V2\"/><path d=\"M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z\"/></svg>Залгуур ихтэй</li></ul></div>",
+      "css": ".ds-inset-wrap { padding: 16px; background: #102038; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .ds-fact { padding: 12px 16px; background: #172c48; border-radius: 6px; } .ds-fact p { margin: 0; } .ds-fact-label { display: flex; align-items: center; gap: 6px; color: #a9b9cd; font-size: 11px; font-weight: 500; } .ds-fact p.ds-fact-value { margin-top: 2px; color: #eef3f9; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-fact p.ds-fact-note { margin-top: 2px; color: #a9b9cd; font-size: 11px; } .ds-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 0; list-style: none; } .ds-tag { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #172c48; color: #eef3f9; border-radius: 4px; font-size: 12px; } .ds-tag svg { color: #a9b9cd; } .ds-tag--category { padding: 4px 8px; background: #14335a; color: #8cc2ff; font-weight: 600; }"
+    },
+    {
+      "name": "Place Card",
+      "kind": "card",
+      "refersTo": "place-card",
+      "description": "A place is its photograph: the picture fills the card, busyness sits top-left, save and Google Maps top-right, and the name, status, rating and facts sit in white on a Night fade.",
+      "html": "<article class=\"ds-place-card\"><div class=\"ds-place-photo\"></div><div class=\"ds-place-fade\"></div><span class=\"ds-place-badge\">Сул</span><div class=\"ds-place-text\"><h3>Хотын нийтийн номын сан</h3><p><b>Нээлттэй</b> · 18:00-д хаагдана</p><p class=\"ds-place-data\">★ 4.7 (3) · 18 Mbps · Чимээгүй</p></div></article>",
+      "css": ".ds-place-card { position: relative; overflow: hidden; min-height: 256px; width: 380px; display: flex; flex-direction: column; justify-content: flex-end; background: #172c48; border-radius: 6px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; color: #ffffff; } .ds-place-photo { position: absolute; inset: 0; background: #4f6f99; } .ds-place-fade { position: absolute; inset: 0; background: linear-gradient(to top, #050c16, rgb(5 12 22 / 0.75) 40%, rgb(5 12 22 / 0.05)); } .ds-place-badge { position: absolute; top: 10px; left: 10px; background: #a3e635; color: #050c16; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; } .ds-place-text { position: relative; padding: 40px 12px 12px; } .ds-place-text h3 { margin: 0; font-size: 18px; font-weight: 700; line-height: 1.375; letter-spacing: -0.01em; } .ds-place-text p { margin: 4px 0 0; font-size: 12px; color: rgb(255 255 255 / 0.85); } .ds-place-text b { color: #5fd79a; font-weight: 600; } .ds-place-text .ds-place-data { font-size: 11px; color: rgb(255 255 255 / 0.8); font-variant-numeric: tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "High Blue Sky, after dark",
+    "overview": "The app is Ulaanbaatar under its own sky at night. The page is always dark: a deep navy ground with slightly lighter sheets on it, and place photographs as the brightest things in view. One committed sky band runs across the top of every screen and holds the name, the navigation, search and filters in white. The band is tied to the real city: its colour follows Ulaanbaatar's actual sunrise and sunset (dawn, day, dusk, night), a thin warm edge appears at dawn and dusk, and every shadow in the interface leans the way the sun casts it at that minute.\n\nA manul (Pallas's cat, the round, permanently unimpressed wild cat of the Mongolian steppe) is the mascot. Its head sits beside the wordmark and is the app icon; the whole cat, loafing on an open book, appears wherever there is nothing to show. It is the one piece of illustration in the product and the source of its character; everything else stays plain.\n\nThis is an Operate surface for someone deciding where to go. A place is a photograph: the picture fills the whole card, the name, open or closed word, rating and facts sit on a dark fade at the bottom, and the live busyness badge sits on the picture's top-left corner. Colour is restrained on the ground so that state can be loud: blue means \"you can act or you chose this\", orange means \"now, live, waiting for you\", and the five-step busyness scale is information, never decoration.\n\nThe system replaced a slate interface with purple and indigo gradients, emoji icons and glassy blur. It is dark again by choice, but it is not that look: surfaces are flat navy with no gradient fills, icons are drawn, and the only fade in the product is the reading scrim over a photograph.",
+    "keyCharacteristics": [
+      "Always dark: navy ground, navy sheets one step lighter, light ink; one committed sky band on top that changes with real Ulaanbaatar time.",
+      "Places are full-photo cards with a bottom reading fade; busyness sits on the photo.",
+      "A manul mascot: head in the wordmark and icon, loafing on a book in empty states.",
+      "Short shadows whose horizontal offset follows the sun, each with a faint light ring so edges hold on dark; one shadow depth per layer.",
+      "Onest for everything, Cyrillic first; a stepped scale from 10px to 28px; tabular figures wherever numbers line up or tick.",
+      "Square-shouldered 6px corners, 4px for small things inside them; drawn Lucide icons; state always carries a word or a shape as well as a colour."
+    ],
+    "rules": [
+      {
+        "name": "The One Sky Rule",
+        "body": "There is exactly one committed colour field per screen, the band at the top, and it is the only place white-on-colour controls live. Nothing below the band is filled edge to edge with blue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fill Is Not Text Rule",
+        "body": "`azure`, `ok` and `alert` are fills that carry white text. Blue, green and red text on dark use `link`, `good` and `danger`. Orange text is `sun-deep`.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sun Means Now Rule",
+        "body": "Sun marks what is live or waiting: the current hour, a pending count, the dusk edge, the pin you are pointing at, where you are standing. Selection and ordinary actions are Action Azure. Text on Sun is Night.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Speaks Twice Rule",
+        "body": "A busyness badge is always the five-bar meter plus the level's word on its fill; open and closed are always words. The map-pin dot is an echo of the badge, and the popup names the level.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Onest sets everything, including third-party surfaces that accept a font (the map, toasts, the sign-in modal). No second face, no monospace for numbers.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Every number that ticks or lines up uses tabular figures: opening hours, distances, Mbps, ratings and counts, chart axes and the chart's table.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sky Above, Ground Below Rule",
+        "body": "Wayfinding (name, tabs, search, sort, filter, location, add) lives in the band in white. Content lives below on ground and sheets in ink. A control does not change sides.",
+        "section": "layout"
+      },
+      {
+        "name": "The Sun-Cast Rule",
+        "body": "No shadow hard-codes its horizontal offset. It comes from `--sun-x`, so the whole interface leans one way at once and stands straight at noon and at night.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Depth Per Layer Rule",
+        "body": "Sheet, Lift, Dialog: a surface takes the shadow of its layer and no other. Regions inside a sheet are separated by Navy Panel and Hairline, not by another shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep the page dark everywhere (`color-scheme: dark`), including the surfaces others draw: the sign-in modal, toasts, native selects, and the map's controls and popups (its tiles stay light).",
+      "**Do** keep the band as the only committed colour field, and let `data-sky` choose its colour (`#16508f` day, `#1b3a63` dawn, `#1b2f57` dusk, `#0c1a2e` night); never set the band colour by hand.",
+      "**Do** take every shadow from the three layer tokens (Sheet, Lift, Dialog) so its offset follows `--sun-x` and its light ring comes with it.",
+      "**Do** use `link`, `good`, `danger` and `sun-deep` for coloured text, and keep `azure`, `ok` and `alert` for fills under white text.",
+      "**Do** let the photograph fill a place card, with the busyness badge on it and white text on the Night fade.",
+      "**Do** use Night text on Sun, lime and amber fills, and white text on Action Azure, Open Green and Closed Red.",
+      "**Do** use the manul for the wordmark, the icon and empty states, in its own colours, grumpy by default and sleepy when there is nothing to show.",
+      "**Do** use tabular figures for times, distances, speeds, ratings and counts.",
+      "**Do** let Mongolian labels wrap to a second line; collapse band buttons to icons with an `aria-label` below 640px."
+    ],
+    "donts": [
+      "**Don't** bring back the look this system replaced: purple or indigo gradients, emoji as icons, glassy backdrop blur, glowing borders.",
+      "**Don't** use a gradient as a surface fill. The only fade is the reading scrim over a photograph.",
+      "**Don't** add a light mode or light sheets; white belongs to the band and to text on photographs, and the map tiles are the only light surface.",
+      "**Don't** set `azure`, `ok` or `alert` as text on dark surfaces (under 3:1), and don't set white text on Sun.",
+      "**Don't** put more than the badge and two round buttons on the open part of a photograph; everything else sits on the fade.",
+      "**Don't** recolour, restyle or animate the manul, give it speech bubbles, or scatter it as decoration beside content that is already there.",
+      "**Don't** use a busyness colour, Open Green or Closed Red as ornament, and don't show state by colour without its word or meter.",
+      "**Don't** use an offset block shadow for depth or give a panel inside a sheet a shadow of its own.",
+      "**Don't** introduce a second typeface, uppercase tracked labels, or container and control radii other than 4px, 6px and full.",
+      "**Don't** recolour third-party marks (Google Maps pin, language flags, chat-platform colours) into the palette, and don't borrow their colours for anything else."
+    ]
+  }
+}
