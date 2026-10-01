@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { LIMITS } from "@/lib/limits";
 import {
   ACCESSIBILITY,
@@ -62,6 +62,16 @@ export default function AddSpotModal({ isOpen, onClose, onAddSpot }: AddSpotModa
   const [osmHours, setOsmHours] = useState<string | null>(null);
   // Хамгийн сүүлд оруулсан холбоосын хариуг л ашиглана.
   const latestLink = useRef("");
+
+  // Цонх нээлттэй үед ард талын хуудас гүйлгэгдэхгүй (SpotDetailDialog-той ижил); хаахад өмнөх байдалд нь буцаана.
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
