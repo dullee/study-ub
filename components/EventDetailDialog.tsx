@@ -8,6 +8,7 @@ import { useI18n } from "@/components/LanguageProvider";
 import GoogleMapsIcon from "@/components/GoogleMapsIcon";
 import EventChatLink from "@/components/EventChatLink";
 import EventPhone from "@/components/EventPhone";
+import { MapPin, X } from "lucide-react";
 
 interface EventDetailDialogProps {
   event: StudyEvent;
@@ -62,7 +63,7 @@ export default function EventDetailDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 bg-night/55 z-[1100] flex items-stretch sm:items-center justify-center p-0 sm:p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -71,17 +72,17 @@ export default function EventDetailDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="event-dialog-title"
-        className="relative bg-slate-900 sm:border border-slate-800 w-full max-w-xl rounded-none sm:rounded-2xl shadow-2xl h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6 space-y-5"
+        className="relative bg-sheet sm:border border-line w-full max-w-xl rounded-none sm:rounded-md shadow-dialog h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[92vh] overflow-y-auto px-5 pb-5 sm:px-6 sm:pb-6 space-y-5"
       >
-        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-slate-900 border-b border-slate-800 flex items-start justify-between gap-3">
+        <div className="sticky top-0 z-10 -mx-5 sm:-mx-6 px-5 sm:px-6 pt-5 sm:pt-6 pb-3 bg-sheet border-b border-line flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <span className="inline-block text-[11px] font-semibold bg-slate-800 text-indigo-300 px-2.5 py-1 rounded-lg border border-slate-700">
+            <span className="inline-block text-[11px] font-semibold bg-panel text-link px-2.5 py-1 rounded-md border border-line">
               {formatEventTime(event.starts_at, undefined, locale)}
             </span>
-            <h2 id="event-dialog-title" className="text-xl font-bold text-white">
+            <h2 id="event-dialog-title" className="text-xl font-bold text-ink">
               {event.title}
               {isHost ? (
-                <span className="ml-2 align-middle text-[10px] font-semibold bg-indigo-600/30 text-indigo-200 px-1.5 py-0.5 rounded">
+                <span className="ml-2 align-middle text-[10px] font-semibold bg-azure-soft text-link px-1.5 py-0.5 rounded">
                   {t.yourEvent}
                 </span>
               ) : null}
@@ -91,22 +92,22 @@ export default function EventDetailDialog({
             onClick={onClose}
             type="button"
             aria-label={t.close}
-            className="h-10 w-10 shrink-0 rounded-full bg-slate-800 text-slate-200 hover:text-white border border-slate-700"
+            className="flex items-center justify-center h-10 w-10 shrink-0 rounded-full bg-panel text-ink hover:bg-line transition-colors"
           >
-            ✕
+            <X aria-hidden="true" className="h-5 w-5" strokeWidth={2.25} />
           </button>
         </div>
 
         <div className="space-y-5">
-          <div className="text-sm text-slate-300 space-y-1.5">
+          <div className="text-sm text-ink-muted space-y-1.5">
             <p>
-              📍 {event.place_name}
+              <MapPin aria-hidden="true" className="h-4 w-4 inline -mt-0.5 mr-1" strokeWidth={2} />{event.place_name}
               {hasCoords ? (
                 <a
                   href={googleMapsUrl({ lat: event.lat as number, lng: event.lng as number })}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 align-middle text-indigo-300 hover:text-indigo-200 ml-2 text-xs"
+                  className="inline-flex items-center gap-1 align-middle text-link hover:text-link ml-2 text-xs"
                 >
                   <GoogleMapsIcon className="h-3.5 w-3.5" />
                   Google Maps
@@ -119,11 +120,11 @@ export default function EventDetailDialog({
           </div>
 
           {event.description ? (
-            <p className="text-sm text-slate-200 whitespace-pre-line">{event.description}</p>
+            <p className="text-sm text-ink whitespace-pre-line">{event.description}</p>
           ) : null}
 
           <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-300">
+            <p className="text-xs font-semibold text-ink-muted">
               {t.attending} {attendees.length}
               {event.max_people !== null ? ` / ${event.max_people}` : ""}
             </p>
@@ -132,24 +133,24 @@ export default function EventDetailDialog({
                 {attendees.map((attendee) => (
                   <span
                     key={attendee.id}
-                    className="text-[11px] bg-slate-800 border border-slate-700 text-slate-300 px-2 py-0.5 rounded-md"
+                    className="text-[11px] bg-panel border border-line text-ink-muted px-2 py-0.5 rounded-md"
                   >
                     {attendee.name}
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-slate-500">{t.noAttendees}</p>
+              <p className="text-[11px] text-ink-muted">{t.noAttendees}</p>
             )}
           </div>
 
           {isPast ? (
-            <p className="text-center text-xs text-slate-500 py-2">{t.pastEvent}</p>
+            <p className="text-center text-xs text-ink-muted py-2">{t.pastEvent}</p>
           ) : isGoing ? (
             <button
               onClick={() => run(onLeave)}
               disabled={busy}
-              className="w-full py-2.5 bg-emerald-900/40 hover:bg-slate-700 text-emerald-300 hover:text-white text-sm font-semibold rounded-xl transition-all border border-emerald-700/60 disabled:opacity-60"
+              className="w-full py-2.5 bg-ok-soft hover:bg-alert-soft text-good hover:text-danger border border-ok/30 text-sm font-semibold rounded-md transition-all border border-ok/40 disabled:opacity-60"
             >
               {t.youreGoing}
             </button>
@@ -157,7 +158,7 @@ export default function EventDetailDialog({
             <button
               onClick={() => run(onJoin)}
               disabled={busy || isFull || !authReady}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:shadow-none disabled:bg-slate-700"
+              className="w-full py-2.5 bg-azure hover:bg-azure-deep text-white text-sm font-semibold rounded-md transition-all shadow-sheet disabled:opacity-50 disabled:shadow-none disabled:bg-panel"
             >
               {isFull ? t.eventFull : t.imGoing}
             </button>

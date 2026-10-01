@@ -31,6 +31,8 @@ import {
   saveLocalEvent,
   saveLocalEventPhone,
 } from "@/lib/localStore";
+import { Armchair, Search, User } from "lucide-react";
+import Manul from "@/components/Manul";
 
 // Эхэлснээс хойш 3 цаг хүртэл идэвхтэй гэж үзнэ.
 const ACTIVE_WINDOW_MS = 3 * 60 * 60 * 1000;
@@ -46,10 +48,10 @@ const WHEN_OPTIONS = [
 ] as const;
 
 const chipClass = (active: boolean) =>
-  `px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+  `px-3 py-1.5 rounded-md text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
     active
-      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-      : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+      ? "bg-azure text-white shadow-sheet"
+      : "bg-panel text-ink-muted hover:bg-line hover:text-ink"
   }`;
 
 export default function EventsPage() {
@@ -304,26 +306,26 @@ export default function EventsPage() {
   );
 
   return (
-    <div className="bg-slate-900 text-slate-100 min-h-screen font-sans pb-12">
+    <div className="bg-sheet text-ink min-h-screen font-sans pb-12">
       <Header onAddClick={handleAddClick} addLabel={t.createEvent} />
       <main className="max-w-7xl mx-auto px-4 pt-6 space-y-8">
         {linkedMissing ? (
-          <p role="status" className="text-sm rounded-xl px-4 py-3 border text-rose-200 bg-rose-950/60 border-rose-800/50">
+          <p role="status" className="text-sm rounded-md px-4 py-3 border text-danger bg-alert-soft border-alert/40">
             {t.eventNotFound}
           </p>
         ) : null}
         {notice ? (
           <p
-            className={`text-sm rounded-xl px-4 py-3 border ${
+            className={`text-sm rounded-md px-4 py-3 border ${
               notice.error
-                ? "text-rose-200 bg-rose-950/60 border-rose-800/50"
-                : "text-indigo-200 bg-indigo-950/60 border-indigo-800/50"
+                ? "text-danger bg-alert-soft border-alert/40"
+                : "text-link bg-azure-soft border-azure/40"
             }`}
           >
             {notice.text}
           </p>
         ) : null}
-        <section aria-label={t.filterBarLabel} className="space-y-3 bg-slate-800/40 p-3 sm:p-4 rounded-2xl border border-slate-800">
+        <section aria-label={t.filterBarLabel} className="space-y-3 bg-panel p-3 sm:p-4 rounded-md border border-line">
           <div className="relative">
             <input
               type="search"
@@ -331,10 +333,10 @@ export default function EventsPage() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t.eventsSearchPlaceholder}
               aria-label={t.eventsSearchLabel}
-              className="w-full h-10 bg-slate-800 border border-slate-700 text-white placeholder-slate-400 pl-10 pr-3 rounded-xl text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full h-10 bg-panel border border-line text-ink placeholder:text-ink-muted pl-10 pr-3 rounded-md text-sm focus:outline-none focus:border-azure transition-colors"
             />
-            <span className="absolute left-3.5 top-2.5 text-slate-400 text-sm" aria-hidden="true">
-              🔍
+            <span className="absolute left-3.5 top-2.5 text-ink-muted text-sm" aria-hidden="true">
+              <Search aria-hidden="true" className="h-5 w-5 text-ink-faint" strokeWidth={2} />
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -349,7 +351,7 @@ export default function EventsPage() {
                 {t[label]}
               </button>
             ))}
-            <span className="hidden sm:block w-px h-5 bg-slate-700 mx-1" aria-hidden="true" />
+            <span className="hidden sm:block w-px h-5 bg-panel mx-1" aria-hidden="true" />
             <button
               type="button"
               aria-pressed={onlyMine}
@@ -357,13 +359,13 @@ export default function EventsPage() {
               onClick={() => setOnlyMine(!onlyMine)}
               className={chipClass(onlyMine)}
             >
-              ✋ {t.onlyMine}
+              <User aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.onlyMine}
             </button>
             <button type="button" aria-pressed={hasSpots} onClick={() => setHasSpots(!hasSpots)} className={chipClass(hasSpots)}>
-              🪑 {t.hasSpots}
+              <Armchair aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {t.hasSpots}
             </button>
             {filtersActive ? (
-              <button type="button" onClick={clearFilters} className="text-xs text-indigo-300 hover:text-white ml-auto">
+              <button type="button" onClick={clearFilters} className="text-xs text-link hover:text-ink ml-auto">
                 {t.clearFilters}
               </button>
             ) : null}
@@ -371,29 +373,31 @@ export default function EventsPage() {
         </section>
 
         <section className="space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <h2 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <div className="flex justify-between items-center border-b border-line pb-2">
+            <h2 className="text-sm font-semibold text-ink-muted flex items-center gap-2">
               {t.upcomingEvents}
             </h2>
-            <span className="text-xs text-indigo-400 font-mono bg-indigo-950/60 border border-indigo-800/50 px-2.5 py-1 rounded-md">
+            <span className="text-xs font-semibold text-link tabular-nums bg-azure-soft px-2.5 py-1 rounded">
               {t.eventCount(shownUpcoming.length)}
             </span>
           </div>
           {loading ? (
-            <p className="text-center text-slate-500 py-12 text-sm">{t.loading}</p>
+            <p className="text-center text-ink-muted py-12 text-sm">{t.loading}</p>
           ) : upcoming.length > 0 && shownUpcoming.length === 0 ? (
-            <div className="text-center py-12 space-y-3">
-              <p className="text-slate-500 text-sm">{t.noEventsMatch}</p>
-              <button type="button" onClick={clearFilters} className="text-xs text-indigo-300 hover:text-white">
+            <div className="text-center py-10 space-y-3">
+              <Manul variant="loaf" mood="sleepy" className="h-28 w-32 mx-auto" />
+              <p className="text-ink-muted text-sm">{t.noEventsMatch}</p>
+              <button type="button" onClick={clearFilters} className="text-xs text-link hover:text-ink">
                 {t.clearFilters}
               </button>
             </div>
           ) : upcoming.length === 0 ? (
-            <div className="text-center py-12 space-y-3">
-              <p className="text-slate-500 text-sm">{t.noEvents}</p>
+            <div className="text-center py-10 space-y-3">
+              <Manul variant="loaf" className="h-28 w-32 mx-auto" />
+              <p className="text-ink-muted text-sm">{t.noEvents}</p>
               <button
                 onClick={handleAddClick}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold"
+                className="bg-azure hover:bg-azure-deep text-white px-4 py-2 rounded-md text-xs font-semibold"
               >
                 {t.createEventButton}
               </button>
@@ -405,7 +409,7 @@ export default function EventsPage() {
 
         {shownPast.length > 0 ? (
           <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-500 border-b border-slate-800 pb-2">
+            <h2 className="text-sm font-semibold text-ink-muted border-b border-line pb-2">
               {t.pastEvents}
             </h2>
             {renderGrid(shownPast, true)}

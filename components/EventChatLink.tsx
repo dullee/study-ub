@@ -7,6 +7,7 @@ import { deleteChatLink, fetchChatLink, saveChatLink } from "@/lib/supabase/even
 import { loadLocalChatLink, saveLocalChatLink } from "@/lib/localStore";
 import { chatPlatform, normalizeChatUrl } from "@/lib/chatLinks";
 import { useI18n } from "@/components/LanguageProvider";
+import { Lock, MessageCircle } from "lucide-react";
 
 interface EventChatLinkProps {
   event: StudyEvent;
@@ -77,28 +78,28 @@ export default function EventChatLink({ event, isMember, isHost, usingRemote }: 
   const platform = link ? chatPlatform(link) : null;
 
   return (
-    <section className="space-y-3 bg-slate-800/30 border border-slate-800 rounded-xl p-4" aria-label={t.chatHeading}>
+    <section className="space-y-3 bg-panel border border-line rounded-md p-4" aria-label={t.chatHeading}>
       <div>
-        <h3 className="text-sm font-semibold text-slate-200">{t.chatHeading}</h3>
-        <p className="text-xs text-slate-500">{t.chatIntro}</p>
+        <h3 className="text-sm font-semibold text-ink">{t.chatHeading}</h3>
+        <p className="text-xs text-ink-muted">{t.chatIntro}</p>
       </div>
 
       {!isLoaded ? null : !user ? (
         <div className="text-center space-y-2 text-xs">
-          <p className="text-slate-400">{t.chatSignIn}</p>
+          <p className="text-ink-muted">{t.chatSignIn}</p>
           <SignInButton mode="modal">
-            <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-semibold">
+            <button className="bg-azure hover:bg-azure-deep text-white px-4 py-2 rounded-md font-semibold">
               {t.signIn}
             </button>
           </SignInButton>
         </div>
       ) : !isMember ? (
-        <p className="text-xs text-slate-400">🔒 {t.chatLocked}</p>
+        <p className="text-xs text-ink-muted"><Lock aria-hidden="true" className="h-3.5 w-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{t.chatLocked}</p>
       ) : link === undefined ? (
-        <div className="h-11 rounded-xl bg-slate-800/60 animate-pulse" aria-hidden="true" />
+        <div className="h-11 rounded-md bg-panel animate-pulse" aria-hidden="true" />
       ) : editing ? (
         <form onSubmit={handleSubmit} className="space-y-2">
-          <label className="block text-xs text-slate-400" htmlFor={`chat-link-${event.id}`}>
+          <label className="block text-xs text-ink-muted" htmlFor={`chat-link-${event.id}`}>
             {t.chatLinkLabel}
           </label>
           <input
@@ -109,14 +110,14 @@ export default function EventChatLink({ event, isMember, isHost, usingRemote }: 
             onChange={(e) => setDraft(e.target.value)}
             placeholder={t.chatLinkPlaceholder}
             autoFocus
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+            className="w-full bg-panel border border-line rounded-md p-2.5 text-sm text-ink focus:outline-none focus:border-azure"
           />
-          <p className="text-[11px] text-slate-500">{t.chatLinkHint}</p>
+          <p className="text-[11px] text-ink-muted">{t.chatLinkHint}</p>
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold disabled:opacity-60"
+              className="px-4 py-2 rounded-md bg-azure hover:bg-azure-deep text-white text-xs font-semibold disabled:opacity-60"
             >
               {saving ? t.saving : t.save}
             </button>
@@ -124,7 +125,7 @@ export default function EventChatLink({ event, isMember, isHost, usingRemote }: 
               type="button"
               onClick={() => setEditing(false)}
               disabled={saving}
-              className="px-4 py-2 rounded-lg bg-slate-700 text-slate-200 text-xs font-semibold"
+              className="px-4 py-2 rounded-md bg-panel text-ink text-xs font-semibold"
             >
               {t.cancel}
             </button>
@@ -136,21 +137,21 @@ export default function EventChatLink({ event, isMember, isHost, usingRemote }: 
             href={link}
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-sm font-semibold transition-all ${platform.className}`}
+            className={`flex items-center justify-center gap-2 w-full py-3 rounded-md text-ink text-sm font-semibold transition-all ${platform.className}`}
           >
-            <span aria-hidden="true">{platform.icon}</span>
+            <MessageCircle aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             {platform.name ? t.joinChatOn(platform.name) : t.joinChat}
           </a>
           {isHost ? (
             <div className="flex justify-center gap-3 text-xs">
-              <button type="button" onClick={startEditing} className="text-indigo-300 hover:text-white">
+              <button type="button" onClick={startEditing} className="text-link hover:text-ink">
                 {t.changeChatLink}
               </button>
               <button
                 type="button"
                 onClick={() => persist(null)}
                 disabled={saving}
-                className="text-rose-300 hover:text-white"
+                className="text-danger hover:text-ink"
               >
                 {t.removeChatLink}
               </button>
@@ -161,15 +162,15 @@ export default function EventChatLink({ event, isMember, isHost, usingRemote }: 
         <button
           type="button"
           onClick={startEditing}
-          className="w-full py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 text-sm font-semibold"
+          className="w-full py-2.5 rounded-md border border-dashed border-line-strong text-ink-muted hover:text-ink hover:border-line-strong text-sm font-semibold"
         >
           {t.addChatLink}
         </button>
       ) : (
-        <p className="text-xs text-slate-500">{loadFailed ? t.chatLoadFailed : t.chatNone}</p>
+        <p className="text-xs text-ink-muted">{loadFailed ? t.chatLoadFailed : t.chatNone}</p>
       )}
 
-      {error ? <p className="text-xs text-rose-400">{error}</p> : null}
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
     </section>
   );
 }

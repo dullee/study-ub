@@ -7,6 +7,7 @@ import { deleteEventPhone, fetchEventPhone, saveEventPhone } from "@/lib/supabas
 import { loadLocalEventPhone, saveLocalEventPhone } from "@/lib/localStore";
 import { normalizePhone, telHref } from "@/lib/phone";
 import { useI18n } from "@/components/LanguageProvider";
+import { Lock, Phone } from "lucide-react";
 
 interface EventPhoneProps {
   event: StudyEvent;
@@ -78,16 +79,16 @@ export default function EventPhone({ event, isMember, isHost, usingRemote }: Eve
   };
 
   return (
-    <section className="space-y-2 bg-slate-800/30 border border-slate-800 rounded-xl p-4" aria-label={t.phoneHeading}>
-      <h3 className="text-sm font-semibold text-slate-200">📞 {t.phoneHeading}</h3>
+    <section className="space-y-2 bg-panel border border-line rounded-md p-4" aria-label={t.phoneHeading}>
+      <h3 className="text-sm font-semibold text-ink"><Phone aria-hidden="true" className="h-4 w-4 inline -mt-0.5 mr-1.5" strokeWidth={2} />{t.phoneHeading}</h3>
 
       {!isMember ? (
-        <p className="text-xs text-slate-400">🔒 {t.phoneLocked}</p>
+        <p className="text-xs text-ink-muted"><Lock aria-hidden="true" className="h-3.5 w-3.5 inline -mt-0.5 mr-1" strokeWidth={2} />{t.phoneLocked}</p>
       ) : phone === undefined ? (
-        <div className="h-11 rounded-xl bg-slate-800/60 animate-pulse" aria-hidden="true" />
+        <div className="h-11 rounded-md bg-panel animate-pulse" aria-hidden="true" />
       ) : editing ? (
         <form onSubmit={handleSubmit} className="space-y-2">
-          <label className="block text-xs text-slate-400" htmlFor={`event-phone-${event.id}`}>
+          <label className="block text-xs text-ink-muted" htmlFor={`event-phone-${event.id}`}>
             {t.phoneLabel}
           </label>
           <input
@@ -100,13 +101,13 @@ export default function EventPhone({ event, isMember, isHost, usingRemote }: Eve
             onChange={(e) => setDraft(e.target.value)}
             placeholder={t.phonePlaceholder}
             autoFocus
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+            className="w-full bg-panel border border-line rounded-md p-2.5 text-sm text-ink focus:outline-none focus:border-azure"
           />
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold disabled:opacity-60"
+              className="px-4 py-2 rounded-md bg-azure hover:bg-azure-deep text-white text-xs font-semibold disabled:opacity-60"
             >
               {saving ? t.saving : t.save}
             </button>
@@ -114,7 +115,7 @@ export default function EventPhone({ event, isMember, isHost, usingRemote }: Eve
               type="button"
               onClick={() => setEditing(false)}
               disabled={saving}
-              className="px-4 py-2 rounded-lg bg-slate-700 text-slate-200 text-xs font-semibold"
+              className="px-4 py-2 rounded-md bg-panel text-ink text-xs font-semibold"
             >
               {t.cancel}
             </button>
@@ -124,21 +125,21 @@ export default function EventPhone({ event, isMember, isHost, usingRemote }: Eve
         <div className="space-y-2">
           <a
             href={telHref(phone)}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-all"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-md bg-ok hover:bg-ok/90 text-white text-sm font-semibold transition-all"
           >
-            <span aria-hidden="true">📞</span>
+            <Phone aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             {t.callPhone(phone)}
           </a>
           {isHost ? (
             <div className="flex justify-center gap-3 text-xs">
-              <button type="button" onClick={startEditing} className="text-indigo-300 hover:text-white">
+              <button type="button" onClick={startEditing} className="text-link hover:text-ink">
                 {t.changePhone}
               </button>
               <button
                 type="button"
                 onClick={() => persist(null)}
                 disabled={saving}
-                className="text-rose-300 hover:text-white"
+                className="text-danger hover:text-ink"
               >
                 {t.removePhone}
               </button>
@@ -149,15 +150,15 @@ export default function EventPhone({ event, isMember, isHost, usingRemote }: Eve
         <button
           type="button"
           onClick={startEditing}
-          className="w-full py-2.5 rounded-xl border border-dashed border-slate-600 text-slate-300 hover:text-white hover:border-slate-400 text-sm font-semibold"
+          className="w-full py-2.5 rounded-md border border-dashed border-line-strong text-ink-muted hover:text-ink hover:border-line-strong text-sm font-semibold"
         >
           {t.addPhone}
         </button>
       ) : (
-        <p className="text-xs text-slate-500">{loadFailed ? t.phoneLoadFailed : t.phoneNone}</p>
+        <p className="text-xs text-ink-muted">{loadFailed ? t.phoneLoadFailed : t.phoneNone}</p>
       )}
 
-      {error ? <p className="text-xs text-rose-400">{error}</p> : null}
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
     </section>
   );
 }
