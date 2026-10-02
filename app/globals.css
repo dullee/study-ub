@@ -54,7 +54,7 @@
   --color-danger: #ff8f85;
   --color-good: #5fd79a;
   --color-sun-deep: #ffb070;
-  /* Хамгийн гүн шөнө: бүрхүүл, tooltip, тод дүүргэлт дээрх бараан бичвэр. */
+  /* Хамгийн гүн шөнө: бүрхүүл, тод дүүргэлт дээрх бараан бичвэр. */
   --color-night: #050c16;
   --color-band: var(--sky-band);
   --color-band-edge: var(--sky-edge);
@@ -121,7 +121,11 @@ select option {
   }
 }
 
-.leaflet-container {
+/*
+  leaflet.css газрын зурагтай хамт (dynamic import) энэ файлаас хойно ачаалагддаг тул ижил жинтэй дүрэм нь
+  манайхыг дардаг (цагаан popup дээр цайвар бичвэр гарч байсан). Доорх дүрмүүд сонгогчийн жингээр давна.
+*/
+div.leaflet-container {
   height: 100%;
   width: 100%;
   z-index: 0;
@@ -147,34 +151,66 @@ select option {
 .leaflet-bar a:hover {
   background: var(--color-panel) !important;
 }
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
+/* Popup: харанхуй хуудас, цайвар бичвэр (ink 14.6:1) — цайвар газрын зураг дээр тод ялгарна. */
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-popup-tip {
   background: var(--color-sheet);
   color: var(--color-ink);
 }
-.leaflet-popup-content-wrapper {
+.leaflet-container .leaflet-popup-content-wrapper {
   border-radius: 6px;
   box-shadow: var(--shadow-lift);
 }
-.leaflet-popup-tip {
+.leaflet-container .leaflet-popup-tip {
   box-shadow: none;
 }
-.leaflet-container a {
+.leaflet-container .leaflet-popup-content {
+  margin: 12px 32px 12px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.leaflet-container .leaflet-popup-content a {
   color: var(--color-link);
 }
-.leaflet-container a.leaflet-popup-close-button {
+/* Утсан дээр газрын зураг жижиг — popup нарийн, зах багатай. */
+@media (max-width: 639px) {
+  .leaflet-container .leaflet-popup-content {
+    margin: 8px 26px 8px 10px;
+    max-width: 200px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+}
+.leaflet-container .leaflet-popup a.leaflet-popup-close-button {
+  top: 4px;
+  right: 4px;
   color: var(--color-ink-muted);
 }
-.leaflet-tooltip {
-  background: var(--color-ink);
-  color: var(--color-night);
-  border-radius: 4px;
+.leaflet-container .leaflet-popup a.leaflet-popup-close-button:hover,
+.leaflet-container .leaflet-popup a.leaflet-popup-close-button:focus {
+  color: var(--color-ink);
+}
+/* Tooltip (картад заахад гардаг нэр, зогсоолын тэмдгийн тайлбар) нь popup-тай нэг загвар. */
+.leaflet-container .leaflet-tooltip {
+  background: var(--color-sheet);
+  color: var(--color-ink);
+  border-radius: 6px;
   border: none;
-  box-shadow: var(--shadow-sheet);
+  box-shadow: var(--shadow-lift);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.45;
   font-weight: 600;
 }
-.leaflet-tooltip-top::before {
-  border-top-color: var(--color-ink);
+.leaflet-container .leaflet-tooltip-top::before {
+  border-top-color: var(--color-sheet);
+}
+@media (max-width: 639px) {
+  .leaflet-container .leaflet-tooltip {
+    padding: 6px 10px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
 }
 .leaflet-control-attribution {
   background: rgb(255 255 255 / 0.8) !important;

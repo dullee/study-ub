@@ -177,7 +177,7 @@ export default function ParkingMap({
             pathOptions={{ color: "#ffffff", weight: 3, fillColor: "#ff8a2a", fillOpacity: 1 }}
           >
             <Popup>
-              <span className="font-sans text-xs font-semibold">{destination.name}</span>
+              <span className="font-sans text-[13px] font-semibold text-ink">{destination.name}</span>
             </Popup>
           </CircleMarker>
         ) : null}
@@ -198,33 +198,37 @@ export default function ParkingMap({
               eventHandlers={{ click: () => onSelect(parking.id) }}
             >
               <Popup>
-                <div className="font-sans text-xs">
-                  <b className="text-sm text-ink">{parking.name}</b>
-                  <br />
-                  <MapPin aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />{parking.address?.trim() || missing}
-                  {km != null ? (
-                    <>
-                      <br />
-                      {t.distance}: {formatDistance(km, t)}
-                    </>
-                  ) : null}
-                  <br />
-                  {t.parkingHourlyRate}: {parking.hourlyRate?.trim() || missing}
-                  <br />
-                  {t.parkingHours}: {parking.hours?.trim() || missing}
-                  {parking.hourlyRate || parking.hours ? (
-                    <>
-                      <br />
-                      <span className="text-ink-muted">{t.parkingSourceNote}</span>
-                    </>
-                  ) : null}
+                <div className="font-sans min-w-40 sm:min-w-48 space-y-1.5 sm:space-y-2 text-xs sm:text-[13px] text-ink">
+                  <div className="text-[13px] sm:text-[15px] font-semibold leading-tight">{parking.name}</div>
+                  <div className="space-y-0.5 sm:space-y-1">
+                    <div className="flex gap-1.5 min-w-0">
+                      <MapPin aria-hidden="true" className="h-3.5 w-3.5 mt-0.5 shrink-0 text-ink-muted" strokeWidth={2} />
+                      <span className="min-w-0 max-sm:truncate">{parking.address?.trim() || missing}</span>
+                    </div>
+                    {km != null ? (
+                      <div>
+                        <span className="text-ink-muted">{t.distance}:</span>{" "}
+                        <span className="font-semibold tabular-nums">{formatDistance(km, t)}</span>
+                      </div>
+                    ) : null}
+                    <div>
+                      <span className="text-ink-muted">{t.parkingHourlyRate}:</span>{" "}
+                      <span className="font-semibold">{parking.hourlyRate?.trim() || missing}</span>
+                    </div>
+                    <div>
+                      <span className="text-ink-muted">{t.parkingHours}:</span>{" "}
+                      <span className="font-semibold">{parking.hours?.trim() || missing}</span>
+                    </div>
+                    {parking.hourlyRate || parking.hours ? (
+                      <div className="text-[11px] sm:text-xs text-ink-muted">{t.parkingSourceNote}</div>
+                    ) : null}
+                  </div>
                   {directions ? (
-                    <>
-                      <br />
-                      <a href={directions} target="_blank" rel="noopener noreferrer">
+                    <div className="border-t border-line pt-1.5 sm:pt-2 font-semibold">
+                      <a href={directions} target="_blank" rel="noopener noreferrer" className="hover:underline">
                         {destination ? t.parkingDirections : "Google Maps"}
                       </a>
-                    </>
+                    </div>
                   ) : null}
                 </div>
               </Popup>

@@ -275,18 +275,29 @@ export default function Home() {
 
   // Картад хулганаар заахад богино хүлээлтийн дараа газрын зураг тэр газарт очно —
   // жагсаалтаар хулгана гүйлгэхэд газрын зураг хаа сайгүй нисэхгүй.
+  // Заахаа болиход (утсанд: голд карт үгүй болоход) тодруулга, ойролцоох зогсоолууд хэвээр үлдэнэ — өөр картад
+  // заах, газрын зураг дээр өөр тэмдэг дарах, эсвэл шошгын ✕-ийг дарахад л солигдоно/арилна.
+  // Ингэснээр хулганаа газрын зураг руу аваачиж зогсоолуудыг харж болно.
   const [hoveredSpotId, setHoveredSpotId] = useState<number | null>(null);
+  // Нэг картад дахин заахад ч газрын зураг тэр газар руу буцаж очно.
+  const [hoverTick, setHoverTick] = useState(0);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleHover = useCallback((spot: StudySpot | null) => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
-    if (!spot) {
-      setHoveredSpotId(null);
-      return;
-    }
-    hoverTimer.current = setTimeout(() => setHoveredSpotId(spot.id), 250);
+    if (!spot) return;
+    hoverTimer.current = setTimeout(() => {
+      setHoveredSpotId(spot.id);
+      setHoverTick((value) => value + 1);
+    }, 250);
   }, []);
   useEffect(() => () => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  }, []);
+  // Газрын зураг дээр тэмдэг дарахад тэр газар тодорч, ойролцоох зогсоолууд нь гарна (hoverTick нэмэхгүй —
+  // хэрэглэгч тэмдгээ харж байгаа тул газрын зураг нисэхгүй). null: шошгын ✕ — тодруулга, зогсоолуудыг арилгана.
+  const handleMapSelect = useCallback((spot: StudySpot | null) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    setHoveredSpotId(spot?.id ?? null);
   }, []);
 
   // Утсан дээр hover байхгүй: газрын зургийн доорх харагдах хэсэгт хамгийн их харагдаж буй картыг (тэнцвэл голд ойрыг)
@@ -373,6 +384,8 @@ export default function Home() {
               dimmedIds={outOfRangeIds}
               focusCoords={focusCoords}
               highlightedId={hoveredSpotId}
+              highlightTick={hoverTick}
+              onHighlight={handleMapSelect}
               busyness={busyness}
               now={now}
               onOpenDetails={setDetailSpot}
