@@ -18,6 +18,7 @@ import { ReviewScores, summarizeSpots } from "@/lib/scores";
 import { loadLocalCheckins, loadLocalReviews, loadLocalSpots, saveLocalSpots } from "@/lib/localStore";
 import { applyCheckinChange, fetchRecentCheckins, subscribeCheckins } from "@/lib/supabase/checkins";
 import { SpotCheckin, summarizeAllBusyness } from "@/lib/busyness";
+import { applyDemoBusynessParam, demoCheckins, useDemoBusyness } from "@/lib/demoBusyness";
 import { useFavorites } from "@/lib/useFavorites";
 import { sortByActiveTags } from "@/lib/spotSort";
 import { recentReviewCounts } from "@/lib/popular";
@@ -103,8 +104,14 @@ export default function Home() {
     () => (now === null ? {} : recentReviewCounts(reviewScores ?? [], now)),
     [reviewScores, now]
   );
+  // Демо горим (/demo): жинхэнэ мэдээлэл дээр хөтөч дээр үүсгэсэн жишээ мэдээлэл нэмэгдэнэ (lib/demoBusyness.ts).
+  const demoBusyness = useDemoBusyness();
+  const demoRows = useMemo(() => (demoBusyness ? demoCheckins(spots.map((spot) => spot.id)) : []), [demoBusyness, spots]);
   // Минут тутам дахин тооцно — 90 минутаас хуучирсан мэдээлэл өөрөө алга болно.
-  const busyness = useMemo(() => (now === null ? {} : summarizeAllBusyness(checkins, now)), [checkins, now]);
+  const busyness = useMemo(
+    () => (now === null ? {} : summarizeAllBusyness(demoRows.length > 0 ? [...checkins, ...demoRows] : checkins, now)),
+    [checkins, demoRows, now]
+  );
   const summaries = useMemo(
     () => summarizeSpots(spots, reviewScores ?? []),
     [spots, reviewScores]
@@ -164,6 +171,11 @@ export default function Home() {
   };
 
   const { t } = useI18n();
+  // /demo, /demo/off эндээс ?demo=1 / ?demo=0-оор ирнэ: жишээ ачааллын мэдээллийг асааж/унтраана.
+  useEffect(() => {
+    const changed = applyDemoBusynessParam();
+    if (changed) toast.info(changed === "on" ? t.demoBusynessOn : t.demoBusynessOff);
+  }, [t]);
   const { location, locate, clear: clearLocation } = useUserLocation();
   const { favorites, toggleFavorite } = useFavorites(t.favoriteFailed);
   const [maxDistanceKm, setMaxDistanceKm] = useState<number | null>(null);

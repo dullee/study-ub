@@ -15,6 +15,7 @@ import {
 import { fetchBusynessPattern } from "@/lib/supabase/checkins";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { checkinsForSpot } from "@/lib/localStore";
+import { demoPattern, useDemoBusyness } from "@/lib/demoBusyness";
 import { useNow } from "@/lib/openHours";
 import { useI18n } from "@/components/LanguageProvider";
 import { ChevronDown } from "lucide-react";
@@ -67,10 +68,16 @@ function PopularTimesChart({ spotId, labelledBy }: { spotId: number; labelledBy:
   const [cells, setCells] = useState<PatternCell[] | null>(null);
   const [chosenDay, setChosenDay] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
+  // Демо горим (/demo): жинхэнэ түүхийн оронд жишээ график.
+  const demo = useDemoBusyness();
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (demo) {
+        setCells(demoPattern(spotId));
+        return;
+      }
       const remote = isSupabaseConfigured ? await fetchBusynessPattern(spotId) : null;
       if (cancelled) return;
       setCells(remote ?? busynessPattern(checkinsForSpot(spotId), Date.now()));
@@ -79,7 +86,7 @@ function PopularTimesChart({ spotId, labelledBy }: { spotId: number; labelledBy:
     return () => {
       cancelled = true;
     };
-  }, [spotId]);
+  }, [spotId, demo]);
 
   if (cells === null || now === null) {
     return <div className="h-40 rounded-md bg-sheet animate-pulse" aria-hidden="true" />;

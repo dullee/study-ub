@@ -22,6 +22,7 @@ import {
 } from "@/lib/supabase/checkins";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { checkinsForSpot, saveLocalCheckin } from "@/lib/localStore";
+import { demoCheckins, useDemoBusyness } from "@/lib/demoBusyness";
 import { useNow } from "@/lib/openHours";
 import { formatDistance, useUserLocation } from "@/lib/geo";
 import { StudySpot } from "@/types";
@@ -52,6 +53,8 @@ export default function BusynessPanel({
   // Илгээж буй түвшин — тэр товч дээр эргэлдэх дүрс харуулна.
   const [savingLevel, setSavingLevel] = useState<BusynessLevel | null>(null);
   const saving = savingLevel !== null;
+  // Демо горим (/demo): нүүр хуудасны карттай ижил жишээ мэдээлэл нэмэгдэнэ.
+  const demo = useDemoBusyness();
 
   // Цонх нээлттэй байхад бусдын мэдээлэл шууд ирнэ (Realtime).
   useEffect(() => {
@@ -60,7 +63,7 @@ export default function BusynessPanel({
     async function load() {
       const remote = isSupabaseConfigured ? await fetchRecentCheckins(spotId) : null;
       if (cancelled) return;
-      const loaded = remote ?? checkinsForSpot(spotId);
+      const loaded = [...(remote ?? checkinsForSpot(spotId)), ...(demo ? demoCheckins([spotId]) : [])];
       setCheckins((prev) => [...prev.filter((item) => !loaded.some((l) => l.id === item.id)), ...loaded]);
       setLoading(false);
     }
@@ -69,7 +72,7 @@ export default function BusynessPanel({
       cancelled = true;
       unsubscribe();
     };
-  }, [spotId]);
+  }, [spotId, demo]);
 
   const summary = now === null ? null : summarizeBusyness(checkins, now);
   const mine = user && now !== null ? recentOwnCheckin(checkins, user.id, now) : undefined;
