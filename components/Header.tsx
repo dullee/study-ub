@@ -40,10 +40,19 @@ export default function Header({ onAddClick, addLabel, joined = false }: HeaderP
   const addText = addLabel ?? t.addPlace;
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
-  const { submissions, pendingCount } = useMySubmissions();
+  // Эвентийн хуудсанд "Миний илгээсэн" нь эвентүүдийг, бусад хуудсанд газруудыг харуулна.
+  const onEvents = pathname === "/events";
+  const { spots, events, count, pendingCount } = useMySubmissions(onEvents ? "events" : "spots");
   const [submissionsOpen, setSubmissionsOpen] = useState(false);
   const closeSubmissions = useCallback(() => setSubmissionsOpen(false), []);
-  const hasSubmissions = submissions.length > 0;
+  const hasSubmissions = count > 0;
+  // Тоо нь цонхонд жагсаагдах бүгдийг (хүлээгдэж буй + зөвшөөрөгдөөгүй) тоолно; тайлбар нь хүлээгдэж буйг хэлнэ.
+  const pendingText =
+    pendingCount === 0
+      ? t.mySubmissions
+      : onEvents
+        ? t.myEventSubmissionsPending(pendingCount)
+        : t.mySubmissionsPending(pendingCount);
 
   // Header-ийн өндрийг --header-h болгон нийтэлнэ — том дэлгэцэнд шүүлтүүр, газрын зураг түүний доор наалдана.
   // Утсан дээр header наалдахгүй — дэлгэцийн зайг хэмнэж, зөвхөн шүүлтүүрийн мөр наалдана.
@@ -86,7 +95,7 @@ export default function Header({ onAddClick, addLabel, joined = false }: HeaderP
             <SquareParking aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             <span className="hidden sm:inline">{t.findParking}</span>
           </Link>
-          {/* Утсан дээр илгээсэн газар байвал ➕ нь "нэмэх / миний илгээсэн" цэс; эс бөгөөс шууд нэмнэ. */}
+          {/* Утсан дээр илгээсэн газар (эвентийн хуудсанд эвент) байвал ➕ нь "нэмэх / миний илгээсэн" цэс; эс бөгөөс шууд нэмнэ. */}
           <div className={hasSubmissions ? "sm:hidden" : "hidden"}>
             <Dropdown
               align="right"
@@ -96,7 +105,7 @@ export default function Header({ onAddClick, addLabel, joined = false }: HeaderP
               label={
                 <>
                   <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} />
-                  {pendingCount > 0 ? <span className={`absolute -top-1.5 -right-1.5 ${countPill}`}>{pendingCount}</span> : null}
+                  <span className={`absolute -top-1.5 -right-1.5 ${countPill}`}>{count}</span>
                 </>
               }
             >
@@ -121,7 +130,7 @@ export default function Header({ onAddClick, addLabel, joined = false }: HeaderP
                     className="flex items-center gap-2 w-full px-3 py-2.5 rounded-md border border-line bg-sheet hover:bg-panel text-ink text-sm font-semibold"
                   >
                     <Hourglass aria-hidden="true" className="h-4 w-4 text-sun-deep" strokeWidth={2} /> {t.mySubmissions}
-                    <span className={`ml-auto ${countPill}`}>{pendingCount}</span>
+                    <span className={`ml-auto ${countPill}`}>{count}</span>
                   </button>
                 </div>
               )}
@@ -140,13 +149,13 @@ export default function Header({ onAddClick, addLabel, joined = false }: HeaderP
             <button
               type="button"
               onClick={() => setSubmissionsOpen(true)}
-              title={t.mySubmissionsPending(pendingCount)}
-              aria-label={`${t.mySubmissions}: ${t.mySubmissionsPending(pendingCount)}`}
+              title={pendingText}
+              aria-label={pendingCount === 0 ? `${t.mySubmissions}: ${count}` : `${t.mySubmissions}: ${pendingText}`}
               className={`hidden sm:inline-flex px-3 whitespace-nowrap ${onSky}`}
             >
               <Hourglass aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
               <span className="hidden md:inline">{t.mySubmissions}</span>
-              <span className={countPill}>{pendingCount}</span>
+              <span className={countPill}>{count}</span>
             </button>
           ) : null}
           <LanguageSwitcher />
@@ -187,7 +196,14 @@ export default function Header({ onAddClick, addLabel, joined = false }: HeaderP
       </nav>
       {/* Цонхыг body-д зурна: header-ийн stacking context дотор хоригдохгүй. */}
       {submissionsOpen && hasSubmissions
-        ? createPortal(<MySubmissionsDialog spots={submissions} onClose={closeSubmissions} />, document.body)
+        ? createPortal(
+            onEvents ? (
+              <MySubmissionsDialog events={events} onClose={closeSubmissions} />
+            ) : (
+              <MySubmissionsDialog spots={spots} onClose={closeSubmissions} />
+            ),
+            document.body
+          )
         : null}
     </header>
   );

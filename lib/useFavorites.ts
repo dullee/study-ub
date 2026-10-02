@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { addFavorites, fetchFavorites, removeFavorite } from "@/lib/supabase/favorites";
+import { addFavorites, existingSpotIds, fetchFavorites, removeFavorite } from "@/lib/supabase/favorites";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { loadLocalFavorites, saveLocalFavorites } from "@/lib/localStore";
 
@@ -26,11 +26,10 @@ export function useFavorites(failedMessage: string) {
         return;
       }
       if (local.length > 0) {
-        // Нэгийг нь (устгагдсан газар гэх мэт) нэмж чадаагүй ч бусдыг нь алдахгүй.
-        let moved = await addFavorites(userId, local);
-        if (!moved) moved = (await Promise.all(local.map((id) => addFavorites(userId, [id])))).some(Boolean);
-        // Юу ч шилжээгүй бол (хүснэгт хараахан үүсээгүй гэх мэт) хөтчийнхийг устгахгүй.
-        if (moved) saveLocalFavorites([]);
+        // Устгагдсан газрын id-г орхино — эс бөгөөс FK алдаа гарч, хөтчийнх хэзээ ч цэвэрлэгдэхгүй.
+        const existing = await existingSpotIds(local);
+        // Шалгаж эсвэл шилжүүлж чадаагүй бол (хүснэгт хараахан үүсээгүй гэх мэт) хөтчийнхийг устгахгүй.
+        if (existing && (await addFavorites(userId, existing))) saveLocalFavorites([]);
       }
       const saved = await fetchFavorites();
       if (!cancelled) setIds(new Set(saved ?? local));

@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { ReactNode, useEffect } from "react";
 import SmartImage from "@/components/SmartImage";
-import { PLACEHOLDER_IMAGE, spotCategory, StudySpot } from "@/types";
+import { PLACEHOLDER_IMAGE, spotCategory, SpotStatus, StudyEvent, StudySpot } from "@/types";
 import { useI18n } from "@/components/LanguageProvider";
-import { MapPin, X } from "lucide-react";
+import { formatEventTime } from "@/lib/format";
+import { CalendarDays, MapPin, X } from "lucide-react";
 import KeyIcon from "@/components/KeyIcon";
 
-interface MySubmissionsDialogProps {
-  spots: StudySpot[];
-  onClose: () => void;
-}
+// Эвентийн хуудсанд events, бусад хуудсанд spots дамжуулна.
+type MySubmissionsDialogProps = { onClose: () => void } & (
+  | { spots: StudySpot[]; events?: undefined }
+  | { events: StudyEvent[]; spots?: undefined }
+);
 
-// Хэрэглэгчийн илгээсэн, хараахан нийтлэгдээгүй газрууд: хүлээгдэж буй нь эхэнд, зөвшөөрөгдөөгүй нь доор.
-export default function MySubmissionsDialog({ spots, onClose }: MySubmissionsDialogProps) {
+const byRejectedLast = <T extends { status?: SpotStatus }>(items: T[]) =>
+  [...items].sort((a, b) => Number(a.status === "rejected") - Number(b.status === "rejected"));
+
+// Хэрэглэгчийн илгээсэн, хараахан нийтлэгдээгүй газрууд эсвэл эвентүүд: хүлээгдэж буй нь эхэнд, зөвшөөрөгдөөгүй нь доор.
+export default function MySubmissionsDialog({ spots, events, onClose }: MySubmissionsDialogProps) {
   const { t, locale } = useI18n();
 
   useEffect(() => {
@@ -29,9 +34,42 @@ export default function MySubmissionsDialog({ spots, onClose }: MySubmissionsDia
     };
   }, [onClose]);
 
-  const sorted = [...spots].sort((a, b) => Number(a.status === "rejected") - Number(b.status === "rejected"));
   const formatDate = (iso?: string) =>
     iso ? new Date(iso).toLocaleDateString(locale === "en" ? "en-US" : "en-CA", { dateStyle: "medium" }) : null;
+
+  const renderRow = (
+    id: number,
+    status: SpotStatus | undefined,
+    createdAt: string | undefined,
+    thumb: ReactNode,
+    body: ReactNode
+  ) => {
+    const rejected = status === "rejected";
+    const date = formatDate(createdAt);
+    return (
+      <li
+        key={id}
+        className={`flex gap-3 items-center rounded-md border border-line bg-panel p-2.5 ${
+          rejected ? "opacity-70" : ""
+        }`}
+      >
+        {thumb}
+        <div className="min-w-0 flex-1">
+          {body}
+          {date ? <p className="text-[11px] text-ink-muted">{t.submittedOn(date)}</p> : null}
+        </div>
+        <span
+          className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+            rejected
+              ? "bg-alert-soft border-alert/40 text-danger"
+              : "bg-sun-soft border-sun/40 text-sun-deep"
+          }`}
+        >
+          {rejected ? t.statusNotApproved : t.statusPending}
+        </span>
+      </li>
+    );
+  };
 
   return (
     <div
@@ -49,9 +87,9 @@ export default function MySubmissionsDialog({ spots, onClose }: MySubmissionsDia
         <div className="sticky top-0 z-10 -mx-5 mb-4 px-5 pt-5 pb-3 bg-sheet border-b border-line flex items-start justify-between gap-3">
           <div>
             <h2 id="my-submissions-title" className="font-bold text-ink">
-              {t.mySubmissionsTitle}
+              {events ? t.myEventSubmissionsTitle : t.mySubmissionsTitle}
             </h2>
-            <p className="text-xs text-ink-muted">{t.mySubmissionsIntro}</p>
+            <p className="text-xs text-ink-muted">{events ? t.myEventSubmissionsIntro : t.mySubmissionsIntro}</p>
           </div>
           <button
             type="button"
@@ -64,44 +102,53 @@ export default function MySubmissionsDialog({ spots, onClose }: MySubmissionsDia
         </div>
 
         <ul className="space-y-2">
-          {sorted.map((spot) => {
-            const category = spotCategory(spot.category);
-            const rejected = spot.status === "rejected";
-            const date = formatDate(spot.created_at);
-            return (
-              <li
-                key={spot.id}
-                className={`flex gap-3 items-center rounded-md border border-line bg-panel p-2.5 ${
-                  rejected ? "opacity-70" : ""
-                }`}
-              >
-                <SmartImage
-                  src={spot.image || PLACEHOLDER_IMAGE}
-                  alt=""
-                  width={56}
-                  height={56}
-                  className="h-14 w-14 shrink-0 rounded-md object-cover border border-line"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm text-ink truncate">
-                    {category ? <KeyIcon k={category.key} className="h-3.5 w-3.5 inline -mt-0.5 mr-1 text-ink-muted" /> : null}
-                    {spot.name}
-                  </p>
-                  <p className="text-xs text-ink-muted truncate"><MapPin aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />{spot.location}</p>
-                  {date ? <p className="text-[11px] text-ink-muted">{t.submittedOn(date)}</p> : null}
-                </div>
-                <span
-                  className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                    rejected
-                      ? "bg-alert-soft border-alert/40 text-danger"
-                      : "bg-sun-soft border-sun/40 text-sun-deep"
-                  }`}
-                >
-                  {rejected ? t.statusNotApproved : t.statusPending}
-                </span>
-              </li>
-            );
-          })}
+          {events
+            ? byRejectedLast(events).map((event) =>
+                renderRow(
+                  event.id,
+                  event.status,
+                  event.created_at,
+                  <span
+                    aria-hidden="true"
+                    className="flex items-center justify-center h-14 w-14 shrink-0 rounded-md border border-line bg-azure-soft text-link"
+                  >
+                    <CalendarDays className="h-6 w-6" strokeWidth={2} />
+                  </span>,
+                  <>
+                    <p className="font-semibold text-sm text-ink truncate">{event.title}</p>
+                    <p className="text-xs text-ink-muted truncate">
+                      <MapPin aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />
+                      {event.place_name}
+                    </p>
+                    <p className="text-xs text-ink-muted truncate">
+                      <CalendarDays aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />
+                      {formatEventTime(event.starts_at, undefined, locale)}
+                    </p>
+                  </>
+                )
+              )
+            : byRejectedLast(spots).map((spot) => {
+                const category = spotCategory(spot.category);
+                return renderRow(
+                  spot.id,
+                  spot.status,
+                  spot.created_at,
+                  <SmartImage
+                    src={spot.image || PLACEHOLDER_IMAGE}
+                    alt=""
+                    width={56}
+                    height={56}
+                    className="h-14 w-14 shrink-0 rounded-md object-cover border border-line"
+                  />,
+                  <>
+                    <p className="font-semibold text-sm text-ink truncate">
+                      {category ? <KeyIcon k={category.key} className="h-3.5 w-3.5 inline -mt-0.5 mr-1 text-ink-muted" /> : null}
+                      {spot.name}
+                    </p>
+                    <p className="text-xs text-ink-muted truncate"><MapPin aria-hidden="true" className="h-3 w-3 inline -mt-0.5 mr-1" strokeWidth={2} />{spot.location}</p>
+                  </>
+                );
+              })}
         </ul>
       </div>
     </div>

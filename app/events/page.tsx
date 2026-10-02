@@ -33,6 +33,7 @@ import {
 } from "@/lib/localStore";
 import { Armchair, Search, User } from "lucide-react";
 import Manul from "@/components/Manul";
+import { notifySubmissionsChanged } from "@/lib/useMySubmissions";
 
 // Эхэлснээс хойш 3 цаг хүртэл идэвхтэй гэж үзнэ.
 const ACTIVE_WINDOW_MS = 3 * 60 * 60 * 1000;
@@ -248,6 +249,7 @@ export default function EventsPage() {
       else saveLocalEventPhone(saved.id, phone);
     }
     setNotice({ text: t.eventSubmitted });
+    notifySubmissionsChanged();
     return true;
   };
 

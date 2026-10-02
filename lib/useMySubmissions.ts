@@ -2,23 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { StudySpot } from "@/types";
+import { StudyEvent, StudySpot } from "@/types";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchMySubmissions } from "@/lib/supabase/spots";
-import { loadLocalSpots } from "@/lib/localStore";
+import { fetchMyEventSubmissions } from "@/lib/supabase/events";
+import { loadLocalEvents, loadLocalSpots } from "@/lib/localStore";
 
-// Газар илгээсний дараа header-ийн "Миний илгээсэн" тоог шинэчлэхэд дуудна.
+// Газар эсвэл эвент илгээсний дараа header-ийн "Миний илгээсэн" тоог шинэчлэхэд дуудна.
 const EVENT = "studyspots:submissions-changed";
 
 export function notifySubmissionsChanged() {
   window.dispatchEvent(new Event(EVENT));
 }
 
-// Нэвтэрсэн хэрэглэгчийн илгээсэн, хараахан нийтлэгдээгүй газрууд (хүлээгдэж буй, зөвшөөрөгдөөгүй).
-export function useMySubmissions() {
+// Эвентийн хуудсанд эвентүүд, бусад хуудсанд газрууд.
+export type SubmissionKind = "spots" | "events";
+
+async function loadSpots(userId: string): Promise<StudySpot[]> {
+  const remote = isSupabaseConfigured ? await fetchMySubmissions(userId) : null;
+  return remote ?? loadLocalSpots().filter((spot) => spot.user_id === userId && spot.status !== "approved");
+}
+
+async function loadEvents(userId: string): Promise<StudyEvent[]> {
+  const remote = isSupabaseConfigured ? await fetchMyEventSubmissions(userId) : null;
+  return (
+    remote ??
+    loadLocalEvents().filter((event) => event.user_id === userId && (event.status ?? "approved") !== "approved")
+  );
+}
+
+// Нэвтэрсэн хэрэглэгчийн илгээсэн, хараахан нийтлэгдээгүй газрууд эсвэл эвентүүд (хүлээгдэж буй, зөвшөөрөгдөөгүй).
+export function useMySubmissions(kind: SubmissionKind = "spots") {
   const { user } = useUser();
   const userId = user?.id ?? null;
-  const [submissions, setSubmissions] = useState<StudySpot[]>([]);
+  const [spots, setSpots] = useState<StudySpot[]>([]);
+  const [events, setEvents] = useState<StudyEvent[]>([]);
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
@@ -31,19 +49,27 @@ export function useMySubmissions() {
     if (!userId) return;
     let cancelled = false;
     (async () => {
-      const remote = isSupabaseConfigured ? await fetchMySubmissions(userId) : null;
-      const rows =
-        remote ?? loadLocalSpots().filter((spot) => spot.user_id === userId && spot.status !== "approved");
-      if (!cancelled) setSubmissions(rows);
+      if (kind === "events") {
+        const rows = await loadEvents(userId);
+        if (!cancelled) setEvents(rows);
+      } else {
+        const rows = await loadSpots(userId);
+        if (!cancelled) setSpots(rows);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId, version]);
+  }, [userId, version, kind]);
 
-  const visible = userId ? submissions : [];
+  const visibleSpots = userId && kind === "spots" ? spots : [];
+  const visibleEvents = userId && kind === "events" ? events : [];
+  const visible: { status?: StudySpot["status"] }[] = kind === "events" ? visibleEvents : visibleSpots;
   return {
-    submissions: visible,
-    pendingCount: visible.filter((spot) => spot.status === "pending").length,
+    kind,
+    spots: visibleSpots,
+    events: visibleEvents,
+    count: visible.length,
+    pendingCount: visible.filter((item) => item.status === "pending").length,
   };
 }

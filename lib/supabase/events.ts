@@ -29,6 +29,22 @@ export async function fetchAllEvents(): Promise<StudyEvent[] | null> {
   return data as StudyEvent[];
 }
 
+// Хэрэглэгчийн илгээсэн, хараахан нийтлэгдээгүй эвентүүд (хүлээгдэж буй ба татгалзсан). RLS: зөвхөн өөрийнх.
+export async function fetchMyEventSubmissions(userId: string): Promise<StudyEvent[] | null> {
+  if (!supabaseAuthed) return null;
+  const { data, error } = await supabaseAuthed
+    .from("events")
+    .select("*")
+    .eq("user_id", userId)
+    .in("status", ["pending", "rejected"])
+    .order("id", { ascending: false });
+  if (error) {
+    console.error("Supabase my event submissions:", error.message);
+    return null;
+  }
+  return data as StudyEvent[];
+}
+
 export async function insertEvent(
   event: Omit<StudyEvent, "id" | "created_at">
 ): Promise<StudyEvent | null> {
