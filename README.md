@@ -2,6 +2,8 @@
 
 https://study-ub-omega.vercel.app/
 
+Ulaanbaatar
+
 Улаанбаатарын сурах газаруудын гид. Next.js (App Router) + TypeScript + Tailwind CSS. Газрын зураг Leaflet, өгөгдөл Supabase (тохируулаагүй үед `data/initialSpots.ts` + localStorage).
 
 ## Ажиллуулах
